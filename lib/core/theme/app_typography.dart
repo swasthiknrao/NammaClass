@@ -1,92 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Typography scale. Used by AppTheme to build TextTheme.
+import 'app_colors.dart';
+
+/// NammaClass typography — Poppins (headings), Inter (body), JetBrains Mono (numbers).
+/// All 12 style tokens from BRD Section 1.2.
 class AppTypography {
   AppTypography._();
 
-  static const String fontFamily = 'Roboto';
+  // DISPLAY / HEADINGS — Poppins
+  static TextStyle get displayLarge => GoogleFonts.poppins(
+    fontSize: 30,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+  );
+  static TextStyle get displayMedium => GoogleFonts.poppins(
+    fontSize: 26,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+  static TextStyle get headlineLarge => GoogleFonts.poppins(
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+  static TextStyle get headlineMedium => GoogleFonts.poppins(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+  static TextStyle get headlineSmall => GoogleFonts.poppins(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+  );
 
-  static TextStyle get displayLarge => const TextStyle(
-        fontSize: 57,
-        fontWeight: FontWeight.w400,
-        letterSpacing: -0.25,
-      );
+  // BODY / LABELS — Inter
+  static TextStyle get bodyLarge => GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
+  static TextStyle get bodyMedium => GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
+  static TextStyle get bodySmall => GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
+  );
+  static TextStyle get labelLarge => GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+  );
+  static TextStyle get labelMedium => GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+  );
+  static TextStyle get labelSmall => GoogleFonts.inter(
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
+  );
 
-  static TextStyle get displayMedium => const TextStyle(
-        fontSize: 45,
-        fontWeight: FontWeight.w400,
-      );
+  // MONOSPACE / NUMBERS — JetBrains Mono
+  static TextStyle get monoAmount => GoogleFonts.jetBrainsMono(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
 
-  static TextStyle get displaySmall => const TextStyle(
-        fontSize: 36,
-        fontWeight: FontWeight.w400,
-      );
-
-  static TextStyle get headlineLarge => const TextStyle(
-        fontSize: 32,
-        fontWeight: FontWeight.w600,
-      );
-
-  static TextStyle get headlineMedium => const TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w600,
-      );
-
-  static TextStyle get headlineSmall => const TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-      );
-
-  static TextStyle get titleLarge => const TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.w500,
-      );
-
-  static TextStyle get titleMedium => const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.15,
-      );
-
-  static TextStyle get titleSmall => const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.1,
-      );
-
-  static TextStyle get bodyLarge => const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.5,
-      );
-
-  static TextStyle get bodyMedium => const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.25,
-      );
-
-  static TextStyle get bodySmall => const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.4,
-      );
-
-  static TextStyle get labelLarge => const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.1,
-      );
-
-  static TextStyle get labelMedium => const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
-      );
-
-  static TextStyle get labelSmall => const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
-      );
+  /// Build a full Material TextTheme from these tokens.
+  static TextTheme get textTheme => TextTheme(
+    displayLarge: displayLarge,
+    displayMedium: displayMedium,
+    displaySmall: headlineLarge,
+    headlineLarge: headlineLarge,
+    headlineMedium: headlineMedium,
+    headlineSmall: headlineSmall,
+    titleLarge: headlineMedium,
+    titleMedium: headlineSmall,
+    titleSmall: labelLarge,
+    bodyLarge: bodyLarge,
+    bodyMedium: bodyMedium,
+    bodySmall: bodySmall,
+    labelLarge: labelLarge,
+    labelMedium: labelMedium,
+    labelSmall: labelSmall,
+  );
 }

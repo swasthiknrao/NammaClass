@@ -1,18 +1,41 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../features/auth/providers/auth_provider.dart';
+import 'app_routes.dart';
 
-import '../core/config/route_config.dart';
+/// Role-based route guard — reads auth + role state and redirects.
+String? routeGuard(String path, AuthState authState) {
+  final isAuth = authState.isAuthenticated;
+  final role = authState.role;
 
-/// Placeholder auth state. When backend is integrated, replace with real auth.
-final isAuthenticatedProvider = StateProvider<bool>((ref) => true);
+  final publicPaths = {AppRoutes.splash, AppRoutes.login, AppRoutes.otp};
 
-/// Route guard: returns redirect path if user must be sent elsewhere (e.g. login).
-String? routeGuard(String location, bool isAuthenticated) {
-  final isLoginRoute = location == RouteConfig.login || location.startsWith('${RouteConfig.login}/');
-  if (!isAuthenticated && !isLoginRoute) {
-    return RouteConfig.login;
+  if (!isAuth) {
+    if (!publicPaths.contains(path)) {
+      return AppRoutes.login;
+    }
+    return null;
   }
-  if (isAuthenticated && isLoginRoute) {
-    return RouteConfig.home;
+
+  // Authenticated — redirect from splash/login to role home
+  if (path == AppRoutes.splash || path == AppRoutes.login || path == '/') {
+    return _roleHome(role);
   }
+
   return null;
+}
+
+String _roleHome(dynamic role) {
+  if (role == null) return AppRoutes.login;
+  switch (role.toString().split('.').last) {
+    case 'parent':
+      return AppRoutes.parentHome;
+    case 'teacher':
+      return AppRoutes.teacherHome;
+    case 'student':
+      return AppRoutes.studentHome;
+    case 'admin':
+    case 'principal':
+      return AppRoutes.adminHome;
+    default:
+      return AppRoutes.login;
+  }
 }

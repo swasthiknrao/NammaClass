@@ -12,9 +12,9 @@ class App extends ConsumerWidget {
     final router = ref.watch(goRouterProvider);
     return MaterialApp.router(
       title: 'NammaClass',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       routerConfig: router,
     );
   }
