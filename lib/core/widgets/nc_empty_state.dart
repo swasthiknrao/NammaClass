@@ -11,6 +11,8 @@ class NcEmptyState extends StatelessWidget {
     super.key,
     required this.title,
     this.body,
+    this.subtitle,
+    this.icon,
     this.illustration = NcIllustration.general,
     this.ctaLabel,
     this.onCta,
@@ -18,6 +20,12 @@ class NcEmptyState extends StatelessWidget {
 
   final String title;
   final String? body;
+
+  /// Alias for [body] — used in some screens.
+  final String? subtitle;
+
+  /// Optional icon override (unused visually — illustration takes precedence).
+  final IconData? icon;
   final NcIllustration illustration;
   final String? ctaLabel;
   final VoidCallback? onCta;
@@ -37,10 +45,10 @@ class NcEmptyState extends StatelessWidget {
               style: AppTypography.headlineMedium,
               textAlign: TextAlign.center,
             ),
-            if (body != null) ...[
+            if (body != null || subtitle != null) ...[
               const SizedBox(height: AppSpacing.xs),
               Text(
-                body!,
+                body ?? subtitle!,
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),

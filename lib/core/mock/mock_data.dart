@@ -226,6 +226,342 @@ class MockCanteenItem {
   final bool available;
 }
 
+// ── Leave application model ────────────────────────────────────────────────
+class MockLeaveApplication {
+  MockLeaveApplication({
+    required this.id,
+    required this.childName,
+    required this.type,
+    required this.fromDate,
+    required this.toDate,
+    required this.workingDays,
+    required this.reason,
+    required this.status,
+    this.approvedBy,
+    this.rejectionReason,
+    this.attachmentName,
+  });
+
+  final String id;
+  final String childName;
+  final String type;
+  final DateTime fromDate;
+  final DateTime toDate;
+  final int workingDays;
+  final String reason;
+  final String status; // pending | approved | rejected
+  final String? approvedBy;
+  final String? rejectionReason;
+  final String? attachmentName;
+}
+
+// ── Complaint model ────────────────────────────────────────────────────────
+class MockComplaintResponse {
+  const MockComplaintResponse({
+    required this.sender,
+    required this.message,
+    required this.timestamp,
+    required this.isAdmin,
+  });
+
+  final String sender;
+  final String message;
+  final DateTime timestamp;
+  final bool isAdmin;
+}
+
+class MockComplaint {
+  MockComplaint({
+    required this.ticketId,
+    required this.category,
+    required this.subject,
+    required this.description,
+    required this.priority,
+    required this.status,
+    required this.createdAt,
+    this.responses = const [],
+    this.isAnonymous = false,
+  });
+
+  final String ticketId;
+  final String category;
+  final String subject;
+  final String description;
+  final String priority; // Low | Medium | High | Urgent
+  final String
+  status; // Open | In Progress | Awaiting Response | Resolved | Closed
+  final DateTime createdAt;
+  final List<MockComplaintResponse> responses;
+  final bool isAnonymous;
+}
+
+// ── Event model ────────────────────────────────────────────────────────────
+class MockEvent {
+  MockEvent({
+    required this.id,
+    required this.title,
+    required this.date,
+    required this.type,
+    required this.description,
+    required this.venue,
+    required this.requiresRsvp,
+    required this.rsvpCount,
+    this.hasRsvped = false,
+  });
+
+  final String id;
+  final String title;
+  final DateTime date;
+  final String type; // sports | pta | holiday | academic | cultural
+  final String description;
+  final String venue;
+  final bool requiresRsvp;
+  final int rsvpCount;
+  bool hasRsvped;
+}
+
+// ── Staff attendance model ─────────────────────────────────────────────────
+class MockStaffAttendanceDay {
+  MockStaffAttendanceDay({
+    required this.date,
+    required this.status,
+    this.checkInTime,
+    this.checkOutTime,
+    this.isWithinGeofence = true,
+  });
+
+  final DateTime date;
+  final String
+  status; // present | absent | leave | half_day | holiday | on_duty
+  final String? checkInTime;
+  final String? checkOutTime;
+  final bool isWithinGeofence;
+}
+
+// ── Payslip model ──────────────────────────────────────────────────────────
+class MockPayslip {
+  const MockPayslip({
+    required this.id,
+    required this.month,
+    required this.basicPaise,
+    required this.hraPaise,
+    required this.daPaise,
+    required this.allowancesPaise,
+    required this.pfDeductionPaise,
+    required this.esiDeductionPaise,
+    required this.tdsDeductionPaise,
+    required this.status,
+  });
+
+  final String id;
+  final String month;
+  final int basicPaise;
+  final int hraPaise;
+  final int daPaise;
+  final int allowancesPaise;
+  final int pfDeductionPaise;
+  final int esiDeductionPaise;
+  final int tdsDeductionPaise;
+  final String status; // Generated | Pending
+
+  int get grossPaise => basicPaise + hraPaise + daPaise + allowancesPaise;
+  int get totalDeductionsPaise =>
+      pfDeductionPaise + esiDeductionPaise + tdsDeductionPaise;
+  int get netPaise => grossPaise - totalDeductionsPaise;
+}
+
+// ── Training model ─────────────────────────────────────────────────────────
+class MockTraining {
+  MockTraining({
+    required this.id,
+    required this.title,
+    required this.provider,
+    required this.date,
+    required this.hours,
+    required this.venue,
+    required this.isCompleted,
+    this.certificateUrl,
+  });
+
+  final String id;
+  final String title;
+  final String provider;
+  final DateTime date;
+  final int hours;
+  final String venue;
+  final bool isCompleted;
+  final String? certificateUrl;
+}
+
+// ── Bus stop model ─────────────────────────────────────────────────────────
+class MockBusStop {
+  MockBusStop({
+    required this.id,
+    required this.name,
+    required this.eta,
+    required this.studentCount,
+    required this.isVisited,
+  });
+
+  final String id;
+  final String name;
+  final String eta;
+  final int studentCount;
+  bool isVisited;
+}
+
+// ── Book issue model ───────────────────────────────────────────────────────
+class MockBookIssue {
+  MockBookIssue({
+    required this.id,
+    required this.studentName,
+    required this.studentClass,
+    required this.bookTitle,
+    required this.bookAccession,
+    required this.issueDate,
+    required this.dueDate,
+    required this.isOverdue,
+    this.finePaise = 0,
+  });
+
+  final String id;
+  final String studentName;
+  final String studentClass;
+  final String bookTitle;
+  final String bookAccession;
+  final DateTime issueDate;
+  final DateTime dueDate;
+  final bool isOverdue;
+  final int finePaise;
+}
+
+// ── Reservation model ──────────────────────────────────────────────────────
+class MockReservation {
+  MockReservation({
+    required this.id,
+    required this.studentName,
+    required this.studentClass,
+    required this.bookTitle,
+    required this.bookAccession,
+    required this.reservedAt,
+    required this.expiresAt,
+    required this.status,
+  });
+
+  final String id;
+  final String studentName;
+  final String studentClass;
+  final String bookTitle;
+  final String bookAccession;
+  final DateTime reservedAt;
+  final DateTime expiresAt;
+  String status; // pending | ready | expired | cancelled
+}
+
+// ── Hostel student model ───────────────────────────────────────────────────
+class MockHostelStudent {
+  MockHostelStudent({
+    required this.id,
+    required this.name,
+    required this.roomNo,
+    required this.bedNo,
+    required this.classSection,
+    required this.isPresent,
+    this.absentReason,
+  });
+
+  final String id;
+  final String name;
+  final String roomNo;
+  final String bedNo;
+  final String classSection;
+  bool isPresent;
+  String? absentReason;
+}
+
+// ── Visitor model ──────────────────────────────────────────────────────────
+class MockVisitor {
+  MockVisitor({
+    required this.id,
+    required this.visitorName,
+    required this.relationship,
+    required this.phone,
+    required this.studentName,
+    required this.idType,
+    required this.checkInTime,
+    this.checkOutTime,
+  });
+
+  final String id;
+  final String visitorName;
+  final String relationship;
+  final String phone;
+  final String studentName;
+  final String idType;
+  final DateTime checkInTime;
+  DateTime? checkOutTime;
+}
+
+// ── Admission enquiry model ────────────────────────────────────────────────
+class MockAdmissionEnquiry {
+  MockAdmissionEnquiry({
+    required this.id,
+    required this.studentName,
+    required this.parentName,
+    required this.phone,
+    required this.classApplying,
+    required this.source,
+    required this.status,
+    required this.aiLeadScore,
+    required this.enquiryDate,
+    this.email,
+    this.notes,
+  });
+
+  final String id;
+  final String studentName;
+  final String parentName;
+  final String phone;
+  final String classApplying;
+  final String source; // Walk-in | Online | Referral | Camp
+  final String
+  status; // New | Contacted | Visit Scheduled | Application Given | Converted | Lost
+  final int aiLeadScore; // 0-100
+  final DateTime enquiryDate;
+  final String? email;
+  final String? notes;
+}
+
+// ── Asset model ────────────────────────────────────────────────────────────
+class MockAsset {
+  MockAsset({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.brand,
+    required this.location,
+    required this.condition,
+    required this.assignedTo,
+    this.serialNo,
+    this.purchaseDate,
+    this.costPaise,
+    this.warrantyTill,
+  });
+
+  final String id;
+  final String name;
+  final String
+  category; // IT | Furniture | AV Equipment | Lab | Sports | Electrical
+  final String brand;
+  final String location;
+  final String condition; // Good | Fair | Needs Repair | Condemned
+  final String assignedTo;
+  final String? serialNo;
+  final DateTime? purchaseDate;
+  final int? costPaise;
+  final DateTime? warrantyTill;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // MOCK DATA SETS
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1647,4 +1983,502 @@ class MockData {
     'nextStop': 'Vidyashree School Gate',
     'studentsOnboard': 34,
   };
+
+  // ── Leave applications ────────────────────────────────────────────────────
+  static final List<MockLeaveApplication> leaveApplications = [
+    MockLeaveApplication(
+      id: 'lv001',
+      childName: 'Riya Kumar',
+      type: 'Sick Leave',
+      fromDate: DateTime.now().subtract(const Duration(days: 5)),
+      toDate: DateTime.now().subtract(const Duration(days: 4)),
+      workingDays: 2,
+      reason: 'High fever and doctor advised rest for 2 days.',
+      status: 'approved',
+      approvedBy: 'Ms. Priya Sharma',
+    ),
+    MockLeaveApplication(
+      id: 'lv002',
+      childName: 'Riya Kumar',
+      type: 'Casual Leave',
+      fromDate: DateTime.now().add(const Duration(days: 3)),
+      toDate: DateTime.now().add(const Duration(days: 5)),
+      workingDays: 3,
+      reason: 'Family function — attending cousin\'s wedding.',
+      status: 'pending',
+    ),
+    MockLeaveApplication(
+      id: 'lv003',
+      childName: 'Riya Kumar',
+      type: 'Half Day',
+      fromDate: DateTime.now().subtract(const Duration(days: 10)),
+      toDate: DateTime.now().subtract(const Duration(days: 10)),
+      workingDays: 1,
+      reason: 'Dental appointment in the afternoon.',
+      status: 'rejected',
+      rejectionReason:
+          'Exam was scheduled that afternoon. Please reschedule appointment.',
+    ),
+  ];
+
+  static const Map<String, int> leaveBalance = {
+    'CL': 8,
+    'SL': 5,
+    'EL': 12,
+    'Total Used': 4,
+  };
+
+  // ── Complaints ────────────────────────────────────────────────────────────
+  static final List<MockComplaint> complaints = [
+    MockComplaint(
+      ticketId: 'NC-2026-0042',
+      category: 'Transport',
+      subject: 'Bus arrives 20 minutes late every day',
+      description:
+          'The Route 3 bus (KA-01-MH-2345) has been consistently arriving 20–25 minutes late for the past week, causing my daughter to miss the first period.',
+      priority: 'High',
+      status: 'In Progress',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      responses: [
+        MockComplaintResponse(
+          sender: 'Admin',
+          message:
+              'Thank you for reporting this. We have escalated to the transport team and are investigating the route timing.',
+          timestamp: DateTime.now().subtract(const Duration(days: 2)),
+          isAdmin: true,
+        ),
+      ],
+    ),
+    MockComplaint(
+      ticketId: 'NC-2026-0031',
+      category: 'Infrastructure',
+      subject: 'Water cooler on 2nd floor not working',
+      description:
+          'The drinking water cooler near Class 8 section has not been working for over a week.',
+      priority: 'Medium',
+      status: 'Resolved',
+      createdAt: DateTime.now().subtract(const Duration(days: 12)),
+      responses: [
+        MockComplaintResponse(
+          sender: 'Facilities Team',
+          message:
+              'The cooler has been repaired and is now functional. Apologies for the inconvenience.',
+          timestamp: DateTime.now().subtract(const Duration(days: 8)),
+          isAdmin: true,
+        ),
+      ],
+    ),
+  ];
+
+  // ── Events / School Calendar ──────────────────────────────────────────────
+  static final List<MockEvent> events = [
+    MockEvent(
+      id: 'ev001',
+      title: 'Annual Sports Day',
+      date: DateTime.now().add(const Duration(days: 7)),
+      type: 'sports',
+      description:
+          'The annual inter-house sports competition. All parents are invited to attend.',
+      venue: 'School Ground',
+      requiresRsvp: true,
+      rsvpCount: 142,
+    ),
+    MockEvent(
+      id: 'ev002',
+      title: 'Parent-Teacher Meeting — Term 2',
+      date: DateTime.now().add(const Duration(days: 14)),
+      type: 'pta',
+      description:
+          'Term 2 PTA meeting. Discuss academic progress with your child\'s teachers.',
+      venue: 'School Auditorium',
+      requiresRsvp: true,
+      rsvpCount: 89,
+    ),
+    MockEvent(
+      id: 'ev003',
+      title: 'Republic Day — School Holiday',
+      date: DateTime.now().add(const Duration(days: 21)),
+      type: 'holiday',
+      description: 'Republic Day national holiday.',
+      venue: '',
+      requiresRsvp: false,
+      rsvpCount: 0,
+    ),
+    MockEvent(
+      id: 'ev004',
+      title: 'Science Exhibition',
+      date: DateTime.now().add(const Duration(days: 28)),
+      type: 'academic',
+      description: 'Students showcase science projects. Open to all parents.',
+      venue: 'School Hall',
+      requiresRsvp: false,
+      rsvpCount: 0,
+    ),
+    MockEvent(
+      id: 'ev005',
+      title: 'Holi Celebration',
+      date: DateTime.now().add(const Duration(days: 35)),
+      type: 'cultural',
+      description: 'School Holi celebration — dry colours only.',
+      venue: 'School Ground',
+      requiresRsvp: false,
+      rsvpCount: 0,
+    ),
+  ];
+
+  // ── Staff attendance ──────────────────────────────────────────────────────
+  static final List<MockStaffAttendanceDay> staffAttendance = List.generate(
+    30,
+    (i) {
+      final date = DateTime.now().subtract(Duration(days: 29 - i));
+      final weekday = date.weekday;
+      if (weekday == DateTime.sunday) {
+        return MockStaffAttendanceDay(date: date, status: 'holiday');
+      }
+      final statuses = [
+        'present',
+        'present',
+        'present',
+        'present',
+        'leave',
+        'half_day',
+      ];
+      return MockStaffAttendanceDay(
+        date: date,
+        status: statuses[i % statuses.length],
+        checkInTime: '08:32 AM',
+        checkOutTime: '04:45 PM',
+        isWithinGeofence: true,
+      );
+    },
+  );
+
+  // ── Payslips ──────────────────────────────────────────────────────────────
+  static final List<MockPayslip> payslips = [
+    MockPayslip(
+      id: 'ps_mar_2026',
+      month: 'March 2026',
+      basicPaise: 4500000,
+      hraPaise: 1800000,
+      daPaise: 450000,
+      allowancesPaise: 500000,
+      pfDeductionPaise: 540000,
+      esiDeductionPaise: 157500,
+      tdsDeductionPaise: 225000,
+      status: 'Generated',
+    ),
+    MockPayslip(
+      id: 'ps_feb_2026',
+      month: 'February 2026',
+      basicPaise: 4500000,
+      hraPaise: 1800000,
+      daPaise: 450000,
+      allowancesPaise: 500000,
+      pfDeductionPaise: 540000,
+      esiDeductionPaise: 157500,
+      tdsDeductionPaise: 225000,
+      status: 'Generated',
+    ),
+    MockPayslip(
+      id: 'ps_jan_2026',
+      month: 'January 2026',
+      basicPaise: 4500000,
+      hraPaise: 1800000,
+      daPaise: 450000,
+      allowancesPaise: 500000,
+      pfDeductionPaise: 540000,
+      esiDeductionPaise: 157500,
+      tdsDeductionPaise: 225000,
+      status: 'Generated',
+    ),
+  ];
+
+  // ── Training records ──────────────────────────────────────────────────────
+  static final List<MockTraining> trainings = [
+    MockTraining(
+      id: 'tr001',
+      title: 'NEP 2020 Implementation Workshop',
+      provider: 'CBSE Training Centre',
+      date: DateTime.now().add(const Duration(days: 5)),
+      hours: 6,
+      venue: 'Regional Institute, Bengaluru',
+      isCompleted: false,
+    ),
+    MockTraining(
+      id: 'tr002',
+      title: 'Digital Classroom Tools',
+      provider: 'EdTech India Pvt. Ltd.',
+      date: DateTime.now().subtract(const Duration(days: 30)),
+      hours: 4,
+      venue: 'Online (Zoom)',
+      isCompleted: true,
+      certificateUrl: 'https://cert.example.com/tr002',
+    ),
+    MockTraining(
+      id: 'tr003',
+      title: 'Child Safety & POCSO Awareness',
+      provider: 'School Management',
+      date: DateTime.now().subtract(const Duration(days: 60)),
+      hours: 3,
+      venue: 'School Auditorium',
+      isCompleted: true,
+    ),
+  ];
+
+  // ── Bus stops for driver ──────────────────────────────────────────────────
+  static final List<MockBusStop> busStops = [
+    MockBusStop(
+      id: 'bs01',
+      name: 'Jayanagar 4th Block',
+      eta: '7:45 AM',
+      studentCount: 4,
+      isVisited: true,
+    ),
+    MockBusStop(
+      id: 'bs02',
+      name: 'BTM Layout 2nd Stage',
+      eta: '7:55 AM',
+      studentCount: 6,
+      isVisited: true,
+    ),
+    MockBusStop(
+      id: 'bs03',
+      name: 'Koramangala 5th Block',
+      eta: '8:05 AM',
+      studentCount: 3,
+      isVisited: false,
+    ),
+    MockBusStop(
+      id: 'bs04',
+      name: 'HSR Layout Sector 2',
+      eta: '8:15 AM',
+      studentCount: 5,
+      isVisited: false,
+    ),
+    MockBusStop(
+      id: 'bs05',
+      name: 'Ejipura Signal',
+      eta: '8:25 AM',
+      studentCount: 4,
+      isVisited: false,
+    ),
+    MockBusStop(
+      id: 'bs06',
+      name: 'School Gate',
+      eta: '8:40 AM',
+      studentCount: 0,
+      isVisited: false,
+    ),
+  ];
+
+  // ── Book issues for librarian ─────────────────────────────────────────────
+  static final List<MockBookIssue> bookIssues = [
+    MockBookIssue(
+      id: 'bi001',
+      studentName: 'Arjun Kumar',
+      studentClass: '8-A',
+      bookTitle: 'Wings of Fire',
+      bookAccession: 'ACC-0042',
+      issueDate: DateTime.now().subtract(const Duration(days: 8)),
+      dueDate: DateTime.now().add(const Duration(days: 6)),
+      isOverdue: false,
+    ),
+    MockBookIssue(
+      id: 'bi002',
+      studentName: 'Preethi Nair',
+      studentClass: '9-B',
+      bookTitle: 'The Alchemist',
+      bookAccession: 'ACC-0108',
+      issueDate: DateTime.now().subtract(const Duration(days: 18)),
+      dueDate: DateTime.now().subtract(const Duration(days: 4)),
+      isOverdue: true,
+      finePaise: 2000,
+    ),
+  ];
+
+  // ── Reservations for librarian ────────────────────────────────────────────
+  static final List<MockReservation> reservations = [
+    MockReservation(
+      id: 'res001',
+      studentName: 'Kiran Rao',
+      studentClass: '7-A',
+      bookTitle: 'Harry Potter and the Sorcerer\'s Stone',
+      bookAccession: 'ACC-0201',
+      reservedAt: DateTime.now().subtract(const Duration(hours: 2)),
+      expiresAt: DateTime.now().add(const Duration(hours: 22)),
+      status: 'pending',
+    ),
+    MockReservation(
+      id: 'res002',
+      studentName: 'Anjali Singh',
+      studentClass: '10-A',
+      bookTitle: 'To Kill a Mockingbird',
+      bookAccession: 'ACC-0312',
+      reservedAt: DateTime.now().subtract(const Duration(hours: 6)),
+      expiresAt: DateTime.now().add(const Duration(hours: 18)),
+      status: 'ready',
+    ),
+  ];
+
+  // ── Hostel students for warden ────────────────────────────────────────────
+  static final List<MockHostelStudent> hostelStudents = [
+    MockHostelStudent(
+      id: 'hs001',
+      name: 'Ravi Shankar',
+      roomNo: '201',
+      bedNo: 'A',
+      classSection: '9-A',
+      isPresent: true,
+    ),
+    MockHostelStudent(
+      id: 'hs002',
+      name: 'Ajay Reddy',
+      roomNo: '201',
+      bedNo: 'B',
+      classSection: '10-B',
+      isPresent: true,
+    ),
+    MockHostelStudent(
+      id: 'hs003',
+      name: 'Mohan Das',
+      roomNo: '202',
+      bedNo: 'A',
+      classSection: '8-C',
+      isPresent: false,
+    ),
+    MockHostelStudent(
+      id: 'hs004',
+      name: 'Sunil Kumar',
+      roomNo: '202',
+      bedNo: 'B',
+      classSection: '9-B',
+      isPresent: true,
+    ),
+    MockHostelStudent(
+      id: 'hs005',
+      name: 'Ramesh N',
+      roomNo: '203',
+      bedNo: 'A',
+      classSection: '10-A',
+      isPresent: true,
+    ),
+    MockHostelStudent(
+      id: 'hs006',
+      name: 'Vikram Shetty',
+      roomNo: '203',
+      bedNo: 'B',
+      classSection: '8-A',
+      isPresent: false,
+    ),
+  ];
+
+  // ── Visitors for warden ───────────────────────────────────────────────────
+  static final List<MockVisitor> visitors = [
+    MockVisitor(
+      id: 'vis001',
+      visitorName: 'Rajan Shankar',
+      relationship: 'Parent',
+      phone: '9845011122',
+      studentName: 'Ravi Shankar',
+      idType: 'Aadhaar',
+      checkInTime: DateTime.now().subtract(const Duration(hours: 2)),
+      checkOutTime: null,
+    ),
+    MockVisitor(
+      id: 'vis002',
+      visitorName: 'Kavitha Reddy',
+      relationship: 'Parent',
+      phone: '9845099887',
+      studentName: 'Ajay Reddy',
+      idType: 'Driving Licence',
+      checkInTime: DateTime.now().subtract(const Duration(hours: 1)),
+      checkOutTime: DateTime.now().subtract(const Duration(minutes: 15)),
+    ),
+  ];
+
+  // ── Admission enquiries ───────────────────────────────────────────────────
+  static final List<MockAdmissionEnquiry> admissionEnquiries = [
+    MockAdmissionEnquiry(
+      id: 'enq001',
+      studentName: 'Sneha Patil',
+      parentName: 'Sunil Patil',
+      phone: '9876501234',
+      classApplying: 'Class 6',
+      source: 'Walk-in',
+      status: 'Contacted',
+      aiLeadScore: 82,
+      enquiryDate: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+    MockAdmissionEnquiry(
+      id: 'enq002',
+      studentName: 'Aditya Mehta',
+      parentName: 'Rahul Mehta',
+      phone: '9845067890',
+      classApplying: 'Class 9',
+      source: 'Online',
+      status: 'New',
+      aiLeadScore: 65,
+      enquiryDate: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+    MockAdmissionEnquiry(
+      id: 'enq003',
+      studentName: 'Divya Rao',
+      parentName: 'Prasad Rao',
+      phone: '9900123456',
+      classApplying: 'Class 1',
+      source: 'Referral',
+      status: 'Application Given',
+      aiLeadScore: 91,
+      enquiryDate: DateTime.now().subtract(const Duration(days: 5)),
+    ),
+  ];
+
+  // ── Assets for inventory ──────────────────────────────────────────────────
+  static final List<MockAsset> assets = [
+    MockAsset(
+      id: 'ast001',
+      name: 'Dell Laptop',
+      category: 'IT',
+      brand: 'Dell',
+      location: 'Lab 1',
+      condition: 'Good',
+      assignedTo: 'Computer Lab',
+    ),
+    MockAsset(
+      id: 'ast002',
+      name: 'Projector BenQ',
+      category: 'AV Equipment',
+      brand: 'BenQ',
+      location: 'Class 9-A',
+      condition: 'Good',
+      assignedTo: 'Class 9-A',
+    ),
+    MockAsset(
+      id: 'ast003',
+      name: 'Science Lab Microscope',
+      category: 'Lab',
+      brand: 'Olympus',
+      location: 'Science Lab',
+      condition: 'Fair',
+      assignedTo: 'Science Lab',
+    ),
+    MockAsset(
+      id: 'ast004',
+      name: 'Office Chair',
+      category: 'Furniture',
+      brand: 'Featherlite',
+      location: 'Principal Office',
+      condition: 'Good',
+      assignedTo: 'Principal',
+    ),
+    MockAsset(
+      id: 'ast005',
+      name: 'Copier Machine',
+      category: 'IT',
+      brand: 'Canon',
+      location: 'Admin Office',
+      condition: 'Needs Repair',
+      assignedTo: 'Admin Office',
+    ),
+  ];
 }

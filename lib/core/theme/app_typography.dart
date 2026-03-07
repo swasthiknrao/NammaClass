@@ -67,6 +67,10 @@ class AppTypography {
     color: AppColors.textSecondary,
   );
 
+  // Aliases matching Material TextTheme naming used in screens
+  static TextStyle get titleMedium => headlineSmall;
+  static TextStyle get titleSmall => labelLarge;
+
   // MONOSPACE / NUMBERS — JetBrains Mono
   static TextStyle get monoAmount => GoogleFonts.jetBrainsMono(
     fontSize: 16,

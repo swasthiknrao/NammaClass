@@ -12,6 +12,7 @@ class NcTextField extends StatelessWidget {
     this.controller,
     this.label,
     this.hint,
+    this.hintText,
     this.prefixIcon,
     this.suffixIcon,
     this.obscureText = false,
@@ -36,6 +37,9 @@ class NcTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String? label;
   final String? hint;
+
+  /// Alias for [hint] for compatibility.
+  final String? hintText;
   final IconData? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
@@ -80,7 +84,7 @@ class NcTextField extends StatelessWidget {
       style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
-        hintText: hint,
+        hintText: hint ?? hintText,
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, size: 20, color: AppColors.textSecondary)
             : null,
@@ -101,6 +105,7 @@ class NcDropdown<T> extends StatelessWidget {
     this.label,
     this.hint,
     this.enabled = true,
+    this.validator,
   });
 
   final T? value;
@@ -109,34 +114,30 @@ class NcDropdown<T> extends StatelessWidget {
   final String? label;
   final String? hint;
   final bool enabled;
+  final FormFieldValidator<T>? validator;
 
   @override
   Widget build(BuildContext context) {
-    return InputDecorator(
+    return DropdownButtonFormField<T>(
+      value: value,
+      items: items,
+      onChanged: enabled ? onChanged : null,
+      validator: validator,
+      isExpanded: true,
+      hint: hint != null
+          ? Text(
+              hint!,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textDisabled,
+              ),
+            )
+          : null,
+      style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.xs,
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          items: items,
-          onChanged: enabled ? onChanged : null,
-          isExpanded: true,
-          hint: hint != null
-              ? Text(
-                  hint!,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textDisabled,
-                  ),
-                )
-              : null,
-          style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textPrimary,
-          ),
         ),
       ),
     );

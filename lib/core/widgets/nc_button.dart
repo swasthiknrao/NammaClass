@@ -12,6 +12,7 @@ class NcPrimaryButton extends StatelessWidget {
     this.onPressed,
     this.loading = false,
     this.fullWidth = false,
+    this.isFullWidth,
     this.icon,
     this.color,
   });
@@ -20,6 +21,9 @@ class NcPrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool loading;
   final bool fullWidth;
+
+  /// Alias for [fullWidth].
+  final bool? isFullWidth;
   final IconData? icon;
   final Color? color;
 
@@ -62,7 +66,8 @@ class NcPrimaryButton extends StatelessWidget {
       child: child,
     );
 
-    return fullWidth ? SizedBox(width: double.infinity, child: btn) : btn;
+    final w = fullWidth || (isFullWidth ?? false);
+    return w ? SizedBox(width: double.infinity, child: btn) : btn;
   }
 }
 

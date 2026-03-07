@@ -132,7 +132,118 @@ class MainShell extends ConsumerWidget {
             Icons.person,
           ),
         ];
-      default: // admin / principal
+      case UserRole.staff:
+        return [
+          _NavDest(
+            AppRoutes.staffHome,
+            'Home',
+            Icons.home_outlined,
+            Icons.home,
+          ),
+          _NavDest(
+            AppRoutes.staffAttendance,
+            'Attendance',
+            Icons.location_on_outlined,
+            Icons.location_on,
+          ),
+          _NavDest(
+            AppRoutes.staffLeaves,
+            'Leaves',
+            Icons.event_note_outlined,
+            Icons.event_note,
+          ),
+          _NavDest(
+            AppRoutes.staffPayslips,
+            'Payslips',
+            Icons.receipt_long_outlined,
+            Icons.receipt_long,
+          ),
+          _NavDest(
+            AppRoutes.staffProfile,
+            'Profile',
+            Icons.person_outline,
+            Icons.person,
+          ),
+        ];
+      case UserRole.driver:
+        return [
+          _NavDest(
+            AppRoutes.driverRoute,
+            'Route',
+            Icons.map_outlined,
+            Icons.map,
+          ),
+          _NavDest(
+            AppRoutes.driverStudents,
+            'Students',
+            Icons.groups_outlined,
+            Icons.groups,
+          ),
+          _NavDest(
+            AppRoutes.driverProfile,
+            'Profile',
+            Icons.person_outline,
+            Icons.person,
+          ),
+        ];
+      case UserRole.librarian:
+        return [
+          _NavDest(
+            AppRoutes.librarianCounter,
+            'Counter',
+            Icons.qr_code_scanner_outlined,
+            Icons.qr_code_scanner,
+          ),
+          _NavDest(
+            AppRoutes.librarianReservations,
+            'Reservations',
+            Icons.bookmark_outlined,
+            Icons.bookmark,
+          ),
+          _NavDest(
+            AppRoutes.librarianProfile,
+            'Profile',
+            Icons.person_outline,
+            Icons.person,
+          ),
+        ];
+      case UserRole.warden:
+        return [
+          _NavDest(
+            AppRoutes.wardenRollcall,
+            'Roll Call',
+            Icons.how_to_reg_outlined,
+            Icons.how_to_reg,
+          ),
+          _NavDest(
+            AppRoutes.wardenVisitors,
+            'Visitors',
+            Icons.badge_outlined,
+            Icons.badge,
+          ),
+          _NavDest(
+            AppRoutes.wardenProfile,
+            'Profile',
+            Icons.person_outline,
+            Icons.person,
+          ),
+        ];
+      case UserRole.canteenStaff:
+        return [
+          _NavDest(
+            AppRoutes.canteenCounter,
+            'Counter',
+            Icons.point_of_sale_outlined,
+            Icons.point_of_sale,
+          ),
+          _NavDest(
+            AppRoutes.canteenProfile,
+            'Profile',
+            Icons.person_outline,
+            Icons.person,
+          ),
+        ];
+      default: // admin / principal / support
         return [
           _NavDest(
             AppRoutes.adminHome,

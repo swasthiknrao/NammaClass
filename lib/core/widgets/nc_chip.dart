@@ -18,14 +18,34 @@ enum NcChipType {
 
 /// BRD Section 1.4 — StatusChip with colour coding.
 class NcStatusChip extends StatelessWidget {
-  const NcStatusChip({super.key, required this.type, this.label});
+  const NcStatusChip({super.key, this.type, this.label, this.color});
 
-  final NcChipType type;
+  final NcChipType? type;
   final String? label;
+
+  /// Optional color override — when provided, renders a plain colored chip instead of type-based colors.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg, icon, defaultLabel) = _config(type);
+    if (color != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color!.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppSpacing.xxl),
+          border: Border.all(color: color!.withValues(alpha: 0.4)),
+        ),
+        child: Text(
+          label ?? (type?.name ?? ''),
+          style: AppTypography.labelMedium.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+    final (bg, fg, icon, defaultLabel) = _config(type ?? NcChipType.pending);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -112,6 +132,7 @@ class NcChip extends StatelessWidget {
     this.selected = false,
     this.onTap,
     this.icon,
+    this.color,
   });
 
   final String label;
@@ -119,8 +140,17 @@ class NcChip extends StatelessWidget {
   final VoidCallback? onTap;
   final IconData? icon;
 
+  /// When provided, overrides the chip background with a tinted version of this color.
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color;
+    final bgColor = effectiveColor != null
+        ? effectiveColor.withValues(alpha: 0.12)
+        : (selected ? AppColors.primary : AppColors.background);
+    final fgColor =
+        effectiveColor ?? (selected ? Colors.white : AppColors.textSecondary);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -130,28 +160,26 @@ class NcChip extends StatelessWidget {
           vertical: AppSpacing.xxs,
         ),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.background,
+          color: bgColor,
           borderRadius: BorderRadius.circular(AppSpacing.xxl),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.divider,
+            color:
+                effectiveColor ??
+                (selected ? AppColors.primary : AppColors.divider),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(
-                icon,
-                size: 14,
-                color: selected ? Colors.white : AppColors.textSecondary,
-              ),
+              Icon(icon, size: 14, color: fgColor),
               const SizedBox(width: 4),
             ],
             Text(
               label,
               style: AppTypography.labelMedium.copyWith(
-                color: selected ? Colors.white : AppColors.textSecondary,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: fgColor,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

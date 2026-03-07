@@ -29,16 +29,27 @@ class AppValidators {
     return null;
   }
 
-  static FormFieldValidator<String> minLength(int min) => (String? v) {
-    if (v == null || v.trim().isEmpty) return 'Required';
-    if (v.trim().length < min) return 'Minimum $min characters required';
-    return null;
-  };
+  /// Returns a [FormFieldValidator] that checks for non-empty input with optional custom message.
+  /// Use this when you want to pass `required` into [combine] with a message.
+  static FormFieldValidator<String> requiredField([
+    String message = 'Required',
+  ]) =>
+      (v) => (v == null || v.trim().isEmpty) ? message : null;
 
-  static FormFieldValidator<String> maxLength(int max) => (String? v) {
-    if (v != null && v.length > max) return 'Maximum $max characters allowed';
-    return null;
-  };
+  static FormFieldValidator<String> minLength(int min, [String? message]) =>
+      (String? v) {
+        if (v == null || v.trim().isEmpty) return message ?? 'Required';
+        if (v.trim().length < min)
+          return message ?? 'Minimum $min characters required';
+        return null;
+      };
+
+  static FormFieldValidator<String> maxLength(int max, [String? message]) =>
+      (String? v) {
+        if (v != null && v.length > max)
+          return message ?? 'Maximum $max characters allowed';
+        return null;
+      };
 
   static FormFieldValidator<String> combine(
     List<FormFieldValidator<String>> validators,

@@ -33,6 +33,10 @@ class AppColors {
   static const Color warningBg = Color(0xFFFEF9E7);
   static const Color leaveBg = Color(0xFFE8DAEF);
 
+  // Extended palette — used in Part 2 screens
+  static const Color purple = Color(0xFF7D3C98);
+  static const Color deepPurple = Color(0xFF7D3C98);
+
   // Gradients
   static const List<Color> primaryGradient = [primary, teal];
   static const List<Color> accentGradient = [accent, Color(0xFFF39C12)];

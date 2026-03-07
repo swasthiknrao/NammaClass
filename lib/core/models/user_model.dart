@@ -1,5 +1,18 @@
-/// NammaClass user roles.
-enum UserRole { parent, teacher, student, admin, principal, support }
+/// NammaClass user roles — covers all 11 portal personas.
+enum UserRole {
+  parent,
+  teacher,
+  student,
+  admin,
+  principal,
+  support,
+  // Part 2 roles
+  staff,
+  driver,
+  librarian,
+  warden,
+  canteenStaff,
+}
 
 /// Core user model used across all roles.
 class UserModel {
@@ -28,6 +41,7 @@ class UserModel {
   final String? studentId;
 
   String get displayName => name;
+
   String get roleLabel {
     switch (role) {
       case UserRole.parent:
@@ -42,6 +56,16 @@ class UserModel {
         return 'Principal';
       case UserRole.support:
         return 'Support';
+      case UserRole.staff:
+        return 'Staff';
+      case UserRole.driver:
+        return 'Driver';
+      case UserRole.librarian:
+        return 'Librarian';
+      case UserRole.warden:
+        return 'Warden';
+      case UserRole.canteenStaff:
+        return 'Canteen Staff';
     }
   }
 
@@ -71,7 +95,8 @@ class UserModel {
     );
   }
 
-  // Demo users for each role
+  // ── Demo users for each role ───────────────────────────────────────────────
+
   static const parent = UserModel(
     id: 'usr_parent_001',
     name: 'Suresh Kumar',
@@ -111,5 +136,55 @@ class UserModel {
     email: 'admin@vidyashree.edu.in',
     schoolId: 'SCH_001',
     employeeId: 'EMP_0001',
+  );
+
+  static const staff = UserModel(
+    id: 'usr_staff_001',
+    name: 'Rajesh Gowda',
+    role: UserRole.staff,
+    phone: '9845099001',
+    email: 'rajesh.gowda@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'EMP_2031',
+  );
+
+  static const driver = UserModel(
+    id: 'usr_driver_001',
+    name: 'Venkat Reddy',
+    role: UserRole.driver,
+    phone: '9900112233',
+    email: 'venkat.driver@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'DRV_007',
+  );
+
+  static const librarian = UserModel(
+    id: 'usr_lib_001',
+    name: 'Meena Iyer',
+    role: UserRole.librarian,
+    phone: '9845055678',
+    email: 'meena.lib@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'LIB_001',
+  );
+
+  static const warden = UserModel(
+    id: 'usr_warden_001',
+    name: 'Subbaiah B',
+    role: UserRole.warden,
+    phone: '9845077890',
+    email: 'warden@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'WRD_001',
+  );
+
+  static const canteenStaff = UserModel(
+    id: 'usr_canteen_001',
+    name: 'Lakshmi Devi',
+    role: UserRole.canteenStaff,
+    phone: '9845033456',
+    email: 'canteen@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'CAN_001',
   );
 }

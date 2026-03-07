@@ -64,4 +64,15 @@ class AppFormatters {
   /// Short date for chips: 'Mar 5'
   static String formatShortDate(DateTime date) =>
       DateFormat('MMM d').format(date);
+
+  // ── Convenience aliases used in screens ──────────────────────────────────────
+
+  /// currency(int rupees) → '₹X,XXX'
+  static String currency(int rupees) => formatRupees(rupees.toDouble());
+
+  /// shortDate(DateTime) → 'Mar 5'
+  static String shortDate(DateTime date) => formatShortDate(date);
+
+  /// time(DateTime) → '10:30 AM'
+  static String time(DateTime date) => formatTime(date);
 }

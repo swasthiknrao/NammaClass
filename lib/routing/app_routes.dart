@@ -1,13 +1,13 @@
-/// NammaClass route path constants — BRD Section 1.5.
+/// NammaClass route path constants — BRD Section 1.5 + Part 2.
 class AppRoutes {
   AppRoutes._();
 
-  // Auth
+  // ── Auth ──────────────────────────────────────────────────────────────────
   static const String splash = '/splash';
   static const String login = '/login';
   static const String otp = '/otp';
 
-  // Parent
+  // ── Parent ────────────────────────────────────────────────────────────────
   static const String parentHome = '/parent/home';
   static const String parentAttendance = '/parent/attendance';
   static const String parentFees = '/parent/fees';
@@ -18,33 +18,71 @@ class AppRoutes {
   static const String parentNotices = '/parent/notices';
   static const String parentCanteen = '/parent/canteen';
   static const String parentProfile = '/parent/profile';
+  // Part 2 — Leave & Complaints
+  static const String parentLeaveApply = '/parent/leave-apply';
+  static const String parentLeaveStatus = '/parent/leave-status';
+  static const String parentComplaintNew = '/parent/complaint-new';
+  static const String parentComplaints = '/parent/complaints';
 
-  // Teacher
+  // ── Teacher ───────────────────────────────────────────────────────────────
   static const String teacherHome = '/teacher/home';
   static const String teacherAttendance = '/teacher/attendance';
   static const String teacherDiary = '/teacher/diary';
   static const String teacherStudents = '/teacher/students';
   static const String teacherProfile = '/teacher/profile';
+  // Part 2 — Leave
+  static const String teacherLeaveApply = '/teacher/leave-apply';
+  static const String teacherLeaveApprovals = '/teacher/leave-approvals';
 
-  // Student
+  // ── Student ───────────────────────────────────────────────────────────────
   static const String studentHome = '/student/home';
   static const String studentAcademics = '/student/academics';
   static const String studentLibrary = '/student/library';
   static const String studentProfile = '/student/profile';
 
-  // Admin
+  // ── Admin ─────────────────────────────────────────────────────────────────
   static const String adminHome = '/admin/home';
   static const String adminApprovals = '/admin/approvals';
   static const String adminBroadcast = '/admin/broadcast';
   static const String adminPeople = '/admin/people';
   static const String adminProfile = '/admin/profile';
 
-  // Shared
+  // ── Shared ────────────────────────────────────────────────────────────────
   static const String notifications = '/notifications';
   static const String hostel = '/hostel';
   static const String profile = '/profile';
+  // Part 2
+  static const String events = '/events';
+  static const String search = '/search';
 
-  // Web portal
+  // ── Staff HR Portal (Part 2) ──────────────────────────────────────────────
+  static const String staffHome = '/staff/home';
+  static const String staffAttendance = '/staff/attendance';
+  static const String staffLeaves = '/staff/leaves';
+  static const String staffPayslips = '/staff/payslips';
+  static const String staffTraining = '/staff/training';
+  static const String staffProfile = '/staff/profile';
+
+  // ── Driver App (Part 2) ───────────────────────────────────────────────────
+  static const String driverRoute = '/driver/route';
+  static const String driverStudents = '/driver/students';
+  static const String driverProfile = '/driver/profile';
+
+  // ── Librarian App (Part 2) ────────────────────────────────────────────────
+  static const String librarianCounter = '/librarian/counter';
+  static const String librarianReservations = '/librarian/reservations';
+  static const String librarianProfile = '/librarian/profile';
+
+  // ── Hostel Warden App (Part 2) ────────────────────────────────────────────
+  static const String wardenRollcall = '/warden/rollcall';
+  static const String wardenVisitors = '/warden/visitors';
+  static const String wardenProfile = '/warden/profile';
+
+  // ── Canteen Staff App (Part 2) ────────────────────────────────────────────
+  static const String canteenCounter = '/canteen/counter';
+  static const String canteenProfile = '/canteen/profile';
+
+  // ── Web Portal (Part 1) ───────────────────────────────────────────────────
   static const String webDashboard = '/web/dashboard';
   static const String webAnalytics = '/web/analytics';
   static const String webStudents = '/web/students';
@@ -62,4 +100,33 @@ class AppRoutes {
   static const String webSettings = '/web/settings';
   static const String webAiTools = '/web/ai';
   static const String webWebsite = '/web/website';
+
+  // ── Web Portal (Part 2) ───────────────────────────────────────────────────
+  // Admissions
+  static const String webAdmissions = '/web/admissions';
+  static const String webEnquiries = '/web/admissions/enquiries';
+  static const String webApplicationDetail = '/web/admissions/applications/:id';
+  // Students
+  static const String webBulkPromotion = '/web/students/promote';
+  // Finance
+  static const String webFeeCollect = '/web/fees/collect';
+  static const String webFinanceLedger = '/web/finance/ledger';
+  // Academics
+  static const String webReportCards = '/web/report-cards';
+  // Communication
+  static const String webCommunicationAnalytics =
+      '/web/communication/analytics';
+  // Library
+  static const String webLibraryReports = '/web/library/reports';
+  // Transport
+  static const String webTransportRoutes = '/web/transport/routes';
+  static const String webTransportLive = '/web/transport/live';
+  // Inventory
+  static const String webInventoryAssets = '/web/inventory/assets';
+  static const String webInventoryStock = '/web/inventory/stock';
+  // Reports & Analytics
+  static const String webReportBuilder = '/web/reports/builder';
+  // Settings
+  static const String webUserManagement = '/web/settings/users';
+  static const String webIntegrations = '/web/settings/integrations';
 }
