@@ -5,22 +5,22 @@ import '../../../core/mock/mock_data.dart';
 final adminDashboardKpisProvider = FutureProvider<Map<String, dynamic>>((
   ref,
 ) async {
-  await Future.delayed(const Duration(milliseconds: 800));
+  await Future.delayed(const Duration(milliseconds: 150));
   return Map<String, dynamic>.from(MockData.dashboardKpis);
 });
 
 final adminStudentsProvider = FutureProvider<List<MockStudent>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 700));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.students;
 });
 
 final adminStaffProvider = FutureProvider<List<MockStaffMember>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 600));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.staff;
 });
 
 final adminNoticesProvider = FutureProvider<List<MockNotice>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 500));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.notices;
 });
 
@@ -43,7 +43,7 @@ class MockApproval {
 }
 
 final adminApprovalsProvider = FutureProvider<List<MockApproval>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 500));
+  await Future.delayed(const Duration(milliseconds: 150));
   return [
     MockApproval(
       id: 'ap01',

@@ -129,4 +129,5 @@ class AppRoutes {
   // Settings
   static const String webUserManagement = '/web/settings/users';
   static const String webIntegrations = '/web/settings/integrations';
+  static const String webSecurityLog = '/web/settings/security-log';
 }

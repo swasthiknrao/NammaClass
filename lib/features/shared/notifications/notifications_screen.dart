@@ -7,25 +7,29 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_empty_state.dart';
+import 'notification_service.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notices = MockData.notices;
+    final notices = ref.watch(notificationServiceProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              'Mark all read',
-              style: TextStyle(color: Colors.white),
+          if (notices.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                ref.read(notificationServiceProvider.notifier).markAllRead();
+              },
+              child: const Text(
+                'Mark all read',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
-          ),
         ],
       ),
       backgroundColor: AppColors.background,
@@ -43,11 +47,11 @@ class NotificationsScreen extends ConsumerWidget {
                   key: Key(n.id),
                   direction: DismissDirection.endToStart,
                   onDismissed: (_) {
+                    ref
+                        .read(notificationServiceProvider.notifier)
+                        .markAsRead(n.id);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Notification dismissed'),
-                        action: SnackBarAction(label: 'Undo', onPressed: () {}),
-                      ),
+                      const SnackBar(content: Text('Notification marked read')),
                     );
                   },
                   background: Container(
@@ -57,6 +61,11 @@ class NotificationsScreen extends ConsumerWidget {
                     child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   child: ListTile(
+                    onTap: () {
+                      ref
+                          .read(notificationServiceProvider.notifier)
+                          .markAsRead(n.id);
+                    },
                     tileColor: n.isRead
                         ? AppColors.card
                         : AppColors.primary.withValues(alpha: 0.04),

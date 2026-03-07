@@ -11,42 +11,42 @@ final parentChildProvider = Provider<MockStudent>((ref) {
 final parentAttendanceProvider = FutureProvider<List<MockAttendanceDay>>((
   ref,
 ) async {
-  await Future.delayed(const Duration(milliseconds: 800));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.attendance;
 });
 
 final parentFeesProvider = FutureProvider<List<MockFeeInstallment>>((
   ref,
 ) async {
-  await Future.delayed(const Duration(milliseconds: 600));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.fees;
 });
 
 final parentDiaryProvider = FutureProvider<List<MockDiaryEntry>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 700));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.diary;
 });
 
 final parentChatThreadsProvider = FutureProvider<List<MockChatThread>>((
   ref,
 ) async {
-  await Future.delayed(const Duration(milliseconds: 500));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.chatThreads;
 });
 
 final parentMessagesProvider = FutureProvider<List<MockMessage>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 400));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.messages;
 });
 
 final parentNoticesProvider = FutureProvider<List<MockNotice>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 500));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.notices;
 });
 
 final parentCanteenMenuProvider = FutureProvider<List<MockCanteenItem>>((
   ref,
 ) async {
-  await Future.delayed(const Duration(milliseconds: 300));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.canteenMenu;
 });

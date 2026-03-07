@@ -4,6 +4,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/providers/theme_mode_provider.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../features/auth/providers/auth_provider.dart';
@@ -85,6 +86,9 @@ class ProfileScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 children: [
+                  _SectionHeader('Appearance'),
+                  NcCard(padding: EdgeInsets.zero, child: const _ThemeTile()),
+                  const SizedBox(height: AppSpacing.lg),
                   // Account section
                   _SectionHeader('Account'),
                   NcCard(
@@ -123,7 +127,7 @@ class ProfileScreen extends ConsumerWidget {
                           leading: const Icon(Icons.language_outlined),
                           title: Text(
                             'Language',
-                            style: AppTypography.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           trailing: DropdownButton<String>(
                             value: 'English',
@@ -144,7 +148,7 @@ class ProfileScreen extends ConsumerWidget {
                           secondary: const Icon(Icons.notifications_outlined),
                           title: Text(
                             'Push Notifications',
-                            style: AppTypography.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           value: true,
                           onChanged: (_) {},
@@ -154,7 +158,7 @@ class ProfileScreen extends ConsumerWidget {
                           secondary: const Icon(Icons.dark_mode_outlined),
                           title: Text(
                             'Dark Mode',
-                            style: AppTypography.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           value: false,
                           onChanged: (_) {},
@@ -204,9 +208,9 @@ class ProfileScreen extends ConsumerWidget {
                               child: const Text('Cancel'),
                             ),
                             ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 Navigator.pop(context);
-                                auth.logout();
+                                await auth.logout();
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.error,
@@ -231,6 +235,98 @@ class ProfileScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ThemeTile extends ConsumerWidget {
+  const _ThemeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    String label;
+    switch (themeMode) {
+      case ThemeMode.light:
+        label = 'Light';
+        break;
+      case ThemeMode.dark:
+        label = 'Dark';
+        break;
+      case ThemeMode.system:
+        label = 'System';
+        break;
+    }
+    return ListTile(
+      leading: const Icon(
+        Icons.brightness_6_outlined,
+        color: AppColors.textSecondary,
+      ),
+      title: Text('Theme', style: Theme.of(context).textTheme.bodyMedium),
+      subtitle: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right,
+        color: AppColors.textSecondary,
+        size: 18,
+      ),
+      onTap: () {
+        showModalBottomSheet<void>(
+          context: context,
+          builder: (ctx) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: const Text('Light'),
+                  leading: Icon(
+                    Icons.light_mode,
+                    color: themeMode == ThemeMode.light
+                        ? AppColors.primary
+                        : null,
+                  ),
+                  onTap: () {
+                    ref.read(themeModeProvider.notifier).state =
+                        ThemeMode.light;
+                    Navigator.pop(ctx);
+                  },
+                ),
+                ListTile(
+                  title: const Text('Dark'),
+                  leading: Icon(
+                    Icons.dark_mode,
+                    color: themeMode == ThemeMode.dark
+                        ? AppColors.primary
+                        : null,
+                  ),
+                  onTap: () {
+                    ref.read(themeModeProvider.notifier).state = ThemeMode.dark;
+                    Navigator.pop(ctx);
+                  },
+                ),
+                ListTile(
+                  title: const Text('System'),
+                  leading: Icon(
+                    Icons.settings_brightness,
+                    color: themeMode == ThemeMode.system
+                        ? AppColors.primary
+                        : null,
+                  ),
+                  onTap: () {
+                    ref.read(themeModeProvider.notifier).state =
+                        ThemeMode.system;
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -261,7 +357,7 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: AppColors.textSecondary),
-      title: Text(label, style: AppTypography.bodyMedium),
+      title: Text(label, style: Theme.of(context).textTheme.bodyMedium),
       trailing: const Icon(
         Icons.chevron_right,
         color: AppColors.textSecondary,

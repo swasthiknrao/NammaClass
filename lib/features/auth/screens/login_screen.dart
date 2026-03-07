@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/sanitization.dart';
+import '../../../core/config/env_config.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_input.dart';
 import '../providers/auth_provider.dart';
@@ -34,15 +37,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _sendOtp() async {
+    final rawPhone = _phoneController.text;
+    final phone = Sanitization.sanitize(rawPhone, maxLength: 10);
+    if (phone != rawPhone) _phoneController.text = phone;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     setState(() => _loading = false);
-    context.push(
-      AppRoutes.otp,
-      extra: {'phone': _phoneController.text.trim(), 'role': _demoRole},
-    );
+    context.push(AppRoutes.otp, extra: {'phone': phone, 'role': _demoRole});
   }
 
   void _loginDemo(UserRole role) {
@@ -111,59 +114,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             onPressed: _sendOtp,
           ),
 
-          const SizedBox(height: AppSpacing.xl),
-          const Row(
-            children: [
-              Expanded(child: Divider()),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: Text('OR'),
-              ),
-              Expanded(child: Divider()),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Demo role selector
-          Text(
-            'Demo Mode — Select Role',
-            style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textSecondary,
+          if (kDebugMode || EnvConfig.env == 'dev') ...[
+            const SizedBox(height: AppSpacing.xl),
+            const Row(
+              children: [
+                Expanded(child: Divider()),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  child: Text('OR'),
+                ),
+                Expanded(child: Divider()),
+              ],
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            alignment: WrapAlignment.center,
-            children: [
-              _DemoButton(
-                label: 'Parent',
-                icon: Icons.family_restroom,
-                color: AppColors.primary,
-                onTap: () => _loginDemo(UserRole.parent),
+            const SizedBox(height: AppSpacing.md),
+
+            // Demo role selector (dev/debug only)
+            Text(
+              'Demo Mode — Select Role',
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondary,
               ),
-              _DemoButton(
-                label: 'Teacher',
-                icon: Icons.school,
-                color: AppColors.teal,
-                onTap: () => _loginDemo(UserRole.teacher),
-              ),
-              _DemoButton(
-                label: 'Student',
-                icon: Icons.person,
-                color: AppColors.accent,
-                onTap: () => _loginDemo(UserRole.student),
-              ),
-              _DemoButton(
-                label: 'Admin',
-                icon: Icons.admin_panel_settings,
-                color: AppColors.error,
-                onTap: () => _loginDemo(UserRole.admin),
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              alignment: WrapAlignment.center,
+              children: [
+                _DemoButton(
+                  label: 'Parent',
+                  icon: Icons.family_restroom,
+                  color: AppColors.primary,
+                  onTap: () => _loginDemo(UserRole.parent),
+                ),
+                _DemoButton(
+                  label: 'Teacher',
+                  icon: Icons.school,
+                  color: AppColors.teal,
+                  onTap: () => _loginDemo(UserRole.teacher),
+                ),
+                _DemoButton(
+                  label: 'Student',
+                  icon: Icons.person,
+                  color: AppColors.accent,
+                  onTap: () => _loginDemo(UserRole.student),
+                ),
+                _DemoButton(
+                  label: 'Admin',
+                  icon: Icons.admin_panel_settings,
+                  color: AppColors.error,
+                  onTap: () => _loginDemo(UserRole.admin),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

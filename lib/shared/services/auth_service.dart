@@ -1,4 +1,4 @@
-import '../models/result.dart';
+import '../../../core/models/result.dart';
 
 /// Placeholder for auth service. Implement when backend is integrated.
 abstract class AuthService {

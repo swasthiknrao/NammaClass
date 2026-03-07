@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_input.dart';
+import '../../../routing/app_routes.dart';
 
 class WebSettingsScreen extends StatefulWidget {
   const WebSettingsScreen({super.key});
@@ -125,8 +127,16 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
                       const Center(
                         child: Text('Communication settings coming soon'),
                       ),
-                      const Center(
-                        child: Text('Security settings coming soon'),
+                      NcCard(
+                        child: ListTile(
+                          leading: const Icon(Icons.security),
+                          title: const Text('Security audit log'),
+                          subtitle: const Text(
+                            'View login, logout and security events',
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push(AppRoutes.webSecurityLog),
+                        ),
                       ),
                     ],
                   ),

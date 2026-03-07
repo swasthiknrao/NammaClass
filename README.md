@@ -8,27 +8,39 @@ Production-ready Flutter frontend for a large-scale application (50+ screens). B
 lib/
 ├── main.dart              # Entry: ProviderScope + App
 ├── app.dart               # MaterialApp.router, theme, go_router
-├── core/                  # Config, theme, constants, utils, extensions
-├── shared/                # Reusable widgets, models, service interfaces
-├── features/              # Feature modules (shell, home, auth, dashboard, settings)
-└── routing/               # go_router, route guard, page transitions
+├── core/                  # Config, theme, constants, utils, extensions, models, services
+│   ├── config/            # EnvConfig, AppConfig
+│   ├── constants/         # StorageKeys, AppConstants, ApiConstants
+│   ├── models/            # Result, UserModel (single source of truth)
+│   ├── services/          # SecureStorage, AuditLog
+│   ├── mock/              # Mock data (replace with API)
+│   └── widgets/           # Nc* design-system primitives
+├── shared/                # Reusable widgets, service interfaces
+│   ├── services/          # AuthService, ApiClient (abstract)
+│   └── widgets/           # App* layout, feedback, tables
+├── features/              # Feature modules (auth, parent, teacher, web, …)
+└── routing/               # go_router; auth_routes, *_shell_routes, app_router
 ```
+
+## Widget conventions
+
+- **core/widgets (Nc\*)** — Design-system primitives: NcButton, NcInput, NcCard, NcShimmer, NcEmptyState, NcAvatar. Use for consistent forms and cards.
+- **shared/widgets (App\*)** — Layout and feedback: ConstrainedContent, ResponsiveBuilder, AppCard, AppDialog, AppSkeleton, AppListView, AppDataTable. Use for page structure and list/table patterns.
+- Prefer one convention per screen; most feature screens use Nc* components.
 
 ## Adding a new screen
 
 1. **Route constant**  
-   Add the path in `lib/core/config/route_config.dart`.
+   Add the path in `lib/routing/app_routes.dart` (single source of truth for routes).
 
 2. **Feature folder**  
-   Create `lib/features/<feature>/presentation/<feature>_screen.dart` and implement the screen (use `ConstrainedContent`, `ResponsiveBuilder`, and shared widgets from `lib/shared/widgets/`).
+   Create `lib/features/<feature>/screens/<feature>_screen.dart` (or `presentation/` in some modules). Use `ConstrainedContent`, `ResponsiveBuilder`, and widgets from `lib/core/widgets/` or `lib/shared/widgets/`.
 
 3. **Register route**  
-   In `lib/routing/app_router.dart`:
-   - For a **shell tab**: add a `GoRoute` under the existing `ShellRoute` with `path` and `pageBuilder` (or `builder`).
-   - For a **full-screen** route (e.g. login): add a top-level `GoRoute` and use `fadeSlideTransition` in `pageBuilder` if you want custom transitions.
+   In the appropriate file under `lib/routing/`: `auth_routes.dart` for auth, `main_shell_routes.dart` for parent/teacher/student/admin, `web_shell_routes.dart` for web portal, or the matching shell. Add a `GoRoute` with `path` and `pageBuilder`. Compose in `app_router.dart` via the spread of route lists.
 
 4. **Navigation**  
-   Use `context.go(path)` or `context.push(path)` with the path from `RouteConfig`.
+   Use `context.go(path)` or `context.push(path)` with constants from `AppRoutes` (e.g. `AppRoutes.parentHome`).
 
 ## Adding a new feature module
 
@@ -40,12 +52,12 @@ lib/
 
 - **Theme**: `lib/core/theme/app_theme.dart` (light/dark), `app_colors.dart`, `app_typography.dart`, `app_spacing.dart`.
 - **Config**: Breakpoints and layout in `lib/core/config/app_config.dart`. Change in one place to affect the app.
-- **Components**: Buttons, inputs, cards, navigation, feedback (skeleton, dialog, snackbar), layout (ResponsiveBuilder, AdaptiveScaffold, ConstrainedContent), tables under `lib/shared/widgets/`.
+- **Components**: Buttons, inputs, cards: use **core/widgets** (Nc*). Layout (ResponsiveBuilder, ConstrainedContent), feedback (skeleton, dialog, snackbar), tables: **shared/widgets** (App*).
 
 ## Responsiveness
 
 - **Breakpoints**: xs 0, sm 600, md 900, lg 1200, xl 1600 (see `AppConfig`).
-- **Shell**: Bottom navigation on mobile, navigation rail on tablet/desktop (`AdaptiveScaffold`).
+- **Shell**: Bottom navigation on mobile, navigation rail on tablet/desktop (role-specific shells in `MainShell` / `WebShell`).
 - **Content**: Use `ConstrainedContent` for max width and centering on large screens; use `ResponsiveBuilder` when layout depends on breakpoint.
 
 ## Security (frontend)
@@ -66,6 +78,6 @@ Target a platform with `-d chrome`, `-d windows`, etc.
 
 ## Backend integration (later)
 
-- Add API client and inject via Riverpod (e.g. `final apiClientProvider = Provider((ref) => ApiClient(EnvConfig.apiBaseUrl))`).
+- Add API client (implement `ApiClient` in `lib/shared/services/`) and inject via Riverpod.
 - Implement `AuthRepository` (and others) in `lib/shared/services/` and wire to `isAuthenticatedProvider` and login/logout.
 - Use `Result<T>` or `AsyncValue<T>` patterns already prepared in the UI for loading/error states.

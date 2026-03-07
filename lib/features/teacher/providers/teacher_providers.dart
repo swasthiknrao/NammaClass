@@ -56,21 +56,21 @@ class AttendanceMarkNotifier extends StateNotifier<AttendanceMarkState> {
 
   Future<void> submit() async {
     state = state.copyWith(isSaving: true);
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 300));
     state = state.copyWith(isSaving: false, saved: true);
   }
 }
 
 // ── Teacher providers ──────────────────────────────────────────────────────────
 final teacherStudentsProvider = FutureProvider<List<MockStudent>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 700));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.students;
 });
 
 final teacherTimetableProvider = FutureProvider<Map<String, List<MockPeriod>>>((
   ref,
 ) async {
-  await Future.delayed(const Duration(milliseconds: 500));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.timetable;
 });
 
@@ -80,6 +80,6 @@ final attendanceMarkProvider =
     );
 
 final teacherDiaryProvider = FutureProvider<List<MockDiaryEntry>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 600));
+  await Future.delayed(const Duration(milliseconds: 150));
   return MockData.diary;
 });

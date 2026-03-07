@@ -280,4 +280,102 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get dark {
+    final base = ThemeData.dark(useMaterial3: true);
+    return base.copyWith(
+      scaffoldBackgroundColor: AppColors.backgroundDark,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primary,
+        secondary: AppColors.accent,
+        surface: AppColors.cardDark,
+        error: AppColors.error,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: AppColors.textPrimaryDark,
+        onError: Colors.white,
+        surfaceContainerHighest: AppColors.backgroundDark,
+        outline: AppColors.dividerDark,
+      ),
+      textTheme: AppTypography.textTheme,
+      primaryTextTheme: AppTypography.textTheme,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        titleTextStyle: AppTypography.headlineMedium.copyWith(
+          color: Colors.white,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white, size: 22),
+        actionsIconTheme: const IconThemeData(color: Colors.white, size: 22),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.cardDark,
+        elevation: AppElevation.low,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        clipBehavior: Clip.antiAlias,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.cardDark,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.dividerDark),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.dividerDark),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        labelStyle: AppTypography.bodySmall.copyWith(
+          color: AppColors.textSecondaryDark,
+        ),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.textDisabled,
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        height: 64,
+        backgroundColor: AppColors.cardDark,
+        indicatorColor: AppColors.primary.withValues(alpha: 0.3),
+        indicatorShape: const StadiumBorder(),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        elevation: 8,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.cardDark,
+        elevation: AppElevation.high,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: AppColors.cardDark,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.lg),
+          ),
+        ),
+        elevation: AppElevation.high,
+        modalElevation: AppElevation.high,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+        circularTrackColor: AppColors.backgroundDark,
+        linearTrackColor: AppColors.backgroundDark,
+      ),
+    );
+  }
 }

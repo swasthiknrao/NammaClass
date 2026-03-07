@@ -7,6 +7,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/config/env_config.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/models/user_model.dart';
 import '../providers/auth_provider.dart';
@@ -51,7 +52,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   }
 
   Future<void> _verify() async {
-    if (_otp.length != 6) return;
+    final raw = _controller.text;
+    final sanitized = raw.replaceAll(RegExp(r'\D'), '').length > 6
+        ? raw.replaceAll(RegExp(r'\D'), '').substring(0, 6)
+        : raw.replaceAll(RegExp(r'\D'), '');
+    if (sanitized.length != 6) return;
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
@@ -101,7 +106,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 appContext: context,
                 length: 6,
                 controller: _controller,
-                onChanged: (v) => setState(() => _otp = v),
+                onChanged: (v) {
+                  final sanitized = v.replaceAll(RegExp(r'\D'), '');
+                  final trimmed = sanitized.length > 6
+                      ? sanitized.substring(0, 6)
+                      : sanitized;
+                  if (trimmed != v) _controller.text = trimmed;
+                  setState(() => _otp = trimmed);
+                },
                 onCompleted: (_) => _verify(),
                 keyboardType: TextInputType.number,
                 animationType: AnimationType.scale,
@@ -165,14 +177,15 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               ),
 
               const Spacer(),
-              Text(
-                'Demo: Enter any 6 digits to proceed',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textDisabled,
+              if (EnvConfig.env == 'dev')
+                Text(
+                  'Demo: Enter any 6 digits to proceed',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textDisabled,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.md),
+              if (EnvConfig.env == 'dev') const SizedBox(height: AppSpacing.md),
             ],
           ),
         ),

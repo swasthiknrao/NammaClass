@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/user_model.dart';
+import '../../../core/services/audit_log.dart';
+import '../../../core/services/secure_storage.dart';
 
 // ── Auth state ─────────────────────────────────────────────────────────────────
 class AuthState {
@@ -30,14 +32,28 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthState());
+  AuthNotifier({SecureStorage? secureStorage})
+    : _secureStorage = secureStorage ?? SecureStorage(),
+      super(const AuthState());
+
+  final SecureStorage _secureStorage;
 
   void loginAs(UserModel user) {
     state = AuthState(isAuthenticated: true, currentUser: user);
+    AuditLog.instance.log(
+      'login_success',
+      role: user.role.name,
+      userId: user.id,
+      details: 'demo_or_otp',
+    );
   }
 
-  void logout() {
+  Future<void> logout() async {
+    final role = state.role?.name;
+    final userId = state.currentUser?.id;
     state = const AuthState();
+    await _secureStorage.clearAuth();
+    AuditLog.instance.log('logout', role: role, userId: userId);
   }
 
   void setLoading(bool loading) {
@@ -45,8 +61,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
+final secureStorageProvider = Provider<SecureStorage>((ref) => SecureStorage());
+
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
-  (ref) => AuthNotifier(),
+  (ref) => AuthNotifier(secureStorage: ref.read(secureStorageProvider)),
 );
 
 // Convenience providers

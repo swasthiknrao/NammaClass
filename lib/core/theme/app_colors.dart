@@ -42,4 +42,11 @@ class AppColors {
   static const List<Color> accentGradient = [accent, Color(0xFFF39C12)];
   static const List<Color> successGradient = [success, teal];
   static const List<Color> errorGradient = [error, Color(0xFFCB4335)];
+
+  // Dark theme variants
+  static const Color backgroundDark = Color(0xFF121212);
+  static const Color cardDark = Color(0xFF1E1E1E);
+  static const Color textPrimaryDark = Color(0xFFE8E8E8);
+  static const Color textSecondaryDark = Color(0xFFB0B0B0);
+  static const Color dividerDark = Color(0xFF3A3A3A);
 }
