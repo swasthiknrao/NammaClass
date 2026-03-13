@@ -53,10 +53,16 @@ class NcCard extends StatelessWidget {
       );
     }
 
+    final surfaceColor =
+        color ??
+        (Theme.of(context).brightness == Brightness.dark
+            ? AppColors.cardDark
+            : AppColors.card);
+
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        color: color ?? AppColors.card,
+        color: surfaceColor,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: border,
         boxShadow: [
@@ -70,7 +76,7 @@ class NcCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: onTap != null
           ? Material(
-              color: color ?? AppColors.card,
+              color: surfaceColor,
               child: InkWell(
                 onTap: onTap,
                 splashColor: AppColors.primary.withValues(alpha: 0.08),

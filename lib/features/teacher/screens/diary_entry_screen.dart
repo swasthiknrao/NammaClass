@@ -19,6 +19,9 @@ class _DiaryEntryScreenState extends ConsumerState<DiaryEntryScreen> {
   final Map<String, TextEditingController> _cwControllers = {};
   final Map<String, TextEditingController> _hwControllers = {};
   DateTime _selectedDate = DateTime.now();
+  String _selectedClassSection = '8-A';
+
+  static const _classSections = ['8-A', '8-B', '9-A', '9-B', '10-A'];
 
   final _subjects = [
     'Mathematics',
@@ -52,10 +55,126 @@ class _DiaryEntryScreenState extends ConsumerState<DiaryEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Diary & Homework Entry')),
-      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Diary & Homework Entry'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: AppColors.divider),
+        ),
+      ),
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
+          // Class / Section selector — "Assigning for:"
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.xs,
+            ),
+            color: AppColors.card,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.school_rounded,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'Assigning for class',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _classSections.map((section) {
+                      final isSelected = _selectedClassSection == section;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: AppSpacing.sm),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () =>
+                                setState(() => _selectedClassSection = section),
+                            borderRadius: BorderRadius.circular(12),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.sm,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHighest
+                                          .withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.divider,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.25,
+                                          ),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.groups_rounded,
+                                    size: 18,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Text(
+                                    section,
+                                    style: AppTypography.titleSmall.copyWith(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppColors.textPrimary,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // 7-day date strip
           Container(
             height: 70,
@@ -135,6 +254,12 @@ class _DiaryEntryScreenState extends ConsumerState<DiaryEntryScreen> {
                           ),
                         ),
                         title: Text(subject, style: AppTypography.labelLarge),
+                        subtitle: Text(
+                          'Class $_selectedClassSection · classwork & homework',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                         children: [
                           Padding(
                             padding: const EdgeInsets.fromLTRB(
@@ -184,8 +309,9 @@ class _DiaryEntryScreenState extends ConsumerState<DiaryEntryScreen> {
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              '$subject diary saved!',
+                                              '$subject · $_selectedClassSection — diary saved!',
                                             ),
+                                            behavior: SnackBarBehavior.floating,
                                           ),
                                         );
                                       },

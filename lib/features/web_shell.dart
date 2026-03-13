@@ -32,15 +32,23 @@ class _WebShellState extends ConsumerState<WebShell> {
     final sidebarWidth = _collapsed ? 64.0 : 240.0;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: Row(
         children: [
-          // ── Sidebar ────────────────────────────────────────────────────────────
+          // ── Sidebar ────────────────────────────────────────────────────
           AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeInOut,
             width: sidebarWidth,
-            color: AppColors.sidebarBg,
+            decoration: BoxDecoration(
+              color: AppColors.sidebarBg,
+              border: Border(
+                right: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  width: 1,
+                ),
+              ),
+            ),
             child: Column(
               children: [
                 // Logo area
@@ -100,7 +108,6 @@ class _WebShellState extends ConsumerState<WebShell> {
                   ),
                 ),
 
-                // Collapse toggle
                 const Divider(color: Colors.white12, height: 1),
                 InkWell(
                   onTap: () => setState(() => _collapsed = !_collapsed),
@@ -126,14 +133,16 @@ class _WebShellState extends ConsumerState<WebShell> {
             ),
           ),
 
-          // ── Main area ──────────────────────────────────────────────────────────
+          // ── Main area ──────────────────────────────────────────
           Expanded(
             child: Column(
               children: [
                 // Top bar
                 Container(
                   height: 56,
-                  color: AppColors.card,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.cardDark
+                      : AppColors.card,
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
                   ),
@@ -169,7 +178,6 @@ class _WebShellState extends ConsumerState<WebShell> {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
-                      // Notifications
                       IconButton(
                         onPressed: () {},
                         icon: const Icon(
@@ -178,7 +186,6 @@ class _WebShellState extends ConsumerState<WebShell> {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.xs),
-                      // Avatar + name
                       if (user != null)
                         Row(
                           children: [

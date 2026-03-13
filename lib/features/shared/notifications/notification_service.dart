@@ -19,6 +19,7 @@ class NotificationService extends StateNotifier<List<MockNotice>> {
                 category: n.category,
                 isRead: true,
                 hasAttachment: n.hasAttachment,
+                targetUserId: n.targetUserId,
               )
             : n,
     ];
@@ -35,6 +36,7 @@ class NotificationService extends StateNotifier<List<MockNotice>> {
           category: n.category,
           isRead: true,
           hasAttachment: n.hasAttachment,
+          targetUserId: n.targetUserId,
         ),
     ];
   }

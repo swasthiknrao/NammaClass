@@ -404,7 +404,9 @@ class _WebReportBuilderScreenState
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Result Preview (Showing 5 rows)',
+                              _reportName.isEmpty
+                                  ? 'Result Preview (Showing 5 rows)'
+                                  : '$_reportName — Result Preview (Showing 5 rows)',
                               style: AppTypography.titleSmall,
                             ),
                             Row(

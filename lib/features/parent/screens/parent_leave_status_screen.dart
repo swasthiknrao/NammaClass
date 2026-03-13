@@ -42,17 +42,6 @@ class _ParentLeaveStatusScreenState
     return MockData.leaveApplications.where((l) => l.status == status).toList();
   }
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'approved':
-        return AppColors.success;
-      case 'rejected':
-        return AppColors.error;
-      default:
-        return AppColors.warning;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final pending = _filtered('pending').length;

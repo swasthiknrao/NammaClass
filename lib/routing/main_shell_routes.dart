@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'page_transitions.dart';
 import '../features/admin/screens/admin_dash_screen.dart';
 import '../features/admin/screens/approvals_screen.dart';
 import '../features/admin/screens/broadcast_screen.dart';
 import '../features/admin/screens/people_screen.dart';
+import '../features/web/staff/add_staff_screen.dart';
 import '../features/parent/screens/bus_tracking_screen.dart';
 import '../features/parent/screens/canteen_screen.dart';
 import '../features/parent/screens/chat_thread_screen.dart';
@@ -43,164 +45,169 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       GoRoute(
         path: AppRoutes.parentHome,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentHomeScreen()),
+            fadeSlideTransition(c, s, const ParentHomeScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentAttendance,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentAttendanceScreen()),
+            fadeSlideTransition(c, s, const ParentAttendanceScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentFees,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentFeesScreen()),
+            fadeSlideTransition(c, s, const ParentFeesScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentDiary,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentDiaryScreen()),
+            fadeSlideTransition(c, s, const ParentDiaryScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentChatList,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentChatListScreen()),
+            fadeSlideTransition(c, s, const ParentChatListScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentChatThread,
-        pageBuilder: (c, s) => NoTransitionPage(
-          child: ChatThreadScreen(threadId: s.pathParameters['tid'] ?? ''),
+        pageBuilder: (c, s) => fadeSlideTransition(
+          c,
+          s,
+          ChatThreadScreen(threadId: s.pathParameters['tid'] ?? ''),
         ),
       ),
       GoRoute(
         path: AppRoutes.parentBus,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: BusTrackingScreen()),
+            fadeSlideTransition(c, s, const BusTrackingScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentNotices,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentNoticesScreen()),
+            fadeSlideTransition(c, s, const ParentNoticesScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentCanteen,
-        pageBuilder: (c, s) => const NoTransitionPage(child: CanteenScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, CanteenScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentProfile,
-        pageBuilder: (c, s) => const NoTransitionPage(child: ProfileScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentLeaveApply,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentLeaveApplyScreen()),
+            fadeSlideTransition(c, s, const ParentLeaveApplyScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentLeaveStatus,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentLeaveStatusScreen()),
+            fadeSlideTransition(c, s, ParentLeaveStatusScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentComplaintNew,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentComplaintNewScreen()),
+            fadeSlideTransition(c, s, ParentComplaintNewScreen()),
       ),
       GoRoute(
         path: AppRoutes.parentComplaints,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: ParentComplaintsScreen()),
+            fadeSlideTransition(c, s, ParentComplaintsScreen()),
       ),
       GoRoute(
         path: AppRoutes.teacherHome,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: TeacherHomeScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, TeacherHomeScreen()),
       ),
       GoRoute(
         path: AppRoutes.teacherAttendance,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: AttendanceMarkScreen()),
+            fadeSlideTransition(c, s, AttendanceMarkScreen()),
       ),
       GoRoute(
         path: AppRoutes.teacherDiary,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: DiaryEntryScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, DiaryEntryScreen()),
       ),
       GoRoute(
         path: AppRoutes.teacherStudents,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: MyStudentsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, MyStudentsScreen()),
       ),
       GoRoute(
         path: AppRoutes.teacherProfile,
-        pageBuilder: (c, s) => const NoTransitionPage(child: ProfileScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
       ),
       GoRoute(
         path: AppRoutes.teacherLeaveApply,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: TeacherLeaveApplyScreen()),
+            fadeSlideTransition(c, s, TeacherLeaveApplyScreen()),
       ),
       GoRoute(
         path: AppRoutes.teacherLeaveApprovals,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: TeacherLeaveApprovalsScreen()),
+            fadeSlideTransition(c, s, TeacherLeaveApprovalsScreen()),
       ),
       GoRoute(
         path: AppRoutes.studentHome,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: StudentHomeScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, StudentHomeScreen()),
       ),
       GoRoute(
         path: AppRoutes.studentAcademics,
-        pageBuilder: (c, s) => const NoTransitionPage(child: AcademicsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, AcademicsScreen()),
       ),
       GoRoute(
         path: AppRoutes.studentLibrary,
-        pageBuilder: (c, s) => const NoTransitionPage(child: LibraryScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, LibraryScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.studentCanteen,
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, const CanteenScreen()),
       ),
       GoRoute(
         path: AppRoutes.studentProfile,
-        pageBuilder: (c, s) => const NoTransitionPage(child: ProfileScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
       ),
       GoRoute(
         path: AppRoutes.adminHome,
-        pageBuilder: (c, s) => const NoTransitionPage(child: AdminDashScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, AdminDashScreen()),
       ),
       GoRoute(
         path: AppRoutes.adminApprovals,
-        pageBuilder: (c, s) => const NoTransitionPage(child: ApprovalsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, ApprovalsScreen()),
       ),
       GoRoute(
         path: AppRoutes.adminBroadcast,
-        pageBuilder: (c, s) => const NoTransitionPage(child: BroadcastScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, BroadcastScreen()),
       ),
       GoRoute(
         path: AppRoutes.adminPeople,
-        pageBuilder: (c, s) => const NoTransitionPage(child: PeopleScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, PeopleScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.adminAddStaff,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AddStaffScreen()),
       ),
       GoRoute(
         path: AppRoutes.adminProfile,
-        pageBuilder: (c, s) => const NoTransitionPage(child: ProfileScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
       ),
       GoRoute(
         path: AppRoutes.notifications,
-        pageBuilder: (c, s) => NoTransitionPage(child: NotificationsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, NotificationsScreen()),
       ),
       GoRoute(
         path: AppRoutes.hostel,
-        pageBuilder: (c, s) => const NoTransitionPage(child: HostelScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, HostelScreen()),
       ),
       GoRoute(
         path: AppRoutes.profile,
-        pageBuilder: (c, s) => const NoTransitionPage(child: ProfileScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
       ),
       GoRoute(
         path: AppRoutes.events,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: SchoolEventsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, SchoolEventsScreen()),
       ),
       GoRoute(
         path: AppRoutes.search,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: GlobalSearchScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, GlobalSearchScreen()),
       ),
     ],
   ),

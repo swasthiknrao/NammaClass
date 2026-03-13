@@ -23,7 +23,7 @@ class TeacherHomeScreen extends ConsumerWidget {
     final periods = MockData.timetable[today] ?? [];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(

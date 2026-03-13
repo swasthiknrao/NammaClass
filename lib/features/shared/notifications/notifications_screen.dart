@@ -1,20 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_empty_state.dart';
 import 'notification_service.dart';
+import 'notices_for_user_provider.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
+  void _markOrDismiss(WidgetRef ref, String noticeId, List notices) {
+    if (noticeId.startsWith('lib_overdue_')) {
+      final issueId = noticeId.replaceFirst('lib_overdue_', '');
+      ref.read(libraryOverdueDismissedProvider.notifier).update((s) => {...s, issueId});
+    } else {
+      ref.read(notificationServiceProvider.notifier).markAsRead(noticeId);
+    }
+  }
+
+  void _markAllRead(WidgetRef ref, List notices) {
+    ref.read(notificationServiceProvider.notifier).markAllRead();
+    final libIds = notices
+        .where((n) => n.id.toString().startsWith('lib_overdue_'))
+        .map((n) => n.id.toString().replaceFirst('lib_overdue_', ''))
+        .toList();
+    if (libIds.isNotEmpty) {
+      ref.read(libraryOverdueDismissedProvider.notifier).update(
+          (s) => {...s, ...libIds});
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notices = ref.watch(notificationServiceProvider);
+    final notices = ref.watch(noticesForCurrentUserProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -22,9 +43,7 @@ class NotificationsScreen extends ConsumerWidget {
         actions: [
           if (notices.isNotEmpty)
             TextButton(
-              onPressed: () {
-                ref.read(notificationServiceProvider.notifier).markAllRead();
-              },
+              onPressed: () => _markAllRead(ref, notices),
               child: const Text(
                 'Mark all read',
                 style: TextStyle(color: Colors.white),
@@ -32,7 +51,7 @@ class NotificationsScreen extends ConsumerWidget {
             ),
         ],
       ),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: notices.isEmpty
           ? const NcEmptyState(
               title: 'No Notifications',
@@ -47,9 +66,7 @@ class NotificationsScreen extends ConsumerWidget {
                   key: Key(n.id),
                   direction: DismissDirection.endToStart,
                   onDismissed: (_) {
-                    ref
-                        .read(notificationServiceProvider.notifier)
-                        .markAsRead(n.id);
+                    _markOrDismiss(ref, n.id, notices);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Notification marked read')),
                     );
@@ -61,11 +78,7 @@ class NotificationsScreen extends ConsumerWidget {
                     child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   child: ListTile(
-                    onTap: () {
-                      ref
-                          .read(notificationServiceProvider.notifier)
-                          .markAsRead(n.id);
-                    },
+                    onTap: () => _markOrDismiss(ref, n.id, notices),
                     tileColor: n.isRead
                         ? AppColors.card
                         : AppColors.primary.withValues(alpha: 0.04),

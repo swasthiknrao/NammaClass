@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
+import 'staff_notifier.dart';
 
 final adminDashboardKpisProvider = FutureProvider<Map<String, dynamic>>((
   ref,
@@ -14,9 +15,9 @@ final adminStudentsProvider = FutureProvider<List<MockStudent>>((ref) async {
   return MockData.students;
 });
 
-final adminStaffProvider = FutureProvider<List<MockStaffMember>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 150));
-  return MockData.staff;
+/// Staff list with add support. Used by WebStaffScreen and PeopleScreen.
+final adminStaffProvider = Provider<AsyncValue<List<MockStaffMember>>>((ref) {
+  return ref.watch(staffNotifierProvider);
 });
 
 final adminNoticesProvider = FutureProvider<List<MockNotice>>((ref) async {

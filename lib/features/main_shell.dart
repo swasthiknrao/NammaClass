@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/auth/providers/auth_provider.dart';
 import '../core/models/user_model.dart';
+import '../core/theme/app_colors.dart';
+import '../features/auth/providers/auth_provider.dart';
 import '../routing/app_routes.dart';
 
 class MainShell extends ConsumerWidget {
@@ -17,22 +18,30 @@ class MainShell extends ConsumerWidget {
     final currentPath = GoRouterState.of(context).uri.path;
     final selectedIndex = _selectedIndex(currentPath, destinations);
 
+    final navDestinations = destinations
+        .map(
+          (d) => NavigationDestination(
+            icon: Icon(d.icon),
+            selectedIcon: Icon(d.selectedIcon ?? d.icon),
+            label: d.label,
+          ),
+        )
+        .toList();
+
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: child,
       bottomNavigationBar: NavigationBar(
+        height: 64,
         selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
         onDestinationSelected: (index) {
           context.go(destinations[index].route);
         },
-        destinations: destinations
-            .map(
-              (d) => NavigationDestination(
-                icon: Icon(d.icon),
-                selectedIcon: Icon(d.selectedIcon ?? d.icon),
-                label: d.label,
-              ),
-            )
-            .toList(),
+        destinations: navDestinations,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.cardDark
+            : AppColors.card,
+        elevation: 8,
       ),
     );
   }
@@ -126,6 +135,12 @@ class MainShell extends ConsumerWidget {
             Icons.local_library,
           ),
           _NavDest(
+            AppRoutes.studentCanteen,
+            'Food',
+            Icons.restaurant_outlined,
+            Icons.restaurant,
+          ),
+          _NavDest(
             AppRoutes.studentProfile,
             'Profile',
             Icons.person_outline,
@@ -157,6 +172,12 @@ class MainShell extends ConsumerWidget {
             'Payslips',
             Icons.receipt_long_outlined,
             Icons.receipt_long,
+          ),
+          _NavDest(
+            AppRoutes.staffCanteen,
+            'Food',
+            Icons.restaurant_outlined,
+            Icons.restaurant,
           ),
           _NavDest(
             AppRoutes.staffProfile,
@@ -195,6 +216,12 @@ class MainShell extends ConsumerWidget {
             Icons.qr_code_scanner,
           ),
           _NavDest(
+            AppRoutes.librarianCatalog,
+            'Catalog',
+            Icons.menu_book_outlined,
+            Icons.menu_book,
+          ),
+          _NavDest(
             AppRoutes.librarianReservations,
             'Reservations',
             Icons.bookmark_outlined,
@@ -210,6 +237,12 @@ class MainShell extends ConsumerWidget {
       case UserRole.warden:
         return [
           _NavDest(
+            AppRoutes.wardenHome,
+            'Home',
+            Icons.home_outlined,
+            Icons.home,
+          ),
+          _NavDest(
             AppRoutes.wardenRollcall,
             'Roll Call',
             Icons.how_to_reg_outlined,
@@ -220,6 +253,12 @@ class MainShell extends ConsumerWidget {
             'Visitors',
             Icons.badge_outlined,
             Icons.badge,
+          ),
+          _NavDest(
+            AppRoutes.wardenOutpass,
+            'Outpass',
+            Icons.event_note_outlined,
+            Icons.event_note,
           ),
           _NavDest(
             AppRoutes.wardenProfile,
@@ -235,6 +274,12 @@ class MainShell extends ConsumerWidget {
             'Counter',
             Icons.point_of_sale_outlined,
             Icons.point_of_sale,
+          ),
+          _NavDest(
+            AppRoutes.canteenManage,
+            'Manage',
+            Icons.restaurant_menu_outlined,
+            Icons.restaurant_menu,
           ),
           _NavDest(
             AppRoutes.canteenProfile,

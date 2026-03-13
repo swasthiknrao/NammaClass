@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'page_transitions.dart';
 import '../features/driver/screens/driver_route_screen.dart';
 import '../features/driver/screens/driver_students_screen.dart';
 import '../features/main_shell.dart';
@@ -15,16 +16,16 @@ List<RouteBase> driverShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       GoRoute(
         path: AppRoutes.driverRoute,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: DriverRouteScreen()),
+            fadeSlideTransition(c, s, const DriverRouteScreen()),
       ),
       GoRoute(
         path: AppRoutes.driverStudents,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: DriverStudentsScreen()),
+            fadeSlideTransition(c, s, const DriverStudentsScreen()),
       ),
       GoRoute(
         path: AppRoutes.driverProfile,
-        pageBuilder: (c, s) => const NoTransitionPage(child: ProfileScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, const ProfileScreen()),
       ),
     ],
   ),

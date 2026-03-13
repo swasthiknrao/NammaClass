@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/mock/mock_data.dart';
+import '../../../core/utils/launch_utils.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -15,7 +16,7 @@ class BusTrackingScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Live Bus Tracking')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           // Map placeholder
@@ -143,7 +144,12 @@ class BusTrackingScreen extends StatelessWidget {
                           ),
                         ),
                         TextButton.icon(
-                          onPressed: () {},
+                          onPressed: () => launchTel(
+                            context,
+                            phone:
+                                bus['driverPhone'] as String? ?? '9876543210',
+                            fallbackSnackBar: 'Cannot launch dialer',
+                          ),
                           icon: const Icon(Icons.call, size: 16),
                           label: const Text('Call'),
                         ),
@@ -154,7 +160,11 @@ class BusTrackingScreen extends StatelessWidget {
 
                   // SOS
                   FilledButton.icon(
-                    onPressed: () {},
+                    onPressed: () => launchTel(
+                      context,
+                      phone: '112',
+                      fallbackSnackBar: 'Cannot launch emergency dialer',
+                    ),
                     icon: const Icon(Icons.emergency),
                     label: const Text('SOS Emergency'),
                     style: FilledButton.styleFrom(

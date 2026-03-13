@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
+import '../../../core/utils/launch_utils.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -37,12 +38,16 @@ class ChatThreadScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () => launchTel(
+              context,
+              phone: '9876543210',
+              fallbackSnackBar: 'Cannot launch dialer',
+            ),
             icon: const Icon(Icons.call_outlined, color: Colors.white),
           ),
         ],
       ),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           Expanded(

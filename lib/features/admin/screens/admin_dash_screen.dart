@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/nc_async_error.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../../../routing/app_routes.dart';
@@ -22,11 +23,12 @@ class AdminDashScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: kpisAsync.when(
         loading: () =>
             const Padding(padding: EdgeInsets.all(16), child: NcShimmerList()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            const NcAsyncError(message: 'Unable to load dashboard'),
         data: (kpis) => SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
@@ -132,7 +134,7 @@ class AdminDashScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: (kpis['feesCollectedPercent'] as num) / 100,
-                        backgroundColor: AppColors.background,
+                        backgroundColor: Colors.transparent,
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           AppColors.success,
                         ),
@@ -201,7 +203,8 @@ class AdminDashScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const NcShimmerCard(),
-                error: (e, _) => const SizedBox.shrink(),
+                error: (e, _) =>
+                    const NcAsyncError(message: 'Unable to load approvals'),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -310,7 +313,8 @@ class AdminDashScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const NcShimmerCard(),
-                error: (e, _) => const SizedBox.shrink(),
+                error: (e, _) =>
+                    const NcAsyncError(message: 'Unable to load activity'),
               ),
               const SizedBox(height: 100),
             ],

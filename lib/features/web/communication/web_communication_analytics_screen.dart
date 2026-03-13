@@ -59,7 +59,6 @@ class WebCommunicationAnalyticsScreen extends ConsumerWidget {
                   child: BarChart(
                     BarChartData(
                       barGroups: List.generate(4, (i) {
-                        final months = ['Dec', 'Jan', 'Feb', 'Mar'];
                         return BarChartGroupData(
                           x: i,
                           barRods: [

@@ -130,6 +130,51 @@ class StaffHomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
+                // Food / Canteen card
+                NcCard(
+                  onTap: () => context.go(AppRoutes.staffCanteen),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.restaurant_menu,
+                        color: Colors.white,
+                        size: 36,
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Canteen & Food',
+                              style: AppTypography.labelLarge.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              'Order meals, manage subscriptions',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: Colors.white70,
+                        size: 24,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+
                 // Pending tasks
                 Text('Pending Tasks', style: AppTypography.titleSmall),
                 const SizedBox(height: AppSpacing.xs),

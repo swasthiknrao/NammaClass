@@ -20,7 +20,7 @@ class ParentFeesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Fees & Payment')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: feesAsync.when(
         loading: () =>
             const Padding(padding: EdgeInsets.all(16), child: NcShimmerList()),

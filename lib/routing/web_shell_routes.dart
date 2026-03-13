@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'page_transitions.dart';
 import '../features/web/academics/web_marks_entry_screen.dart';
 import '../features/web/academics/web_report_card_builder_screen.dart';
 import '../features/web/academics/web_timetable_screen.dart';
@@ -26,6 +27,7 @@ import '../features/web/settings/web_security_log_screen.dart';
 import '../features/web/settings/web_settings_screen.dart';
 import '../features/web/settings/web_user_management_screen.dart';
 import '../features/web/staff/web_payroll_screen.dart';
+import '../features/web/staff/add_staff_screen.dart';
 import '../features/web/staff/web_staff_screen.dart';
 import '../features/web/students/web_bulk_promotion_screen.dart';
 import '../features/web/students/web_student_profile.dart';
@@ -43,18 +45,15 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
     routes: [
       GoRoute(
         path: AppRoutes.webDashboard,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebDashboardScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebDashboardScreen()),
       ),
       GoRoute(
         path: AppRoutes.webAnalytics,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebAnalyticsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebAnalyticsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webStudents,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebStudentsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebStudentsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webStudentProfile,
@@ -64,67 +63,64 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       ),
       GoRoute(
         path: AppRoutes.webTimetable,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebTimetableScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebTimetableScreen()),
       ),
       GoRoute(
         path: AppRoutes.webMarksEntry,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebMarksEntryScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebMarksEntryScreen()),
       ),
       GoRoute(
         path: AppRoutes.webFeeStructure,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebFeeStructureScreen()),
+            fadeSlideTransition(c, s, WebFeeStructureScreen()),
       ),
       GoRoute(
         path: AppRoutes.webFeeCollection,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebFeeCollectionScreen()),
+            fadeSlideTransition(c, s, WebFeeCollectionScreen()),
       ),
       GoRoute(
         path: AppRoutes.webStaff,
-        pageBuilder: (c, s) => const NoTransitionPage(child: WebStaffScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebStaffScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webAddStaff,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AddStaffScreen()),
       ),
       GoRoute(
         path: AppRoutes.webPayroll,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebPayrollScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebPayrollScreen()),
       ),
       GoRoute(
         path: AppRoutes.webNotices,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebNoticesScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebNoticesScreen()),
       ),
       GoRoute(
         path: AppRoutes.webLibrary,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebLibraryScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebLibraryScreen()),
       ),
       GoRoute(
         path: AppRoutes.webSettings,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebSettingsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebSettingsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webAiTools,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebAiToolsScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebAiToolsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webWebsite,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebWebsiteManagerScreen()),
+            fadeSlideTransition(c, s, WebWebsiteManagerScreen()),
       ),
       GoRoute(
         path: AppRoutes.webAdmissions,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebAdmissionDashboardScreen()),
+            fadeSlideTransition(c, s, WebAdmissionDashboardScreen()),
       ),
       GoRoute(
         path: AppRoutes.webEnquiries,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebEnquiriesScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebEnquiriesScreen()),
       ),
       GoRoute(
         path: AppRoutes.webApplicationDetail,
@@ -137,72 +133,71 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       GoRoute(
         path: AppRoutes.webBulkPromotion,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebBulkPromotionScreen()),
+            fadeSlideTransition(c, s, WebBulkPromotionScreen()),
       ),
       GoRoute(
         path: AppRoutes.webFeeCollect,
-        pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebFeeCollectScreen()),
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, WebFeeCollectScreen()),
       ),
       GoRoute(
         path: AppRoutes.webFinanceLedger,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebFinanceLedgerScreen()),
+            fadeSlideTransition(c, s, WebFinanceLedgerScreen()),
       ),
       GoRoute(
         path: AppRoutes.webReportCards,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebReportCardBuilderScreen()),
+            fadeSlideTransition(c, s, WebReportCardBuilderScreen()),
       ),
       GoRoute(
         path: AppRoutes.webCommunicationAnalytics,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebCommunicationAnalyticsScreen()),
+            fadeSlideTransition(c, s, WebCommunicationAnalyticsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webLibraryReports,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebLibraryReportsScreen()),
+            fadeSlideTransition(c, s, WebLibraryReportsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webTransportRoutes,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebTransportRoutesScreen()),
+            fadeSlideTransition(c, s, WebTransportRoutesScreen()),
       ),
       GoRoute(
         path: AppRoutes.webTransportLive,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebTransportLiveScreen()),
+            fadeSlideTransition(c, s, WebTransportLiveScreen()),
       ),
       GoRoute(
         path: AppRoutes.webInventoryAssets,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebInventoryAssetsScreen()),
+            fadeSlideTransition(c, s, WebInventoryAssetsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webInventoryStock,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebInventoryStockScreen()),
+            fadeSlideTransition(c, s, WebInventoryStockScreen()),
       ),
       GoRoute(
         path: AppRoutes.webReportBuilder,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebReportBuilderScreen()),
+            fadeSlideTransition(c, s, WebReportBuilderScreen()),
       ),
       GoRoute(
         path: AppRoutes.webUserManagement,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebUserManagementScreen()),
+            fadeSlideTransition(c, s, WebUserManagementScreen()),
       ),
       GoRoute(
         path: AppRoutes.webIntegrations,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebIntegrationsScreen()),
+            fadeSlideTransition(c, s, WebIntegrationsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webSecurityLog,
         pageBuilder: (c, s) =>
-            const NoTransitionPage(child: WebSecurityLogScreen()),
+            fadeSlideTransition(c, s, WebSecurityLogScreen()),
       ),
     ],
   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/theme/app_glass_theme.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/theme_mode_provider.dart';
 import 'routing/app_router.dart';
@@ -19,6 +20,17 @@ class App extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            gradient: isDark
+                ? AppGlassTheme.backgroundGradientDark
+                : AppGlassTheme.backgroundGradientLight,
+          ),
+          child: child,
+        );
+      },
     );
   }
 }

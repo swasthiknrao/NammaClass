@@ -8,6 +8,13 @@ final parentChildProvider = Provider<MockStudent>((ref) {
   return MockData.students.first;
 });
 
+final parentTimetableProvider = FutureProvider<Map<String, List<MockPeriod>>>((
+  ref,
+) async {
+  await Future.delayed(const Duration(milliseconds: 150));
+  return MockData.timetable;
+});
+
 final parentAttendanceProvider = FutureProvider<List<MockAttendanceDay>>((
   ref,
 ) async {

@@ -19,7 +19,7 @@ class ParentDiaryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Daily Diary & Homework')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: diaryAsync.when(
         loading: () =>
             const Padding(padding: EdgeInsets.all(16), child: NcShimmerList()),

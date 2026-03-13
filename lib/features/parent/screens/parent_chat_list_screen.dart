@@ -20,7 +20,7 @@ class ParentChatListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Messages')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           Padding(

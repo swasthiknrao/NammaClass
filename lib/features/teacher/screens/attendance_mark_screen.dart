@@ -25,7 +25,7 @@ class AttendanceMarkScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mark Attendance')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           // Sticky class/period selector

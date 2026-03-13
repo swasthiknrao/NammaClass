@@ -17,6 +17,7 @@ const _rolePrefixMap = {
   '/web/': {
     UserRole.admin,
     UserRole.principal,
+    UserRole.accountant,
     UserRole.teacher,
     UserRole.librarian,
     UserRole.support,
@@ -79,6 +80,7 @@ String _roleHome(UserRole? role) {
       return AppRoutes.studentHome;
     case UserRole.admin:
     case UserRole.principal:
+    case UserRole.accountant:
       return AppRoutes.adminHome;
     case UserRole.staff:
       return AppRoutes.staffHome;
@@ -87,7 +89,7 @@ String _roleHome(UserRole? role) {
     case UserRole.librarian:
       return AppRoutes.librarianCounter;
     case UserRole.warden:
-      return AppRoutes.wardenRollcall;
+      return AppRoutes.wardenHome;
     case UserRole.canteenStaff:
       return AppRoutes.canteenCounter;
     case UserRole.support:

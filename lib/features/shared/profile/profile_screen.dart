@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/launch_utils.dart';
+import '../../../routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -19,7 +23,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile & Settings')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -95,16 +99,33 @@ class ProfileScreen extends ConsumerWidget {
                     padding: EdgeInsets.zero,
                     child: Column(
                       children: [
-                        _SettingsTile(
-                          Icons.person_outline,
-                          'Edit Profile',
-                          () {},
-                        ),
+                        _SettingsTile(Icons.person_outline, 'Edit Profile', () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Edit profile coming soon'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }),
                         const Divider(height: 1),
                         _SettingsTile(
                           Icons.phone_outlined,
                           user?.phone ?? '+91 XXXXX XXXXX',
-                          () {},
+                          () {
+                            final phone = user?.phone;
+                            if (phone != null &&
+                                phone.contains(RegExp(r'\d')) &&
+                                !phone.contains('X')) {
+                              launchTel(context, phone: phone);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Phone number not available'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
                         ),
                         const Divider(height: 1),
                         _SettingsTile(
@@ -154,14 +175,23 @@ class ProfileScreen extends ConsumerWidget {
                           onChanged: (_) {},
                         ),
                         const Divider(height: 1),
-                        SwitchListTile(
-                          secondary: const Icon(Icons.dark_mode_outlined),
-                          title: Text(
-                            'Dark Mode',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          value: false,
-                          onChanged: (_) {},
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final themeMode = ref.watch(themeModeProvider);
+                            return SwitchListTile(
+                              secondary: const Icon(Icons.dark_mode_outlined),
+                              title: Text(
+                                'Dark Mode',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              value: themeMode == ThemeMode.dark,
+                              onChanged: (v) {
+                                ref.read(themeModeProvider.notifier).state = v
+                                    ? ThemeMode.dark
+                                    : ThemeMode.light;
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -174,18 +204,39 @@ class ProfileScreen extends ConsumerWidget {
                     padding: EdgeInsets.zero,
                     child: Column(
                       children: [
-                        _SettingsTile(Icons.help_outline, 'Help & FAQ', () {}),
+                        _SettingsTile(Icons.help_outline, 'Help & FAQ', () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Help & FAQ coming soon'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }),
                         const Divider(height: 1),
                         _SettingsTile(
                           Icons.privacy_tip_outlined,
                           'Privacy Policy',
-                          () {},
+                          () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Privacy Policy coming soon'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
                         ),
                         const Divider(height: 1),
                         _SettingsTile(
                           Icons.info_outline,
                           'About NammaClass',
-                          () {},
+                          () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('About NammaClass coming soon'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -195,34 +246,47 @@ class ProfileScreen extends ConsumerWidget {
                   // Logout
                   FilledButton.icon(
                     onPressed: () {
-                      showDialog(
+                      showDialog<void>(
                         context: context,
-                        builder: (_) => AlertDialog(
-                          title: const Text('Logout'),
+                        barrierDismissible: false,
+                        builder: (dialogContext) => AlertDialog(
+                          icon: Icon(
+                            Icons.logout_rounded,
+                            color: AppColors.error,
+                            size: 32,
+                          ),
+                          title: const Text('Log out?'),
                           content: const Text(
-                            'Are you sure you want to logout?',
+                            'You’ll need to sign in again to use NammaClass.',
                           ),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () => Navigator.pop(dialogContext),
                               child: const Text('Cancel'),
                             ),
-                            ElevatedButton(
+                            FilledButton(
                               onPressed: () async {
-                                Navigator.pop(context);
+                                Navigator.pop(dialogContext);
                                 await auth.logout();
+                                if (!context.mounted) return;
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  if (!context.mounted) return;
+                                  context.go(AppRoutes.login);
+                                });
                               },
-                              style: ElevatedButton.styleFrom(
+                              style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.error,
                               ),
-                              child: const Text('Logout'),
+                              child: const Text('Log out'),
                             ),
                           ],
                         ),
                       );
                     },
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Logout'),
+                    icon: const Icon(Icons.logout_rounded),
+                    label: const Text('Log out'),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.error,
                       minimumSize: const Size(double.infinity, 48),

@@ -1,4 +1,4 @@
-/// NammaClass user roles — covers all 11 portal personas.
+/// NammaClass user roles — covers all 12 portal personas.
 enum UserRole {
   parent,
   teacher,
@@ -6,6 +6,7 @@ enum UserRole {
   admin,
   principal,
   support,
+  accountant,
   // Part 2 roles
   staff,
   driver,
@@ -56,6 +57,8 @@ class UserModel {
         return 'Principal';
       case UserRole.support:
         return 'Support';
+      case UserRole.accountant:
+        return 'Accountant';
       case UserRole.staff:
         return 'Staff';
       case UserRole.driver:
@@ -138,6 +141,26 @@ class UserModel {
     employeeId: 'EMP_0001',
   );
 
+  static const principal = UserModel(
+    id: 'usr_principal_001',
+    name: 'Dr. Lakshmi Nair',
+    role: UserRole.principal,
+    phone: '9880002222',
+    email: 'principal@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'PRN_001',
+  );
+
+  static const support = UserModel(
+    id: 'usr_support_001',
+    name: 'Kiran Shetty',
+    role: UserRole.support,
+    phone: '9880003333',
+    email: 'support@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'SUP_001',
+  );
+
   static const staff = UserModel(
     id: 'usr_staff_001',
     name: 'Rajesh Gowda',
@@ -186,5 +209,15 @@ class UserModel {
     email: 'canteen@vidyashree.edu.in',
     schoolId: 'SCH_001',
     employeeId: 'CAN_001',
+  );
+
+  static const accountant = UserModel(
+    id: 'usr_accountant_001',
+    name: 'Anita Rao',
+    role: UserRole.accountant,
+    phone: '9845011122',
+    email: 'anita.rao@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'ACC_001',
   );
 }

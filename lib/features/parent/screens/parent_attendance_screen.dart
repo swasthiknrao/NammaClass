@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../routing/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_bottom_sheet.dart';
@@ -19,7 +21,7 @@ class ParentAttendanceScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Attendance')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: attendanceAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator.adaptive()),
@@ -89,7 +91,7 @@ class ParentAttendanceScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: pct,
-                          backgroundColor: AppColors.background,
+                          backgroundColor: Colors.transparent,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             pct >= 0.85 ? AppColors.success : AppColors.error,
                           ),
@@ -215,7 +217,7 @@ class ParentAttendanceScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () => context.go(AppRoutes.parentLeaveApply),
         icon: const Icon(Icons.event_busy),
         label: const Text('Apply Leave'),
         backgroundColor: AppColors.accent,

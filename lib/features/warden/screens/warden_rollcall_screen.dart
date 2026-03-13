@@ -5,7 +5,9 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/launch_utils.dart';
 import '../../../core/widgets/nc_avatar.dart';
+import '../../../core/widgets/nc_card.dart';
 
 class WardenRollcallScreen extends ConsumerStatefulWidget {
   const WardenRollcallScreen({super.key});
@@ -19,6 +21,13 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
   String _selectedBlock = 'Block A';
   final List<MockHostelStudent> _students = MockData.hostelStudents;
   final Map<String, TextEditingController> _reasonCtrls = {};
+  final _searchCtrl = TextEditingController();
+  static const _reasonPresets = [
+    'On approved leave',
+    'Hospital',
+    'Family emergency',
+    'Unauthorised',
+  ];
 
   @override
   void initState() {
@@ -26,14 +35,183 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
     for (final s in _students) {
       _reasonCtrls[s.id] = TextEditingController(text: s.absentReason ?? '');
     }
+    _searchCtrl.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
+    _searchCtrl.dispose();
     for (final ctrl in _reasonCtrls.values) {
       ctrl.dispose();
     }
     super.dispose();
+  }
+
+  Map<String, List<MockHostelStudent>> get _filteredRoomGroups {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    if (q.isEmpty) return _roomGroups;
+    final map = <String, List<MockHostelStudent>>{};
+    for (final s in _students) {
+      if (s.name.toLowerCase().contains(q) ||
+          s.classSection.toLowerCase().contains(q) ||
+          s.roomNo.contains(q)) {
+        map.putIfAbsent(s.roomNo, () => []).add(s);
+      }
+    }
+    return map;
+  }
+
+  void _showStudentDetail(MockHostelStudent s) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, scrollCtrl) => SingleChildScrollView(
+          controller: scrollCtrl,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  NcAvatar(name: s.name, radius: 32),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s.name, style: AppTypography.titleMedium),
+                        Text(
+                          '${s.classSection}  ·  Room ${s.roomNo} Bed ${s.bedNo}',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        if (s.bloodGroup != null)
+                          Text(
+                            'Blood: ${s.bloodGroup}',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.warning,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Parent / Guardian', style: AppTypography.labelMedium),
+              const SizedBox(height: AppSpacing.xs),
+              NcCard(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.parentName ?? '—',
+                            style: AppTypography.bodyLarge,
+                          ),
+                          Text(
+                            s.parentPhone ?? '—',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (s.parentPhone != null && s.parentPhone!.length >= 10)
+                      FilledButton.icon(
+                        onPressed: () {
+                          launchTel(context, phone: s.parentPhone!);
+                        },
+                        icon: const Icon(Icons.phone, size: 18),
+                        label: const Text('Call'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.success,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (s.emergencyContact != null || s.emergencyPhone != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text('Emergency Contact', style: AppTypography.labelMedium),
+                const SizedBox(height: AppSpacing.xs),
+                NcCard(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              s.emergencyContact ?? '—',
+                              style: AppTypography.bodyLarge,
+                            ),
+                            Text(
+                              s.emergencyPhone ?? '—',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (s.emergencyPhone != null &&
+                          s.emergencyPhone!.length >= 10)
+                        IconButton(
+                          onPressed: () =>
+                              launchTel(context, phone: s.emergencyPhone!),
+                          icon: const Icon(Icons.phone),
+                          color: AppColors.accent,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+              if (s.medicalNotes != null && s.medicalNotes!.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    const Icon(Icons.medical_services,
+                        size: 18, color: AppColors.warning),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text('Medical', style: AppTypography.labelMedium),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                NcCard(
+                  child: Text(
+                    s.medicalNotes!,
+                    style: AppTypography.bodySmall,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _markAllPresent() {
@@ -153,6 +331,26 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
+                TextField(
+                  controller: _searchCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'Search by name, class, room…',
+                    prefixIcon: Icon(Icons.search, size: 20),
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                TextField(
+                  controller: _searchCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'Search by name, class, room…',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -175,10 +373,10 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 80),
-              itemCount: _roomGroups.length,
+              itemCount: _filteredRoomGroups.length,
               itemBuilder: (_, i) {
-                final room = _roomGroups.keys.elementAt(i);
-                final roomStudents = _roomGroups[room]!;
+                final room = _filteredRoomGroups.keys.elementAt(i);
+                final roomStudents = _filteredRoomGroups[room]!;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -199,6 +397,7 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
                       (s) => Column(
                         children: [
                           ListTile(
+                            onTap: () => _showStudentDetail(s),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.lg,
                               vertical: 4,
@@ -237,16 +436,53 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSpacing.lg,
                               ),
-                              child: TextField(
-                                controller: _reasonCtrls[s.id],
-                                onChanged: (v) => s.absentReason = v,
-                                decoration: const InputDecoration(
-                                  hintText:
-                                      'Reason: On approved leave / Hospital / Unauthorised',
-                                  border: OutlineInputBorder(),
-                                  isDense: true,
-                                ),
-                                maxLength: 200,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Wrap(
+                                    spacing: AppSpacing.xs,
+                                    runSpacing: AppSpacing.xs,
+                                    children: _reasonPresets
+                                        .map((r) => ActionChip(
+                                              label: Text(r, style: const TextStyle(fontSize: 12)),
+                                              onPressed: () {
+                                                s.absentReason = r;
+                                                _reasonCtrls[s.id]?.text = r;
+                                                setState(() {});
+                                              },
+                                            ))
+                                        .toList(),
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _reasonCtrls[s.id],
+                                          onChanged: (v) => s.absentReason = v,
+                                          decoration: const InputDecoration(
+                                            hintText: 'Or type reason…',
+                                            border: OutlineInputBorder(),
+                                            isDense: true,
+                                          ),
+                                          maxLength: 200,
+                                        ),
+                                      ),
+                                      if (s.parentPhone != null && s.parentPhone!.length >= 10) ...[
+                                        const SizedBox(width: AppSpacing.xs),
+                                        FilledButton.icon(
+                                          onPressed: () => launchTel(context, phone: s.parentPhone!),
+                                          icon: const Icon(Icons.phone, size: 18),
+                                          label: const Text('Call Parent'),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: AppColors.success,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                         ],

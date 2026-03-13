@@ -3,11 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/launch_utils.dart';
+import '../providers/warden_provider.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/launch_utils.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../providers/warden_provider.dart';
+import '../providers/warden_provider.dart';
+import '../providers/warden_provider.dart';
 
 class WardenVisitorsScreen extends ConsumerStatefulWidget {
   const WardenVisitorsScreen({super.key});
@@ -183,7 +189,7 @@ class _WardenVisitorsScreenState extends ConsumerState<WardenVisitorsScreen> {
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const CircleAvatar(
-                    backgroundColor: AppColors.background,
+                    backgroundColor: Colors.transparent,
                     child: Icon(Icons.person, color: AppColors.textSecondary),
                   ),
                   title: Text(v.visitorName, style: AppTypography.labelMedium),

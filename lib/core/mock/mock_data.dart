@@ -127,6 +127,7 @@ class MockNotice {
     required this.category,
     this.isRead = false,
     this.hasAttachment = false,
+    this.targetUserId,
   });
 
   final String id;
@@ -136,6 +137,10 @@ class MockNotice {
   final String category;
   final bool isRead;
   final bool hasAttachment;
+
+  /// If set, this notice is shown only to the user with this ID.
+  /// Also used for library overdue: matches borrowerId or student/staff name.
+  final String? targetUserId;
 }
 
 // ── Timetable model ────────────────────────────────────────────────────────────
@@ -158,6 +163,9 @@ class MockPeriod {
 }
 
 // ── Book model ─────────────────────────────────────────────────────────────────
+/// Format: hardcopy (physical) or softcopy (digital)
+enum BookFormat { hardcopy, softcopy }
+
 class MockBook {
   const MockBook({
     required this.id,
@@ -168,7 +176,11 @@ class MockBook {
     this.issuedTo,
     this.coverUrl,
     this.isbn,
-  });
+    this.format = BookFormat.hardcopy,
+    this.totalCopies = 1,
+    int? availableCopies,
+    this.accessionCode,
+  }) : availableCopies = availableCopies ?? (available ? 1 : 0);
 
   final String id;
   final String title;
@@ -178,6 +190,13 @@ class MockBook {
   final String? issuedTo;
   final String? coverUrl;
   final String? isbn;
+  final BookFormat format;
+  final int totalCopies;
+  final int availableCopies;
+  final String? accessionCode;
+
+  String get accessionOrId =>
+      accessionCode ?? 'ACC-${id.replaceAll('b', '').padLeft(4, '0')}';
 }
 
 // ── Staff model ────────────────────────────────────────────────────────────────
@@ -224,6 +243,144 @@ class MockCanteenItem {
   final bool isVeg;
   final List<String> allergens;
   final bool available;
+}
+
+/// Combo offer — bundle of items at discounted price
+class MockCanteenCombo {
+  const MockCanteenCombo({
+    required this.id,
+    required this.name,
+    required this.itemIds,
+    required this.pricePaise,
+    this.description,
+    this.isVeg = true,
+    this.available = true,
+  });
+
+  final String id;
+  final String name;
+  final List<String> itemIds;
+  final int pricePaise;
+  final String? description;
+  final bool isVeg;
+  final bool available;
+}
+
+/// Subscription plan — veg/non-veg monthly
+class MockCanteenSubscriptionPlan {
+  const MockCanteenSubscriptionPlan({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.pricePaise,
+    required this.durationDays,
+    this.forStudent = true,
+    this.forStaff = true,
+    this.description,
+  });
+
+  final String id;
+  final String name;
+  final String type; // veg | nonveg
+  final int pricePaise;
+  final int durationDays;
+  final bool forStudent;
+  final bool forStaff;
+  final String? description;
+}
+
+/// Active subscription for a person
+class MockCanteenSubscription {
+  MockCanteenSubscription({
+    required this.id,
+    required this.personId,
+    required this.personName,
+    required this.planId,
+    required this.planName,
+    required this.type,
+    required this.startDate,
+    required this.endDate,
+    required this.status,
+  });
+
+  final String id;
+  final String personId;
+  final String personName;
+  final String planId;
+  final String planName;
+  final String type;
+  final DateTime startDate;
+  final DateTime endDate;
+  String status; // active | expired | cancelled
+}
+
+/// Order — paid via wallet, linked by personId
+class MockCanteenOrder {
+  MockCanteenOrder({
+    required this.id,
+    required this.personId,
+    required this.personName,
+    required this.items,
+    required this.totalPaise,
+    required this.paymentStatus,
+    required this.createdAt,
+    this.barcode,
+  });
+
+  final String id;
+  final String personId;
+  final String personName;
+  final List<MockCanteenOrderItem> items;
+  final int totalPaise;
+  String paymentStatus; // paid | pending | refunded
+  final DateTime createdAt;
+  final String? barcode;
+}
+
+class MockCanteenOrderItem {
+  const MockCanteenOrderItem({
+    required this.itemId,
+    required this.name,
+    required this.qty,
+    required this.pricePaise,
+  });
+
+  final String itemId;
+  final String name;
+  final int qty;
+  final int pricePaise;
+}
+
+/// Campus wallet — balance by personId
+class MockCampusWallet {
+  MockCampusWallet({
+    required this.personId,
+    required this.personName,
+    this.balancePaise = 0,
+  });
+
+  final String personId;
+  final String personName;
+  int balancePaise;
+}
+
+/// Transaction for wallet top-up or deduction
+class MockCanteenTransaction {
+  MockCanteenTransaction({
+    required this.id,
+    required this.personId,
+    required this.amountPaise,
+    required this.type,
+    required this.description,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String personId;
+  final int amountPaise;
+  final String type; // topup | deduction | refund
+  final String description;
+  final DateTime createdAt;
 }
 
 // ── Leave application model ────────────────────────────────────────────────
@@ -410,6 +567,9 @@ class MockBusStop {
   bool isVisited;
 }
 
+/// Borrower type for library issues
+enum LibraryBorrowerType { student, staff }
+
 // ── Book issue model ───────────────────────────────────────────────────────
 class MockBookIssue {
   MockBookIssue({
@@ -422,6 +582,8 @@ class MockBookIssue {
     required this.dueDate,
     required this.isOverdue,
     this.finePaise = 0,
+    this.borrowerType = LibraryBorrowerType.student,
+    this.borrowerId,
   });
 
   final String id;
@@ -433,6 +595,14 @@ class MockBookIssue {
   final DateTime dueDate;
   final bool isOverdue;
   final int finePaise;
+  final LibraryBorrowerType borrowerType;
+  final String? borrowerId;
+
+  /// Display name (student or staff)
+  String get borrowerName => studentName;
+
+  /// Display info (class or department)
+  String get borrowerInfo => studentClass;
 }
 
 // ── Reservation model ──────────────────────────────────────────────────────
@@ -468,6 +638,13 @@ class MockHostelStudent {
     required this.classSection,
     required this.isPresent,
     this.absentReason,
+    this.parentName,
+    this.parentPhone,
+    this.bloodGroup,
+    this.medicalNotes,
+    this.emergencyContact,
+    this.emergencyPhone,
+    this.feeStatus = 'paid',
   });
 
   final String id;
@@ -477,6 +654,46 @@ class MockHostelStudent {
   final String classSection;
   bool isPresent;
   String? absentReason;
+
+  /// Parent/guardian name for quick contact
+  final String? parentName;
+
+  /// Parent phone for call/SMS
+  final String? parentPhone;
+  final String? bloodGroup;
+  final String? medicalNotes;
+  final String? emergencyContact;
+  final String? emergencyPhone;
+  final String feeStatus;
+}
+
+// ── Hostel outpass / leave request ─────────────────────────────────────────
+class MockHostelOutpass {
+  MockHostelOutpass({
+    required this.id,
+    required this.studentName,
+    required this.studentId,
+    required this.reason,
+    required this.fromDate,
+    required this.toDate,
+    required this.status,
+    this.approvedBy,
+    this.parentConsentPhone,
+    this.checkOutTime,
+    this.expectedReturnTime,
+  });
+
+  final String id;
+  final String studentName;
+  final String studentId;
+  final String reason; // Home visit | Medical | Family event | Other
+  final DateTime fromDate;
+  final DateTime toDate;
+  String status; // pending | approved | rejected | completed
+  String? approvedBy;
+  final String? parentConsentPhone;
+  DateTime? checkOutTime;
+  DateTime? expectedReturnTime;
 }
 
 // ── Visitor model ──────────────────────────────────────────────────────────
@@ -1475,6 +1692,7 @@ class MockData {
       author: 'Paulo Coelho',
       category: 'Fiction',
       available: true,
+      accessionCode: 'ACC-0108',
     ),
     MockBook(
       id: 'b02',
@@ -1483,6 +1701,7 @@ class MockData {
       category: 'Biography',
       available: false,
       issuedTo: 'Arjun Kumar',
+      accessionCode: 'ACC-0042',
     ),
     MockBook(
       id: 'b03',
@@ -1956,6 +2175,124 @@ class MockData {
     ),
   ];
 
+  // ── Canteen combos, subscriptions, wallets, orders ─────────────────────────
+  static final List<MockCanteenCombo> canteenCombos = [
+    const MockCanteenCombo(
+      id: 'combo1',
+      name: 'Breakfast Combo',
+      itemIds: ['c01', 'c11'],
+      pricePaise: 5000,
+      description: 'Idli Sambar + Cold Coffee',
+      isVeg: true,
+    ),
+    const MockCanteenCombo(
+      id: 'combo2',
+      name: 'Lunch Special',
+      itemIds: ['c05', 'c06', 'c12'],
+      pricePaise: 12000,
+      description: 'Veg Rice + 2 Chapati Dal + Lime Soda',
+      isVeg: true,
+    ),
+    const MockCanteenCombo(
+      id: 'combo3',
+      name: 'Snacks Deal',
+      itemIds: ['c09', 'c10', 'c11'],
+      pricePaise: 6000,
+      description: 'Vada Pav + Samosa + Cold Coffee',
+      isVeg: true,
+    ),
+  ];
+
+  static const List<MockCanteenSubscriptionPlan> canteenSubscriptionPlans = [
+    MockCanteenSubscriptionPlan(
+      id: 'sub_veg',
+      name: 'Veg Monthly',
+      type: 'veg',
+      pricePaise: 450000,
+      durationDays: 30,
+      forStudent: true,
+      forStaff: true,
+      description: 'Unlimited veg lunch Mon–Sat',
+    ),
+    MockCanteenSubscriptionPlan(
+      id: 'sub_nonveg',
+      name: 'Non-Veg Monthly',
+      type: 'nonveg',
+      pricePaise: 600000,
+      durationDays: 30,
+      forStudent: true,
+      forStaff: true,
+      description: 'Unlimited non-veg lunch Mon–Sat',
+    ),
+  ];
+
+  static final List<MockCampusWallet> campusWallets = [
+    MockCampusWallet(
+      personId: 's01',
+      personName: 'Arjun Kumar',
+      balancePaise: 35000,
+    ),
+    MockCampusWallet(
+      personId: 'usr_student_001',
+      personName: 'Arjun Kumar',
+      balancePaise: 35000,
+    ),
+    MockCampusWallet(
+      personId: 'usr_staff_001',
+      personName: 'Rajesh Gowda',
+      balancePaise: 50000,
+    ),
+    MockCampusWallet(
+      personId: 'usr_parent_001',
+      personName: 'Suresh Kumar',
+      balancePaise: 25000,
+    ),
+  ];
+
+  static final List<MockCanteenSubscription> canteenSubscriptions = [
+    MockCanteenSubscription(
+      id: 'act1',
+      personId: 's01',
+      personName: 'Arjun Kumar',
+      planId: 'sub_veg',
+      planName: 'Veg Monthly',
+      type: 'veg',
+      startDate: DateTime.now().subtract(const Duration(days: 10)),
+      endDate: DateTime.now().add(const Duration(days: 20)),
+      status: 'active',
+    ),
+  ];
+
+  static final List<MockCanteenOrder> canteenOrders = [
+    MockCanteenOrder(
+      id: 'ord1',
+      personId: 's01',
+      personName: 'Arjun Kumar',
+      items: const [
+        MockCanteenOrderItem(
+          itemId: 'c01',
+          name: 'Idli Sambar (2 pcs)',
+          qty: 2,
+          pricePaise: 3000,
+        ),
+      ],
+      totalPaise: 6000,
+      paymentStatus: 'paid',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+    ),
+  ];
+
+  static final List<MockCanteenTransaction> canteenTransactions = [
+    MockCanteenTransaction(
+      id: 'tx1',
+      personId: 's01',
+      amountPaise: 50000,
+      type: 'topup',
+      description: 'Wallet top-up',
+      createdAt: DateTime.now().subtract(const Duration(days: 5)),
+    ),
+  ];
+
   // ── KPI summary for dashboard ─────────────────────────────────────────────────
   static const Map<String, dynamic> dashboardKpis = {
     'totalStudents': 1248,
@@ -2329,6 +2666,12 @@ class MockData {
       bedNo: 'A',
       classSection: '9-A',
       isPresent: true,
+      parentName: 'Rajan Shankar',
+      parentPhone: '9845011122',
+      bloodGroup: 'O+',
+      medicalNotes: 'No allergies',
+      emergencyContact: 'Lakshmi Shankar',
+      emergencyPhone: '9845011123',
     ),
     MockHostelStudent(
       id: 'hs002',
@@ -2337,6 +2680,12 @@ class MockData {
       bedNo: 'B',
       classSection: '10-B',
       isPresent: true,
+      parentName: 'Venkat Reddy',
+      parentPhone: '9845099887',
+      bloodGroup: 'B+',
+      medicalNotes: 'Asthma – inhaler in room',
+      emergencyContact: 'Kavitha Reddy',
+      emergencyPhone: '9845099888',
     ),
     MockHostelStudent(
       id: 'hs003',
@@ -2345,6 +2694,12 @@ class MockData {
       bedNo: 'A',
       classSection: '8-C',
       isPresent: false,
+      parentName: 'Ramesh Das',
+      parentPhone: '9900112234',
+      bloodGroup: 'A+',
+      medicalNotes: null,
+      emergencyContact: 'Sita Das',
+      emergencyPhone: '9900112235',
     ),
     MockHostelStudent(
       id: 'hs004',
@@ -2353,6 +2708,12 @@ class MockData {
       bedNo: 'B',
       classSection: '9-B',
       isPresent: true,
+      parentName: 'Vishnu Kumar',
+      parentPhone: '9811223345',
+      bloodGroup: 'AB+',
+      medicalNotes: 'Lactose intolerant',
+      emergencyContact: 'Lakshmi Kumar',
+      emergencyPhone: '9811223346',
     ),
     MockHostelStudent(
       id: 'hs005',
@@ -2361,6 +2722,12 @@ class MockData {
       bedNo: 'A',
       classSection: '10-A',
       isPresent: true,
+      parentName: 'Narayan N',
+      parentPhone: '9712345678',
+      bloodGroup: 'O-',
+      medicalNotes: null,
+      emergencyContact: 'Geeta N',
+      emergencyPhone: '9712345679',
     ),
     MockHostelStudent(
       id: 'hs006',
@@ -2369,6 +2736,38 @@ class MockData {
       bedNo: 'B',
       classSection: '8-A',
       isPresent: false,
+      parentName: 'Raghu Shetty',
+      parentPhone: '9600112234',
+      bloodGroup: 'A-',
+      medicalNotes: 'Penicillin allergy',
+      emergencyContact: 'Uma Shetty',
+      emergencyPhone: '9600112235',
+    ),
+  ];
+
+  // ── Hostel outpass / leave requests ───────────────────────────────────────
+  static final List<MockHostelOutpass> hostelOutpasses = [
+    MockHostelOutpass(
+      id: 'op001',
+      studentName: 'Ravi Shankar',
+      studentId: 'hs001',
+      reason: 'Home visit',
+      fromDate: DateTime.now().subtract(const Duration(days: 1)),
+      toDate: DateTime.now().add(const Duration(days: 2)),
+      status: 'approved',
+      approvedBy: 'Warden',
+      parentConsentPhone: '9845011122',
+      checkOutTime: DateTime.now().subtract(const Duration(hours: 20)),
+      expectedReturnTime: DateTime.now().add(const Duration(days: 2)),
+    ),
+    MockHostelOutpass(
+      id: 'op002',
+      studentName: 'Sunil Kumar',
+      studentId: 'hs004',
+      reason: 'Medical',
+      fromDate: DateTime.now(),
+      toDate: DateTime.now().add(const Duration(days: 1)),
+      status: 'pending',
     ),
   ];
 

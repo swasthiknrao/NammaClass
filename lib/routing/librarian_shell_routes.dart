@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'page_transitions.dart';
+import '../features/librarian/screens/librarian_catalog_screen.dart';
 import '../features/librarian/screens/librarian_counter_screen.dart';
 import '../features/librarian/screens/librarian_reservations_screen.dart';
 import '../features/main_shell.dart';
@@ -16,17 +18,22 @@ List<RouteBase> librarianShellRoutes(GlobalKey<NavigatorState> navigatorKey) =>
           GoRoute(
             path: AppRoutes.librarianCounter,
             pageBuilder: (c, s) =>
-                const NoTransitionPage(child: LibrarianCounterScreen()),
+                fadeSlideTransition(c, s, const LibrarianCounterScreen()),
+          ),
+          GoRoute(
+            path: AppRoutes.librarianCatalog,
+            pageBuilder: (c, s) =>
+                fadeSlideTransition(c, s, const LibrarianCatalogScreen()),
           ),
           GoRoute(
             path: AppRoutes.librarianReservations,
             pageBuilder: (c, s) =>
-                const NoTransitionPage(child: LibrarianReservationsScreen()),
+                fadeSlideTransition(c, s, const LibrarianReservationsScreen()),
           ),
           GoRoute(
             path: AppRoutes.librarianProfile,
             pageBuilder: (c, s) =>
-                const NoTransitionPage(child: ProfileScreen()),
+                fadeSlideTransition(c, s, const ProfileScreen()),
           ),
         ],
       ),

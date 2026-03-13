@@ -43,7 +43,7 @@ class _BroadcastScreenState extends ConsumerState<BroadcastScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Broadcast Message')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(

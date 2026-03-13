@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../providers/canteen_provider.dart';
 
 class CanteenCounterScreen extends ConsumerStatefulWidget {
   const CanteenCounterScreen({super.key});
@@ -18,64 +19,121 @@ class CanteenCounterScreen extends ConsumerStatefulWidget {
 }
 
 class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
-  bool _studentScanned = false;
+  final TextEditingController _lookupController = TextEditingController();
   final Map<String, int> _adHocOrder = {};
-  final int _walletBalance = 12000; // paise
-
   final _menuItems = MockData.canteenMenu.take(6).toList();
+  final _combos = MockData.canteenCombos;
+
+  int _priceForId(String id) {
+    final menuItem = _menuItems.where((m) => m.id == id).firstOrNull;
+    if (menuItem != null) return menuItem.pricePaise;
+    final combo = _combos.where((c) => c.id == id).firstOrNull;
+    if (combo != null) return combo.pricePaise;
+    return 0;
+  }
+
+  String _nameForId(String id) {
+    final menuItem = _menuItems.where((m) => m.id == id).firstOrNull;
+    if (menuItem != null) return menuItem.name;
+    final combo = _combos.where((c) => c.id == id).firstOrNull;
+    if (combo != null) return combo.name;
+    return id;
+  }
 
   int get _orderTotal => _adHocOrder.entries.fold(0, (sum, e) {
-    final item = _menuItems.firstWhere((m) => m.id == e.key);
-    return sum + (item.pricePaise * e.value);
+    return sum + (_priceForId(e.key) * e.value);
   });
 
-  int get _walletAfter => _walletBalance - _orderTotal;
+  void _lookupPerson() {
+    final query = _lookupController.text.trim();
+    if (query.isEmpty) return;
+    final info = lookupCanteenPerson(query);
+    if (info != null) {
+      ref.read(canteenStateProvider.notifier).setScannedPerson(info);
+      setState(() {});
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No person found for "$query". Try ID, barcode (BAR-xxx), roll no, or name.',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
 
   void _simulateScan() {
-    setState(() => _studentScanned = true);
+    _lookupController.text = 's01'; // Arjun
+    _lookupPerson();
   }
 
-  void _addItem(MockCanteenItem item) {
-    setState(() => _adHocOrder[item.id] = (_adHocOrder[item.id] ?? 0) + 1);
+  void _clearPerson() {
+    ref.read(canteenStateProvider.notifier).clearScannedPerson();
+    _adHocOrder.clear();
+    _lookupController.clear();
+    setState(() {});
   }
 
-  void _removeItem(MockCanteenItem item) {
+  void _addItem(String id) {
+    setState(() => _adHocOrder[id] = (_adHocOrder[id] ?? 0) + 1);
+  }
+
+  void _removeItem(String id) {
     setState(() {
-      if ((_adHocOrder[item.id] ?? 0) > 0) {
-        _adHocOrder[item.id] = _adHocOrder[item.id]! - 1;
+      if ((_adHocOrder[id] ?? 0) > 0) {
+        _adHocOrder[id] = _adHocOrder[id]! - 1;
+        if (_adHocOrder[id] == 0) _adHocOrder.remove(id);
       }
     });
   }
 
   void _charge() {
-    if (_walletAfter < 0) {
+    final person = ref.read(canteenStateProvider).scannedPerson;
+    if (person == null) return;
+
+    final walletBal = person.walletBalancePaise;
+    final walletAfter = walletBal - _orderTotal;
+
+    if (walletAfter < 0) {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Insufficient Balance'),
           content: Text(
-            'Insufficient balance (${AppFormatters.formatPaise(-_walletAfter)} short). Ask parent to top up.',
+            'Insufficient balance (${AppFormatters.formatPaise(-walletAfter)} short). Ask to top up.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Charge Partial'),
+              child: const Text('OK'),
             ),
           ],
         ),
       );
       return;
     }
+
+    final items = _adHocOrder.entries
+        .where((e) => e.value > 0)
+        .map(
+          (e) => MockCanteenOrderItem(
+            itemId: e.key,
+            name: _nameForId(e.key),
+            qty: e.value,
+            pricePaise: _priceForId(e.key),
+          ),
+        )
+        .toList();
+
+    if (items.isEmpty) return;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirm Payment'),
         content: Text(
-          'Charge ${AppFormatters.formatPaise(_orderTotal)} from wallet?',
+          'Charge ${AppFormatters.formatPaise(_orderTotal)} from ${person.personName}?',
         ),
         actions: [
           TextButton(
@@ -85,8 +143,10 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
+              ref
+                  .read(canteenStateProvider.notifier)
+                  .addOrder(person.personId, items, _orderTotal);
               setState(() {
-                _studentScanned = false;
                 _adHocOrder.clear();
               });
               ScaffoldMessenger.of(context).showSnackBar(
@@ -106,6 +166,16 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
   }
 
   void _showDailySummary() {
+    final todayOrders = MockData.canteenOrders
+        .where(
+          (o) =>
+              o.createdAt.year == DateTime.now().year &&
+              o.createdAt.month == DateTime.now().month &&
+              o.createdAt.day == DateTime.now().day,
+        )
+        .toList();
+    final revenue = todayOrders.fold<int>(0, (s, o) => s + o.totalPaise);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -113,9 +183,8 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _SummaryRow('Total Orders', '47'),
-            _SummaryRow('Total Revenue', AppFormatters.formatPaise(234500)),
-            _SummaryRow('Most Ordered', 'Idli Sambhar (12)'),
+            _SummaryRow('Total Orders', '${todayOrders.length}'),
+            _SummaryRow('Total Revenue', AppFormatters.formatPaise(revenue)),
           ],
         ),
         actions: [
@@ -129,7 +198,18 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
   }
 
   @override
+  void dispose() {
+    _lookupController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final canteenState = ref.watch(canteenStateProvider);
+    final person = canteenState.scannedPerson;
+    final walletBalance = person?.walletBalancePaise ?? 0;
+    final walletAfter = walletBalance - _orderTotal;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Canteen Counter'),
@@ -143,45 +223,67 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
       ),
       body: Column(
         children: [
-          // Scan area
-          if (!_studentScanned)
+          // Lookup / Scan area
+          if (person == null)
             Expanded(
               flex: 2,
-              child: GestureDetector(
-                onTap: _simulateScan,
-                child: Container(
-                  color: AppColors.background,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+              child: Container(
+                color: AppColors.background,
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.qr_code_scanner,
+                      size: 72,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Scan QR or Enter ID / Barcode',
+                      style: AppTypography.headlineSmall.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Person ID, BAR-xxx, roll no, or name',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Row(
                       children: [
-                        const Icon(
-                          Icons.qr_code_scanner,
-                          size: 80,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          'Scan Student QR Card',
-                          style: AppTypography.headlineSmall.copyWith(
-                            color: AppColors.primary,
+                        Expanded(
+                          child: TextField(
+                            controller: _lookupController,
+                            decoration: const InputDecoration(
+                              hintText: 'e.g. s01, BAR-s01, 01, Arjun',
+                              border: OutlineInputBorder(),
+                            ),
+                            onSubmitted: (_) => _lookupPerson(),
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Tap to simulate scan',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                        const SizedBox(width: AppSpacing.sm),
+                        FilledButton(
+                          onPressed: _lookupPerson,
+                          child: const Text('Lookup'),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextButton.icon(
+                      onPressed: _simulateScan,
+                      icon: const Icon(Icons.touch_app, size: 18),
+                      label: const Text('Simulate: Arjun (s01)'),
+                    ),
+                  ],
                 ),
               ),
             )
           else ...[
-            // Student result
+            // Person header
             Container(
               color: AppColors.card,
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -189,22 +291,57 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
                 children: [
                   Row(
                     children: [
-                      const NcAvatar(name: 'Arjun Kumar', radius: 28),
+                      NcAvatar(name: person.personName, radius: 28),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Arjun Kumar',
-                              style: AppTypography.titleMedium,
+                            Row(
+                              children: [
+                                Text(
+                                  person.personName,
+                                  style: AppTypography.titleMedium,
+                                ),
+                                if (person.subscription != null &&
+                                    person.subscription!.status ==
+                                        'active') ...[
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.success.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      person.subscription!.planName,
+                                      style: AppTypography.labelSmall.copyWith(
+                                        color: AppColors.success,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                             Text(
-                              'Class 8-A',
+                              person.info,
                               style: AppTypography.bodySmall.copyWith(
                                 color: AppColors.textSecondary,
                               ),
                             ),
+                            if (person.barcode != null)
+                              Text(
+                                person.barcode!,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -218,7 +355,7 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
                             ),
                           ),
                           Text(
-                            AppFormatters.formatPaise(_walletBalance),
+                            AppFormatters.formatPaise(walletBalance),
                             style: AppTypography.headlineSmall.copyWith(
                               color: AppColors.teal,
                               fontFamily: 'JetBrainsMono',
@@ -226,54 +363,80 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
                           ),
                         ],
                       ),
+                      IconButton(
+                        onPressed: _clearPerson,
+                        icon: const Icon(Icons.close),
+                        tooltip: 'Clear & New',
+                      ),
                     ],
-                  ),
-
-                  // Pre-order section
-                  const SizedBox(height: AppSpacing.sm),
-                  NcCard(
-                    color: AppColors.success.withValues(alpha: 0.05),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Today\'s Pre-Order',
-                          style: AppTypography.labelMedium,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.lunch_dining,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Idli Sambhar x2 — ₹40',
-                              style: AppTypography.bodySmall,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            onPressed: _charge,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.success,
-                            ),
-                            child: const Text('Deliver & Charge ₹40'),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),
             ),
 
-            // Ad-hoc menu
+            // Combos row
+            if (_combos.isNotEmpty)
+              SizedBox(
+                height: 100,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _combos.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppSpacing.xs),
+                  itemBuilder: (_, i) {
+                    final c = _combos[i];
+                    final qty = _adHocOrder[c.id] ?? 0;
+                    return SizedBox(
+                      width: 120,
+                      child: NcCard(
+                        color: c.isVeg
+                            ? AppColors.success.withValues(alpha: 0.08)
+                            : AppColors.error.withValues(alpha: 0.08),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              c.name,
+                              style: AppTypography.labelSmall,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              AppFormatters.formatPaise(c.pricePaise),
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.teal,
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.remove, size: 16),
+                                  onPressed: qty > 0
+                                      ? () => _removeItem(c.id)
+                                      : null,
+                                ),
+                                Text('$qty', style: AppTypography.labelMedium),
+                                IconButton(
+                                  icon: const Icon(Icons.add, size: 16),
+                                  onPressed: () => _addItem(c.id),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+            // Menu grid
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.all(AppSpacing.sm),
@@ -308,7 +471,7 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () => _addItem(item),
+                              onPressed: () => _addItem(item.id),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 4,
@@ -323,14 +486,14 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               IconButton(
-                                onPressed: () => _removeItem(item),
+                                onPressed: () => _removeItem(item.id),
                                 icon: const Icon(Icons.remove, size: 16),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                               ),
                               Text('$qty', style: AppTypography.titleSmall),
                               IconButton(
-                                onPressed: () => _addItem(item),
+                                onPressed: () => _addItem(item.id),
                                 icon: const Icon(Icons.add, size: 16),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
@@ -346,7 +509,7 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
           ],
 
           // Order total footer
-          if (_studentScanned && _orderTotal > 0)
+          if (person != null && _orderTotal > 0)
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg,
@@ -366,9 +529,9 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
                           ),
                         ),
                         Text(
-                          'Wallet: ${AppFormatters.formatPaise(_walletBalance)} → ${AppFormatters.formatPaise(_walletAfter)} after',
+                          'Wallet: ${AppFormatters.formatPaise(walletBalance)} → ${AppFormatters.formatPaise(walletAfter)} after',
                           style: AppTypography.bodySmall.copyWith(
-                            color: _walletAfter < 0
+                            color: walletAfter < 0
                                 ? AppColors.error
                                 : AppColors.textSecondary,
                           ),
@@ -391,6 +554,13 @@ class _CanteenCounterScreenState extends ConsumerState<CanteenCounterScreen> {
         ],
       ),
     );
+  }
+}
+
+extension _FirstOrNull<E> on Iterable<E> {
+  E? get firstOrNull {
+    for (final e in this) return e;
+    return null;
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
@@ -95,6 +96,7 @@ class _WebUserManagementScreenState
     ('Principal', ['Dashboard', 'Academics', 'HR', 'Reports', 'Analytics']),
     ('Accountant', ['Fees & Finance', 'Reports']),
     ('Librarian', ['Library']),
+    ('Driver', ['Transport']),
     ('Teacher', ['Academics', 'Attendance', 'Communication']),
     ('HR Manager', ['HR & Staff', 'Payroll', 'Reports']),
   ];
@@ -170,54 +172,98 @@ class _WebUserManagementScreenState
   }
 
   void _showInviteDialog(BuildContext context) {
+    String inviteEmail = '';
+    String inviteRole = _roles.first.$1;
+    final formKey = GlobalKey<FormState>();
+    final emailController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Invite User'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Email Address',
-                border: OutlineInputBorder(),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Invite User'),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email Address',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Required';
+                      if (!RegExp(
+                        r'^[\w.+-]+@[\w-]+\.\w{2,}$',
+                      ).hasMatch(v.trim())) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
+                    onChanged: (v) => inviteEmail = v ?? '',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  DropdownButtonFormField<String>(
+                    value: inviteRole,
+                    decoration: const InputDecoration(
+                      labelText: 'Role',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.badge_outlined),
+                    ),
+                    items: _roles
+                        .map(
+                          (r) =>
+                              DropdownMenuItem(value: r.$1, child: Text(r.$1)),
+                        )
+                        .toList(),
+                    onChanged: (v) {
+                      setDialogState(() => inviteRole = v ?? _roles.first.$1);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'User will receive a setup link via email. Expires in 48 hours.',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Role',
-                border: OutlineInputBorder(),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  emailController.dispose();
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Cancel'),
               ),
-              items: _roles
-                  .map((r) => DropdownMenuItem(value: r.$1, child: Text(r.$1)))
-                  .toList(),
-              onChanged: (_) {},
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'User will receive a setup link via email. Expires in 48 hours.',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              FilledButton(
+                onPressed: () async {
+                  if (!formKey.currentState!.validate()) return;
+                  inviteEmail = emailController.text.trim();
+                  setDialogState(() {}); // Show loading state if needed
+                  await Future.delayed(const Duration(milliseconds: 600));
+                  if (!ctx.mounted) return;
+                  emailController.dispose();
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Invitation sent to $inviteEmail!'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                },
+                child: const Text('Send Invite'),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Invitation sent!')));
-            },
-            child: const Text('Send Invite'),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

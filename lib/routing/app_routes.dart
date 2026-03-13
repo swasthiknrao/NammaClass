@@ -38,6 +38,7 @@ class AppRoutes {
   static const String studentHome = '/student/home';
   static const String studentAcademics = '/student/academics';
   static const String studentLibrary = '/student/library';
+  static const String studentCanteen = '/student/canteen';
   static const String studentProfile = '/student/profile';
 
   // ── Admin ─────────────────────────────────────────────────────────────────
@@ -45,6 +46,7 @@ class AppRoutes {
   static const String adminApprovals = '/admin/approvals';
   static const String adminBroadcast = '/admin/broadcast';
   static const String adminPeople = '/admin/people';
+  static const String adminAddStaff = '/admin/staff/add';
   static const String adminProfile = '/admin/profile';
 
   // ── Shared ────────────────────────────────────────────────────────────────
@@ -61,6 +63,7 @@ class AppRoutes {
   static const String staffLeaves = '/staff/leaves';
   static const String staffPayslips = '/staff/payslips';
   static const String staffTraining = '/staff/training';
+  static const String staffCanteen = '/staff/canteen';
   static const String staffProfile = '/staff/profile';
 
   // ── Driver App (Part 2) ───────────────────────────────────────────────────
@@ -70,17 +73,24 @@ class AppRoutes {
 
   // ── Librarian App (Part 2) ────────────────────────────────────────────────
   static const String librarianCounter = '/librarian/counter';
+  static const String librarianCatalog = '/librarian/catalog';
   static const String librarianReservations = '/librarian/reservations';
   static const String librarianProfile = '/librarian/profile';
 
   // ── Hostel Warden App (Part 2) ────────────────────────────────────────────
+  static const String wardenHome = '/warden/home';
   static const String wardenRollcall = '/warden/rollcall';
   static const String wardenVisitors = '/warden/visitors';
+  static const String wardenOutpass = '/warden/outpass';
   static const String wardenProfile = '/warden/profile';
 
   // ── Canteen Staff App (Part 2) ────────────────────────────────────────────
   static const String canteenCounter = '/canteen/counter';
+  static const String canteenManage = '/canteen/manage';
   static const String canteenProfile = '/canteen/profile';
+
+  // ── Shared Food/Canteen (for student, staff, parent) ──────────────────────
+  static const String foodMenu = '/food';
 
   // ── Web Portal (Part 1) ───────────────────────────────────────────────────
   static const String webDashboard = '/web/dashboard';
@@ -92,6 +102,7 @@ class AppRoutes {
   static const String webFeeStructure = '/web/fees/structure';
   static const String webFeeCollection = '/web/fees/collection';
   static const String webStaff = '/web/staff';
+  static const String webAddStaff = '/web/staff/add';
   static const String webPayroll = '/web/payroll';
   static const String webNotices = '/web/notices';
   static const String webLibrary = '/web/library';

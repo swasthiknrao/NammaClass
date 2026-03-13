@@ -20,7 +20,7 @@ class ParentNoticesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Notices')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: noticesAsync.when(
         loading: () =>
             const Padding(padding: EdgeInsets.all(16), child: NcShimmerList()),

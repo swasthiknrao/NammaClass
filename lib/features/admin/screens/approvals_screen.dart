@@ -20,7 +20,7 @@ class ApprovalsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Approvals')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: approvalsAsync.when(
         loading: () =>
             const Padding(padding: EdgeInsets.all(16), child: NcShimmerList()),

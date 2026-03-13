@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/launch_utils.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
@@ -12,7 +13,7 @@ class HostelScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Hostel')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: DefaultTabController(
         length: 4,
         child: Column(
@@ -112,7 +113,11 @@ class HostelScreen extends StatelessWidget {
                                 ),
                               ),
                               TextButton.icon(
-                                onPressed: () {},
+                                onPressed: () => launchTel(
+                                  context,
+                                  phone: '9876543210',
+                                  fallbackSnackBar: 'Cannot launch dialer',
+                                ),
                                 icon: const Icon(Icons.call, size: 16),
                                 label: const Text('Call'),
                               ),
@@ -267,7 +272,14 @@ class HostelScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('New request coming soon'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
         icon: const Icon(Icons.build),
         label: const Text('New Request'),
         backgroundColor: AppColors.accent,

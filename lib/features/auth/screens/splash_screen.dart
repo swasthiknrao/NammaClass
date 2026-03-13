@@ -70,6 +70,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         return AppRoutes.teacherHome;
       case 'student':
         return AppRoutes.studentHome;
+      case 'staff':
+        return AppRoutes.staffHome;
+      case 'driver':
+        return AppRoutes.driverRoute;
+      case 'librarian':
+        return AppRoutes.librarianCounter;
+      case 'warden':
+        return AppRoutes.wardenRollcall;
+      case 'canteenStaff':
+        return AppRoutes.canteenCounter;
+      case 'admin':
+      case 'principal':
+      case 'support':
+      case 'accountant':
       default:
         return AppRoutes.adminHome;
     }

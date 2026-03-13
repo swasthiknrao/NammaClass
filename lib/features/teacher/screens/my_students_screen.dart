@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/launch_utils.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_avatar.dart';
@@ -21,7 +22,7 @@ class MyStudentsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Students')),
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           Padding(
@@ -134,7 +135,12 @@ class MyStudentsScreen extends ConsumerWidget {
                                                 children: [
                                                   Expanded(
                                                     child: OutlinedButton.icon(
-                                                      onPressed: () {},
+                                                      onPressed: () => launchTel(
+                                                        context,
+                                                        phone: s.parentPhone!,
+                                                        fallbackSnackBar:
+                                                            'Cannot launch dialer',
+                                                      ),
                                                       icon: const Icon(
                                                         Icons.call,
                                                         size: 16,
@@ -149,7 +155,20 @@ class MyStudentsScreen extends ConsumerWidget {
                                                   ),
                                                   Expanded(
                                                     child: ElevatedButton.icon(
-                                                      onPressed: () {},
+                                                      onPressed: () {
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                              'Messaging coming soon',
+                                                            ),
+                                                            behavior:
+                                                                SnackBarBehavior
+                                                                    .floating,
+                                                          ),
+                                                        );
+                                                      },
                                                       icon: const Icon(
                                                         Icons.chat,
                                                         size: 16,

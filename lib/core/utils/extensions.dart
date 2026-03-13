@@ -40,6 +40,27 @@ extension StringX on String {
     ];
     return colors[hashCode.abs() % colors.length];
   }
+
+  /// Short subject code for display (e.g. Mathematics → MATH)
+  String get subjectCode {
+    const codes = {
+      'Mathematics': 'MATH',
+      'Science': 'SCI',
+      'English': 'ENG',
+      'Social Studies': 'SST',
+      'Kannada': 'KAN',
+      'Computer Science': 'CS',
+      'Physical Ed': 'PE',
+      'Art & Craft': 'ART',
+      'Music': 'MUS',
+      'Science Lab': 'SCI Lab',
+      'Library': 'LIB',
+    };
+    return codes[this] ??
+        split(
+          RegExp(r'\s+'),
+        ).map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').take(3).join();
+  }
 }
 
 extension DateTimeX on DateTime {

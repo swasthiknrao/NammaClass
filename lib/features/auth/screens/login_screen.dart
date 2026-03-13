@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
@@ -54,6 +55,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       UserRole.teacher: UserModel.teacher,
       UserRole.student: UserModel.student,
       UserRole.admin: UserModel.admin,
+      UserRole.principal: UserModel.principal,
+      UserRole.support: UserModel.support,
+      UserRole.staff: UserModel.staff,
+      UserRole.driver: UserModel.driver,
+      UserRole.librarian: UserModel.librarian,
+      UserRole.warden: UserModel.warden,
+      UserRole.canteenStaff: UserModel.canteenStaff,
+      UserRole.accountant: UserModel.accountant,
     };
     ref.read(authProvider.notifier).loginAs(users[role]!);
   }
@@ -64,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isWide = size.width > 700;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: isWide
           ? _WideLayout(child: _form())
           : _NarrowLayout(child: _form()),
@@ -78,18 +87,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            AppConstants.appName,
-            style: AppTypography.displayMedium.copyWith(
-              color: AppColors.primary,
-            ),
-          ),
+                AppConstants.appName,
+                style: AppTypography.displayMedium.copyWith(
+                  color: AppColors.primary,
+                ),
+              )
+              .animate()
+              .fadeIn(duration: 400.ms)
+              .slideY(begin: -0.1, end: 0, curve: Curves.easeOut),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Login to your account',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
+                'Login to your account',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              )
+              .animate()
+              .fadeIn(duration: 400.ms, delay: 100.ms)
+              .slideY(begin: -0.05, end: 0, curve: Curves.easeOut),
           const SizedBox(height: AppSpacing.xl),
 
           // Phone field
@@ -107,12 +122,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: AppSpacing.lg),
 
           NcPrimaryButton(
-            label: 'Send OTP',
-            fullWidth: true,
-            icon: Icons.send_outlined,
-            loading: _loading,
-            onPressed: _sendOtp,
-          ),
+                label: 'Send OTP',
+                fullWidth: true,
+                icon: Icons.send_outlined,
+                loading: _loading,
+                onPressed: _sendOtp,
+              )
+              .animate()
+              .fadeIn(duration: 350.ms, delay: 200.ms)
+              .slideY(begin: 0.03, end: 0, curve: Curves.easeOut),
 
           if (kDebugMode || EnvConfig.env == 'dev') ...[
             const SizedBox(height: AppSpacing.xl),
@@ -165,6 +183,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   icon: Icons.admin_panel_settings,
                   color: AppColors.error,
                   onTap: () => _loginDemo(UserRole.admin),
+                ),
+                _DemoButton(
+                  label: 'Principal',
+                  icon: Icons.school_outlined,
+                  color: AppColors.primary,
+                  onTap: () => _loginDemo(UserRole.principal),
+                ),
+                _DemoButton(
+                  label: 'Staff',
+                  icon: Icons.badge_outlined,
+                  color: AppColors.teal,
+                  onTap: () => _loginDemo(UserRole.staff),
+                ),
+                _DemoButton(
+                  label: 'Driver',
+                  icon: Icons.directions_bus,
+                  color: Colors.orange,
+                  onTap: () => _loginDemo(UserRole.driver),
+                ),
+                _DemoButton(
+                  label: 'Librarian',
+                  icon: Icons.menu_book,
+                  color: Colors.indigo,
+                  onTap: () => _loginDemo(UserRole.librarian),
+                ),
+                _DemoButton(
+                  label: 'Warden',
+                  icon: Icons.night_shelter,
+                  color: Colors.brown,
+                  onTap: () => _loginDemo(UserRole.warden),
+                ),
+                _DemoButton(
+                  label: 'Canteen',
+                  icon: Icons.restaurant,
+                  color: Colors.deepOrange,
+                  onTap: () => _loginDemo(UserRole.canteenStaff),
+                ),
+                _DemoButton(
+                  label: 'Accountant',
+                  icon: Icons.calculate,
+                  color: Colors.green,
+                  onTap: () => _loginDemo(UserRole.accountant),
+                ),
+                _DemoButton(
+                  label: 'Support',
+                  icon: Icons.support_agent,
+                  color: Colors.purple,
+                  onTap: () => _loginDemo(UserRole.support),
                 ),
               ],
             ),

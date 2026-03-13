@@ -8,13 +8,16 @@ import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_shimmer.dart';
-import '../../../features/admin/providers/admin_providers.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../features/admin/providers/staff_notifier.dart';
+import '../../../routing/app_routes.dart';
 
 class WebStaffScreen extends ConsumerWidget {
   const WebStaffScreen({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final staffAsync = ref.watch(adminStaffProvider);
+    final staffAsync = ref.watch(staffNotifierProvider);
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -41,7 +44,7 @@ class WebStaffScreen extends ConsumerWidget {
               NcPrimaryButton(
                 label: 'Add Staff',
                 icon: Icons.add,
-                onPressed: () {},
+                onPressed: () => context.push(AppRoutes.webAddStaff),
               ),
             ],
           ),
@@ -78,6 +81,7 @@ class WebStaffScreen extends ConsumerWidget {
                         itemBuilder: (ctx, i) {
                           final s = staff[i];
                           return Padding(
+                            key: ValueKey(s.id),
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.md,
                               vertical: AppSpacing.xs,
