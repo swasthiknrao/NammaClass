@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_input.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../providers/staff_providers.dart';
@@ -40,16 +41,18 @@ class _StaffTrainingScreenState extends ConsumerState<StaffTrainingScreen>
   Widget build(BuildContext context) {
     final trainingsAsync = ref.watch(staffTrainingsProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Training & CPD'),
-        bottom: const TabBar(
-          tabs: [
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Completed'),
-            Tab(text: 'Add Entry'),
-          ],
-        ),
-      ),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Training & CPD'),
+              bottom: const TabBar(
+                tabs: [
+                  Tab(text: 'Upcoming'),
+                  Tab(text: 'Completed'),
+                  Tab(text: 'Add Entry'),
+                ],
+              ),
+            ),
       body: trainingsAsync.when(
         loading: () => const NcShimmerList(itemCount: 4),
         error: (e, _) =>

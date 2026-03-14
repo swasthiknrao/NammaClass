@@ -7,6 +7,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 
 class DiaryEntryScreen extends ConsumerStatefulWidget {
   const DiaryEntryScreen({super.key});
@@ -55,13 +56,15 @@ class _DiaryEntryScreenState extends ConsumerState<DiaryEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Diary & Homework Entry'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.divider),
-        ),
-      ),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Diary & Homework Entry'),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Container(height: 1, color: AppColors.divider),
+              ),
+            ),
       backgroundColor: Colors.transparent,
       body: Column(
         children: [

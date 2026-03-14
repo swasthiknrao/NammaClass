@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/models/user_model.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../providers/auth_provider.dart';
 import '../../../routing/app_routes.dart';
+import '../../../routing/route_guard.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -55,37 +57,45 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final isAuth = ref.read(isAuthenticatedProvider);
     if (isAuth) {
       final role = ref.read(userRoleProvider);
-      context.go(_roleHome(role));
+      context.go(_roleHome(context, role));
     } else {
       context.go(AppRoutes.login);
     }
   }
 
-  String _roleHome(dynamic role) {
+  String _roleHome(BuildContext context, UserRole? role) {
     if (role == null) return AppRoutes.login;
-    switch (role.toString().split('.').last) {
-      case 'parent':
+    // Mobile override for hod
+    if (MediaQuery.sizeOf(context).width < 600) {
+      final mobileHome = mobileHomeForExecRole(role);
+      if (mobileHome != null) return mobileHome;
+    }
+    switch (role) {
+      case UserRole.parent:
         return AppRoutes.parentHome;
-      case 'teacher':
+      case UserRole.teacher:
         return AppRoutes.teacherHome;
-      case 'student':
+      case UserRole.student:
         return AppRoutes.studentHome;
-      case 'staff':
+      case UserRole.staff:
         return AppRoutes.staffHome;
-      case 'driver':
+      case UserRole.driver:
         return AppRoutes.driverRoute;
-      case 'librarian':
+      case UserRole.librarian:
         return AppRoutes.librarianCounter;
-      case 'warden':
-        return AppRoutes.wardenRollcall;
-      case 'canteenStaff':
+      case UserRole.warden:
+        return AppRoutes.wardenHome;
+      case UserRole.canteenStaff:
         return AppRoutes.canteenCounter;
-      case 'admin':
-      case 'principal':
-      case 'support':
-      case 'accountant':
-      default:
+      case UserRole.admin:
+      case UserRole.principal:
         return AppRoutes.adminHome;
+      case UserRole.support:
+        return AppRoutes.webSupportDashboard;
+      case UserRole.accountant:
+        return AppRoutes.webAccountantDashboard;
+      case UserRole.hod:
+        return AppRoutes.webDashboard;
     }
   }
 

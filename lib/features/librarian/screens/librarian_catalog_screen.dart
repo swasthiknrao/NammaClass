@@ -5,10 +5,13 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/library_provider.dart';
 
 enum CatalogSort { title, author, availability }
+
 enum CatalogFormatFilter { all, hardcopy, softcopy }
+
 enum CatalogAvailabilityFilter { all, available, issued }
 
 class LibrarianCatalogScreen extends ConsumerStatefulWidget {
@@ -19,7 +22,8 @@ class LibrarianCatalogScreen extends ConsumerStatefulWidget {
       _LibrarianCatalogScreenState();
 }
 
-class _LibrarianCatalogScreenState extends ConsumerState<LibrarianCatalogScreen> {
+class _LibrarianCatalogScreenState
+    extends ConsumerState<LibrarianCatalogScreen> {
   final _searchCtrl = TextEditingController();
   String _search = '';
   CatalogSort _sort = CatalogSort.title;
@@ -40,24 +44,25 @@ class _LibrarianCatalogScreenState extends ConsumerState<LibrarianCatalogScreen>
     final q = _search.trim().toLowerCase();
     if (q.isNotEmpty) {
       list = list
-          .where((b) =>
-              b.title.toLowerCase().contains(q) ||
-              b.author.toLowerCase().contains(q) ||
-              b.category.toLowerCase().contains(q))
+          .where(
+            (b) =>
+                b.title.toLowerCase().contains(q) ||
+                b.author.toLowerCase().contains(q) ||
+                b.category.toLowerCase().contains(q),
+          )
           .toList();
     }
     if (_formatFilter != CatalogFormatFilter.all) {
-      final fmt =
-          _formatFilter == CatalogFormatFilter.hardcopy
-              ? BookFormat.hardcopy
-              : BookFormat.softcopy;
+      final fmt = _formatFilter == CatalogFormatFilter.hardcopy
+          ? BookFormat.hardcopy
+          : BookFormat.softcopy;
       list = list.where((b) => b.format == fmt).toList();
     }
     if (_availabilityFilter != CatalogAvailabilityFilter.all) {
       list = list.where((b) {
         final issued = issuedCountForBook(b.accessionOrId, issues);
-        final hasAvailable = b.format == BookFormat.softcopy ||
-            issued < b.totalCopies;
+        final hasAvailable =
+            b.format == BookFormat.softcopy || issued < b.totalCopies;
         if (_availabilityFilter == CatalogAvailabilityFilter.available) {
           return hasAvailable;
         }
@@ -96,28 +101,35 @@ class _LibrarianCatalogScreenState extends ConsumerState<LibrarianCatalogScreen>
     final overdueCount = issues.where((i) => i.isOverdue).length;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Book Catalog'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(72),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Search by title, author, category…',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Book Catalog'),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(72),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    0,
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Search by title, author, category…',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      isDense: true,
+                    ),
+                    onChanged: (v) => setState(() => _search = v),
+                  ),
                 ),
-                filled: true,
-                isDense: true,
               ),
-              onChanged: (v) => setState(() => _search = v),
             ),
-          ),
-        ),
-      ),
       body: Column(
         children: [
           Padding(
@@ -141,11 +153,21 @@ class _LibrarianCatalogScreenState extends ConsumerState<LibrarianCatalogScreen>
                   value: _sort,
                   isDense: true,
                   items: const [
-                    DropdownMenuItem(value: CatalogSort.title, child: Text('Sort: Title')),
-                    DropdownMenuItem(value: CatalogSort.author, child: Text('Sort: Author')),
-                    DropdownMenuItem(value: CatalogSort.availability, child: Text('Sort: Issued')),
+                    DropdownMenuItem(
+                      value: CatalogSort.title,
+                      child: Text('Sort: Title'),
+                    ),
+                    DropdownMenuItem(
+                      value: CatalogSort.author,
+                      child: Text('Sort: Author'),
+                    ),
+                    DropdownMenuItem(
+                      value: CatalogSort.availability,
+                      child: Text('Sort: Issued'),
+                    ),
                   ],
-                  onChanged: (v) => setState(() => v != null ? _sort = v : null),
+                  onChanged: (v) =>
+                      setState(() => v != null ? _sort = v : null),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 FilterChip(
@@ -153,23 +175,23 @@ class _LibrarianCatalogScreenState extends ConsumerState<LibrarianCatalogScreen>
                   selected: _formatFilter != CatalogFormatFilter.all,
                   onSelected: (_) {
                     setState(() {
-                      _formatFilter =
-                          _formatFilter == CatalogFormatFilter.all
-                              ? CatalogFormatFilter.hardcopy
-                              : CatalogFormatFilter.all;
+                      _formatFilter = _formatFilter == CatalogFormatFilter.all
+                          ? CatalogFormatFilter.hardcopy
+                          : CatalogFormatFilter.all;
                     });
                   },
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 FilterChip(
                   label: const Text('Availability'),
-                  selected: _availabilityFilter != CatalogAvailabilityFilter.all,
+                  selected:
+                      _availabilityFilter != CatalogAvailabilityFilter.all,
                   onSelected: (_) {
                     setState(() {
                       _availabilityFilter =
                           _availabilityFilter == CatalogAvailabilityFilter.all
-                              ? CatalogAvailabilityFilter.available
-                              : CatalogAvailabilityFilter.all;
+                          ? CatalogAvailabilityFilter.available
+                          : CatalogAvailabilityFilter.all;
                     });
                   },
                 ),
@@ -184,10 +206,9 @@ class _LibrarianCatalogScreenState extends ConsumerState<LibrarianCatalogScreen>
               itemBuilder: (context, i) {
                 final b = filtered[i];
                 final issued = issuedCountForBook(b.accessionOrId, issues);
-                final avail =
-                    b.format == BookFormat.softcopy
-                        ? 'Digital'
-                        : '${b.totalCopies - issued}/${b.totalCopies}';
+                final avail = b.format == BookFormat.softcopy
+                    ? 'Digital'
+                    : '${b.totalCopies - issued}/${b.totalCopies}';
                 final hasAvailable =
                     b.format == BookFormat.softcopy || issued < b.totalCopies;
                 return Card(
@@ -202,10 +223,7 @@ class _LibrarianCatalogScreenState extends ConsumerState<LibrarianCatalogScreen>
                         color: AppColors.primary,
                       ),
                     ),
-                    title: Text(
-                      b.title,
-                      style: AppTypography.titleSmall,
-                    ),
+                    title: Text(b.title, style: AppTypography.titleSmall),
                     subtitle: Text(
                       '${b.author}  ·  ${b.category}  ·  ${b.accessionOrId}',
                       style: AppTypography.bodySmall.copyWith(

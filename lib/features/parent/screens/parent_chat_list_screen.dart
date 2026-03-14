@@ -9,6 +9,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_shimmer.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/parent_providers.dart';
 
 class ParentChatListScreen extends ConsumerWidget {
@@ -19,7 +20,9 @@ class ParentChatListScreen extends ConsumerWidget {
     final threadsAsync = ref.watch(parentChatThreadsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Messages')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Messages')),
       backgroundColor: Colors.transparent,
       body: Column(
         children: [

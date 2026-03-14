@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../providers/canteen_provider.dart';

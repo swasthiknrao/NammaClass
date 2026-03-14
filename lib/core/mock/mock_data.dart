@@ -452,6 +452,47 @@ class MockComplaint {
   final bool isAnonymous;
 }
 
+// ── Support ticket model ────────────────────────────────────────────────────
+class MockSupportTicket {
+  const MockSupportTicket({
+    required this.id,
+    required this.subject,
+    required this.status,
+    required this.priority,
+    required this.category,
+    required this.createdAt,
+    this.assignee,
+    this.description,
+  });
+
+  final String id;
+  final String subject;
+  final String
+  status; // open | in_progress | awaiting_response | resolved | closed
+  final String priority; // low | medium | high | urgent
+  final String category;
+  final DateTime createdAt;
+  final String? assignee;
+  final String? description;
+}
+
+// ── Knowledge base article model ────────────────────────────────────────────
+class MockKbArticle {
+  const MockKbArticle({
+    required this.id,
+    required this.title,
+    required this.category,
+    required this.excerpt,
+    required this.body,
+  });
+
+  final String id;
+  final String title;
+  final String category;
+  final String excerpt;
+  final String body;
+}
+
 // ── Event model ────────────────────────────────────────────────────────────
 class MockEvent {
   MockEvent({
@@ -485,6 +526,7 @@ class MockStaffAttendanceDay {
     this.checkInTime,
     this.checkOutTime,
     this.isWithinGeofence = true,
+    this.employeeId,
   });
 
   final DateTime date;
@@ -493,6 +535,7 @@ class MockStaffAttendanceDay {
   final String? checkInTime;
   final String? checkOutTime;
   final bool isWithinGeofence;
+  final String? employeeId;
 }
 
 // ── Payslip model ──────────────────────────────────────────────────────────
@@ -501,6 +544,7 @@ class MockPayslip {
     required this.id,
     required this.month,
     required this.basicPaise,
+    this.employeeId,
     required this.hraPaise,
     required this.daPaise,
     required this.allowancesPaise,
@@ -520,6 +564,7 @@ class MockPayslip {
   final int esiDeductionPaise;
   final int tdsDeductionPaise;
   final String status; // Generated | Pending
+  final String? employeeId;
 
   int get grossPaise => basicPaise + hraPaise + daPaise + allowancesPaise;
   int get totalDeductionsPaise =>
@@ -534,6 +579,7 @@ class MockTraining {
     required this.title,
     required this.provider,
     required this.date,
+    this.employeeId,
     required this.hours,
     required this.venue,
     required this.isCompleted,
@@ -548,6 +594,7 @@ class MockTraining {
   final String venue;
   final bool isCompleted;
   final String? certificateUrl;
+  final String? employeeId;
 }
 
 // ── Bus stop model ─────────────────────────────────────────────────────────
@@ -2325,7 +2372,7 @@ class MockData {
   static final List<MockLeaveApplication> leaveApplications = [
     MockLeaveApplication(
       id: 'lv001',
-      childName: 'Riya Kumar',
+      childName: 'Arjun Kumar',
       type: 'Sick Leave',
       fromDate: DateTime.now().subtract(const Duration(days: 5)),
       toDate: DateTime.now().subtract(const Duration(days: 4)),
@@ -2336,7 +2383,7 @@ class MockData {
     ),
     MockLeaveApplication(
       id: 'lv002',
-      childName: 'Riya Kumar',
+      childName: 'Arjun Kumar',
       type: 'Casual Leave',
       fromDate: DateTime.now().add(const Duration(days: 3)),
       toDate: DateTime.now().add(const Duration(days: 5)),
@@ -2346,7 +2393,7 @@ class MockData {
     ),
     MockLeaveApplication(
       id: 'lv003',
-      childName: 'Riya Kumar',
+      childName: 'Arjun Kumar',
       type: 'Half Day',
       fromDate: DateTime.now().subtract(const Duration(days: 10)),
       toDate: DateTime.now().subtract(const Duration(days: 10)),
@@ -2404,6 +2451,79 @@ class MockData {
           isAdmin: true,
         ),
       ],
+    ),
+  ];
+
+  // ── Support tickets ──────────────────────────────────────────────────────
+  static final List<MockSupportTicket> supportTickets = [
+    MockSupportTicket(
+      id: 'TKT-001',
+      subject: 'Parent portal login issues',
+      status: 'open',
+      priority: 'high',
+      category: 'Technical',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      assignee: 'Kiran Shetty',
+      description:
+          'Several parents reported unable to login to the parent portal.',
+    ),
+    MockSupportTicket(
+      id: 'TKT-002',
+      subject: 'Fee receipt not generated',
+      status: 'in_progress',
+      priority: 'medium',
+      category: 'Finance',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      assignee: 'Kiran Shetty',
+      description: 'Payment completed but receipt was not emailed.',
+    ),
+    MockSupportTicket(
+      id: 'TKT-003',
+      subject: 'Bus route change request',
+      status: 'awaiting_response',
+      priority: 'low',
+      category: 'Transport',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      description: 'Request to add a stop near Green Park colony.',
+    ),
+    MockSupportTicket(
+      id: 'TKT-004',
+      subject: 'Attendance marked incorrectly',
+      status: 'resolved',
+      priority: 'high',
+      category: 'Academic',
+      createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      assignee: 'Kiran Shetty',
+      description: 'Student was present but marked absent on 12th March.',
+    ),
+  ];
+
+  // ── Knowledge base articles ──────────────────────────────────────────────
+  static final List<MockKbArticle> kbArticles = [
+    const MockKbArticle(
+      id: 'kb001',
+      title: 'How to reset parent portal password',
+      category: 'Account & Login',
+      excerpt:
+          'Step-by-step guide to reset your password if you have forgotten it.',
+      body:
+          '1. Go to the login page and tap "Forgot Password".\n2. Enter your registered mobile number.\n3. You will receive an OTP. Enter it to verify.\n4. Set a new password (min 8 characters).\n5. Log in with the new password.',
+    ),
+    const MockKbArticle(
+      id: 'kb002',
+      title: 'Understanding fee installments',
+      category: 'Fees',
+      excerpt: 'How fee installments work and when payments are due.',
+      body:
+          'Fees are divided into 3–4 installments per academic year.\nEach installment has a due date. Late fees may apply after 7 days.\nYou can pay via the app (UPI/Card) or at the school counter.\nReceipts are generated automatically and sent via email.',
+    ),
+    const MockKbArticle(
+      id: 'kb003',
+      title: 'Bus tracking and route info',
+      category: 'Transport',
+      excerpt: 'Track your child\'s bus and view route details.',
+      body:
+          'Live tracking is available during school hours.\nGo to Bus in the bottom nav and select your child\'s route.\nYou can see estimated arrival time and bus location.\nFor route change requests, raise a complaint from the app.',
     ),
   ];
 
@@ -2486,6 +2606,7 @@ class MockData {
         checkInTime: '08:32 AM',
         checkOutTime: '04:45 PM',
         isWithinGeofence: true,
+        employeeId: 'EMP_2031',
       );
     },
   );
@@ -2496,6 +2617,7 @@ class MockData {
       id: 'ps_mar_2026',
       month: 'March 2026',
       basicPaise: 4500000,
+      employeeId: 'EMP_2031',
       hraPaise: 1800000,
       daPaise: 450000,
       allowancesPaise: 500000,
@@ -2508,6 +2630,7 @@ class MockData {
       id: 'ps_feb_2026',
       month: 'February 2026',
       basicPaise: 4500000,
+      employeeId: 'EMP_2031',
       hraPaise: 1800000,
       daPaise: 450000,
       allowancesPaise: 500000,
@@ -2520,6 +2643,7 @@ class MockData {
       id: 'ps_jan_2026',
       month: 'January 2026',
       basicPaise: 4500000,
+      employeeId: 'EMP_2031',
       hraPaise: 1800000,
       daPaise: 450000,
       allowancesPaise: 500000,
@@ -2540,6 +2664,7 @@ class MockData {
       hours: 6,
       venue: 'Regional Institute, Bengaluru',
       isCompleted: false,
+      employeeId: 'EMP_2031',
     ),
     MockTraining(
       id: 'tr002',
@@ -2550,6 +2675,7 @@ class MockData {
       venue: 'Online (Zoom)',
       isCompleted: true,
       certificateUrl: 'https://cert.example.com/tr002',
+      employeeId: 'EMP_2031',
     ),
     MockTraining(
       id: 'tr003',
@@ -2559,8 +2685,21 @@ class MockData {
       hours: 3,
       venue: 'School Auditorium',
       isCompleted: true,
+      employeeId: 'EMP_2031',
     ),
   ];
+
+  // ── Driver: stop → students (for boarding screen) ─────────────────────────
+  static final Map<String, List<String>> driverStopStudents = {
+    'Jayanagar 4th Block': [
+      'Arjun Kumar',
+      'Preethi Nair',
+      'Kiran Rao',
+      'Anjali Singh',
+    ],
+    'BTM Layout 2nd Stage': ['Ravi Shankar', 'Mohan Das', 'Sunil Kumar'],
+    'Koramangala 5th Block': ['Deepa Raj', 'Vikram Shetty', 'Lakshmi Bai'],
+  };
 
   // ── Bus stops for driver ──────────────────────────────────────────────────
   static final List<MockBusStop> busStops = [
@@ -2743,6 +2882,20 @@ class MockData {
       emergencyContact: 'Uma Shetty',
       emergencyPhone: '9600112235',
     ),
+    MockHostelStudent(
+      id: 'hs007',
+      name: 'Arjun Kumar',
+      roomNo: '204',
+      bedNo: 'A',
+      classSection: '8-A',
+      isPresent: true,
+      parentName: 'Suresh Kumar',
+      parentPhone: '9876543210',
+      bloodGroup: 'B+',
+      medicalNotes: null,
+      emergencyContact: 'Suresh Kumar',
+      emergencyPhone: '9876543210',
+    ),
   ];
 
   // ── Hostel outpass / leave requests ───────────────────────────────────────
@@ -2880,4 +3033,65 @@ class MockData {
       assignedTo: 'Admin Office',
     ),
   ];
+
+  // ── HOD mock data ──────────────────────────────────────────────────────────
+
+  /// HOD department (matches UserModel.hod "Kavitha Menon" → English dept)
+  static const String hodDepartment = 'English';
+
+  /// Staff leave requests pending HOD approval (department staff)
+  static final List<MockStaffLeaveRequest> staffLeaveRequests = [
+    MockStaffLeaveRequest(
+      id: 'slr001',
+      staffName: 'Deepa Nair',
+      staffId: 'st_dept_01',
+      department: 'English',
+      type: 'Casual Leave',
+      fromDate: DateTime.now().add(const Duration(days: 2)),
+      toDate: DateTime.now().add(const Duration(days: 4)),
+      workingDays: 3,
+      reason: 'Personal work',
+      status: 'pending',
+    ),
+    MockStaffLeaveRequest(
+      id: 'slr002',
+      staffName: 'Vijay Murthy',
+      staffId: 'st_dept_02',
+      department: 'English',
+      type: 'Sick Leave',
+      fromDate: DateTime.now(),
+      toDate: DateTime.now().add(const Duration(days: 1)),
+      workingDays: 2,
+      reason: 'Doctor appointment',
+      status: 'pending',
+    ),
+  ];
+}
+
+// ── HOD models ──────────────────────────────────────────────────────────────
+
+class MockStaffLeaveRequest {
+  const MockStaffLeaveRequest({
+    required this.id,
+    required this.staffName,
+    required this.staffId,
+    required this.department,
+    required this.type,
+    required this.fromDate,
+    required this.toDate,
+    required this.workingDays,
+    required this.reason,
+    required this.status,
+  });
+
+  final String id;
+  final String staffName;
+  final String staffId;
+  final String department;
+  final String type;
+  final DateTime fromDate;
+  final DateTime toDate;
+  final int workingDays;
+  final String reason;
+  final String status; // pending | approved | rejected
 }

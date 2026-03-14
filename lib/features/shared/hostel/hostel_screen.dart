@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/launch_utils.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
+import '../../../core/widgets/nc_empty_state.dart';
+import 'hostel_provider.dart';
 
-class HostelScreen extends StatelessWidget {
+class HostelScreen extends ConsumerWidget {
   const HostelScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myRoom = ref.watch(hostelMyRoomProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Hostel')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Hostel')),
       backgroundColor: Colors.transparent,
       body: DefaultTabController(
         length: 4,
@@ -32,101 +39,120 @@ class HostelScreen extends StatelessWidget {
               child: TabBarView(
                 children: [
                   // My Room
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Column(
-                      children: [
-                        NcCard(
-                          gradient: const LinearGradient(
-                            colors: AppColors.primaryGradient,
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                  myRoom == null
+                      ? const NcEmptyState(
+                          title: 'Not a hostel student',
+                          subtitle:
+                              'Hostel room information is available for enrolled students.',
+                          icon: Icons.night_shelter_outlined,
+                        )
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.all(AppSpacing.md),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Room 204 — Block A',
-                                style: AppTypography.headlineMedium.copyWith(
-                                  color: Colors.white,
+                              NcCard(
+                                gradient: const LinearGradient(
+                                  colors: AppColors.primaryGradient,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                              ),
-                              Text(
-                                '2nd Floor • 4-Sharing',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              Wrap(
-                                spacing: AppSpacing.xs,
-                                children:
-                                    ['Wi-Fi', 'AC', 'Attached Bath', 'Locker']
-                                        .map(
-                                          (f) => Chip(
-                                            label: Text(
-                                              f,
-                                              style: AppTypography.labelSmall
-                                                  .copyWith(
-                                                    color: Colors.white,
-                                                  ),
-                                            ),
-                                            backgroundColor: Colors.white
-                                                .withValues(alpha: 0.2),
-                                            padding: EdgeInsets.zero,
-                                            materialTapTargetSize:
-                                                MaterialTapTargetSize
-                                                    .shrinkWrap,
-                                          ),
-                                        )
-                                        .toList(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        _InfoGrid(),
-                        const SizedBox(height: AppSpacing.md),
-                        NcCard(
-                          child: Row(
-                            children: [
-                              const CircleAvatar(
-                                backgroundColor: AppColors.teal,
-                                child: Icon(Icons.person, color: Colors.white),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Devraj Hostel',
-                                      style: AppTypography.labelLarge,
+                                      'Room ${myRoom.roomNo} — Block ${_roomToBlock(myRoom.roomNo)}',
+                                      style: AppTypography.headlineMedium
+                                          .copyWith(color: Colors.white),
                                     ),
                                     Text(
-                                      'Hostel Warden',
+                                      'Bed ${myRoom.bedNo} • 4-Sharing',
                                       style: AppTypography.bodySmall.copyWith(
-                                        color: AppColors.textSecondary,
+                                        color: Colors.white70,
                                       ),
+                                    ),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Wrap(
+                                      spacing: AppSpacing.xs,
+                                      children:
+                                          [
+                                                'Wi-Fi',
+                                                'AC',
+                                                'Attached Bath',
+                                                'Locker',
+                                              ]
+                                              .map(
+                                                (f) => Chip(
+                                                  label: Text(
+                                                    f,
+                                                    style: AppTypography
+                                                        .labelSmall
+                                                        .copyWith(
+                                                          color: Colors.white,
+                                                        ),
+                                                  ),
+                                                  backgroundColor: Colors.white
+                                                      .withValues(alpha: 0.2),
+                                                  padding: EdgeInsets.zero,
+                                                  materialTapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                ),
+                                              )
+                                              .toList(),
                                     ),
                                   ],
                                 ),
                               ),
-                              TextButton.icon(
-                                onPressed: () => launchTel(
-                                  context,
-                                  phone: '9876543210',
-                                  fallbackSnackBar: 'Cannot launch dialer',
+                              const SizedBox(height: AppSpacing.md),
+                              _InfoGrid(roomNo: myRoom.roomNo),
+                              const SizedBox(height: AppSpacing.md),
+                              NcCard(
+                                child: Row(
+                                  children: [
+                                    const CircleAvatar(
+                                      backgroundColor: AppColors.teal,
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.sm),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Devraj Hostel',
+                                            style: AppTypography.labelLarge,
+                                          ),
+                                          Text(
+                                            'Hostel Warden',
+                                            style: AppTypography.bodySmall
+                                                .copyWith(
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () => launchTel(
+                                        context,
+                                        phone: '9876543210',
+                                        fallbackSnackBar:
+                                            'Cannot launch dialer',
+                                      ),
+                                      icon: const Icon(Icons.call, size: 16),
+                                      label: const Text('Call'),
+                                    ),
+                                  ],
                                 ),
-                                icon: const Icon(Icons.call, size: 16),
-                                label: const Text('Call'),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
 
                   // Mess
                   ListView.builder(
@@ -288,12 +314,30 @@ class HostelScreen extends StatelessWidget {
   }
 }
 
+String _roomToBlock(String roomNo) {
+  final n = int.tryParse(roomNo) ?? 0;
+  if (n >= 200 && n < 210) return 'A';
+  if (n >= 210 && n < 220) return 'B';
+  return 'A';
+}
+
 class _InfoGrid extends StatelessWidget {
+  const _InfoGrid({required this.roomNo});
+  final String roomNo;
+
   @override
   Widget build(BuildContext context) {
+    final f = int.tryParse(roomNo.isNotEmpty ? roomNo[0] : '2') ?? 2;
+    final floor = f == 1
+        ? '1st'
+        : f == 2
+        ? '2nd'
+        : f == 3
+        ? '3rd'
+        : '${f}th';
     final items = [
-      ('Floor', '2nd'),
-      ('Block', 'A'),
+      ('Floor', floor),
+      ('Block', _roomToBlock(roomNo)),
       ('Sharing', '4-Sharing'),
       ('Joined', 'Jun 2024'),
     ];

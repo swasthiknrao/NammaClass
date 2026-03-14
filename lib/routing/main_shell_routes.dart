@@ -34,6 +34,7 @@ import '../features/teacher/screens/my_students_screen.dart';
 import '../features/teacher/screens/teacher_home_screen.dart';
 import '../features/teacher/screens/teacher_leave_apply_screen.dart';
 import '../features/teacher/screens/teacher_leave_approvals_screen.dart';
+import '../features/hod/screens/hod_home_screen.dart';
 import '../features/main_shell.dart';
 import 'app_routes.dart';
 
@@ -187,6 +188,14 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       ),
       GoRoute(
         path: AppRoutes.adminProfile,
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.hodHome,
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, const HodHomeScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.hodProfile,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
       ),
       GoRoute(

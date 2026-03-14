@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
+import '../providers/parent_providers.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_empty_state.dart';
 import '../../../routing/app_routes.dart';
 
@@ -37,54 +39,60 @@ class _ParentLeaveStatusScreenState
     super.dispose();
   }
 
-  List<MockLeaveApplication> _filtered(String status) {
-    if (status == 'all') return MockData.leaveApplications;
-    return MockData.leaveApplications.where((l) => l.status == status).toList();
+  List<MockLeaveApplication> _filtered(
+    List<MockLeaveApplication> leaves,
+    String status,
+  ) {
+    if (status == 'all') return leaves;
+    return leaves.where((l) => l.status == status).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final pending = _filtered('pending').length;
+    final leaves = ref.watch(parentLeaveApplicationsProvider);
+    final pending = _filtered(leaves, 'pending').length;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Leave Status'),
-        bottom: TabBar(
-          controller: _tabs,
-          tabs: [
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Pending'),
-                  if (pending > 0) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$pending',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                        ),
-                      ),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Leave Status'),
+              bottom: TabBar(
+                controller: _tabs,
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Pending'),
+                        if (pending > 0) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '$pending',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
+                  const Tab(text: 'Approved'),
+                  const Tab(text: 'Rejected'),
+                  const Tab(text: 'All'),
                 ],
               ),
             ),
-            const Tab(text: 'Approved'),
-            const Tab(text: 'Rejected'),
-            const Tab(text: 'All'),
-          ],
-        ),
-      ),
       body: Column(
         children: [
           // Balance row
@@ -107,13 +115,13 @@ class _ParentLeaveStatusScreenState
               controller: _tabs,
               children: [
                 _LeaveList(
-                  _filtered('pending'),
+                  _filtered(leaves, 'pending'),
                   canCancel: true,
                   onCancel: _cancelLeave,
                 ),
-                _LeaveList(_filtered('approved')),
-                _LeaveList(_filtered('rejected')),
-                _LeaveList(_filtered('all')),
+                _LeaveList(_filtered(leaves, 'approved')),
+                _LeaveList(_filtered(leaves, 'rejected')),
+                _LeaveList(_filtered(leaves, 'all')),
               ],
             ),
           ),

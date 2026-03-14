@@ -9,6 +9,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_shimmer.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/staff_providers.dart';
 
 class StaffPayslipsScreen extends ConsumerStatefulWidget {
@@ -26,23 +27,22 @@ class _StaffPayslipsScreenState extends ConsumerState<StaffPayslipsScreen> {
   Widget build(BuildContext context) {
     final payslipsAsync = ref.watch(staffPayslipsProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payslips'),
-        actions: [
-          DropdownButton<String>(
-            value: _selectedYear,
-            underline: const SizedBox(),
-            items: [
-              '2026',
-              '2025',
-              '2024',
-              '2023',
-            ].map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
-            onChanged: (v) => setState(() => _selectedYear = v!),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-        ],
-      ),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Payslips'),
+              actions: [
+                DropdownButton<String>(
+                  value: _selectedYear,
+                  underline: const SizedBox(),
+                  items: ['2026', '2025', '2024', '2023']
+                      .map((y) => DropdownMenuItem(value: y, child: Text(y)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedYear = v!),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+            ),
       body: payslipsAsync.when(
         loading: () => const NcShimmerList(itemCount: 6),
         error: (e, _) => const Center(child: Text('Error loading payslips')),
@@ -162,18 +162,20 @@ class _PayslipDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(payslip.month),
-        actions: [
-          IconButton(
-            onPressed: () => ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Downloading PDF...'))),
-            icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Download PDF',
-          ),
-        ],
-      ),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: Text(payslip.month),
+              actions: [
+                IconButton(
+                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Downloading PDF...')),
+                  ),
+                  icon: const Icon(Icons.file_download_outlined),
+                  tooltip: 'Download PDF',
+                ),
+              ],
+            ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(

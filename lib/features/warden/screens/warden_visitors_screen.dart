@@ -9,10 +9,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/utils/launch_utils.dart';
 import '../../../core/widgets/nc_card.dart';
-import '../providers/warden_provider.dart';
-import '../providers/warden_provider.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/warden_provider.dart';
 
 class WardenVisitorsScreen extends ConsumerStatefulWidget {
@@ -75,7 +73,9 @@ class _WardenVisitorsScreenState extends ConsumerState<WardenVisitorsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Visitor Log')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Visitor Log')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showLogForm,
         icon: const Icon(Icons.person_add),

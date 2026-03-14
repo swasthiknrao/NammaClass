@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_empty_state.dart';
 import '../../../core/widgets/nc_shimmer.dart';
@@ -18,7 +19,9 @@ class LibraryScreen extends ConsumerWidget {
     final booksAsync = ref.watch(studentBooksProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Library')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Library')),
       backgroundColor: Colors.transparent,
       body: Column(
         children: [

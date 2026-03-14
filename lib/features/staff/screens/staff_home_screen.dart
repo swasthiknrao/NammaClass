@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../routing/app_routes.dart';
 
 class StaffHomeScreen extends ConsumerWidget {
@@ -16,29 +17,32 @@ class StaffHomeScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 120,
-            pinned: true,
-            backgroundColor: AppColors.teal,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                'Good Morning, Rajesh!',
-                style: AppTypography.titleMedium.copyWith(color: Colors.white),
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.teal,
-                      AppColors.teal.withValues(alpha: 0.7),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+          if (ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar != true)
+            SliverAppBar(
+              expandedHeight: 120,
+              pinned: true,
+              backgroundColor: AppColors.teal,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  'Good Morning, Rajesh!',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.teal,
+                        AppColors.teal.withValues(alpha: 0.7),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           SliverPadding(
             padding: const EdgeInsets.all(AppSpacing.lg),
             sliver: SliverList(

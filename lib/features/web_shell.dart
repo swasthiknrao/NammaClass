@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
+import '../core/utils/screen_size.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/theme/app_typography.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../core/models/user_model.dart';
 import '../core/widgets/nc_avatar.dart';
+import '../core/widgets/notification_icon_button.dart';
 import '../routing/app_routes.dart';
 
 class WebShell extends ConsumerStatefulWidget {
@@ -28,6 +30,12 @@ class _WebShellState extends ConsumerState<WebShell> {
     final user = ref.watch(currentUserProvider);
     final menuItems = _menuItemsFor(role);
     final currentPath = GoRouterState.of(context).uri.path;
+    final isMobile = ScreenSize.isMobile(context);
+
+    // Mobile: bottom nav instead of sidebar (like MainShell for other roles)
+    if (isMobile) {
+      return _buildMobileLayout(context, role, user, menuItems, currentPath);
+    }
 
     final sidebarWidth = _collapsed ? 64.0 : 240.0;
 
@@ -178,12 +186,8 @@ class _WebShellState extends ConsumerState<WebShell> {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.notifications_outlined,
-                          color: AppColors.textSecondary,
-                        ),
+                      const NotificationIconButton(
+                        iconColor: AppColors.textSecondary,
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       if (user != null)
@@ -219,6 +223,137 @@ class _WebShellState extends ConsumerState<WebShell> {
     );
   }
 
+  Widget _buildMobileLayout(
+    BuildContext context,
+    UserRole? role,
+    UserModel? user,
+    List<_MenuItem> menuItems,
+    String currentPath,
+  ) {
+    // Limit to 5 items for bottom nav; take the most relevant
+    final navItems = menuItems.length > 5
+        ? menuItems.take(5).toList()
+        : menuItems;
+    var selectedIndex = 0;
+    for (var i = 0; i < navItems.length; i++) {
+      if (currentPath.startsWith(navItems[i].route)) {
+        selectedIndex = i;
+        break;
+      }
+    }
+
+    final accentColor = _accentForRole(role);
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: [
+          // Compact top bar
+          Container(
+            height: 56,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.cardDark
+                : AppColors.card,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _titleFor(currentPath),
+                    style: AppTypography.headlineSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                InkWell(
+                  onTap: () => context.go(AppRoutes.search),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.search, size: 22),
+                  ),
+                ),
+                const NotificationIconButton(
+                  iconColor: AppColors.textSecondary,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                if (user != null)
+                  InkWell(
+                    onTap: () => _goToProfileForRole(context, role),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: NcAvatar(name: user.name, radius: 18),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(child: widget.child),
+        ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.cardDark
+                  : AppColors.card,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: NavigationBar(
+              height: 64,
+              selectedIndex: selectedIndex,
+              onDestinationSelected: (index) {
+                context.go(navItems[index].route);
+              },
+              destinations: navItems
+                  .map(
+                    (item) => NavigationDestination(
+                      icon: Icon(item.icon),
+                      label: item.label,
+                    ),
+                  )
+                  .toList(),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              indicatorColor: accentColor.withValues(alpha: 0.2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _goToProfileForRole(BuildContext context, UserRole? role) {
+    switch (role) {
+      case UserRole.hod:
+        context.go(AppRoutes.hodProfile);
+        break;
+      default:
+        context.go(AppRoutes.profile);
+        break;
+    }
+  }
+
+  Color _accentForRole(UserRole? role) {
+    switch (role) {
+      case UserRole.hod:
+        return AppColors.teal;
+      default:
+        return AppColors.primary;
+    }
+  }
+
   String _titleFor(String path) {
     const titles = {
       '/web/dashboard': 'Dashboard',
@@ -250,6 +385,11 @@ class _WebShellState extends ConsumerState<WebShell> {
       '/web/settings': 'Settings',
       '/web/ai': 'AI Tools',
       '/web/website': 'Website Manager',
+      '/web/support/dashboard': 'Support Dashboard',
+      '/web/support/tickets': 'Support Tickets',
+      '/web/support/complaints': 'Complaints',
+      '/web/support/kb': 'Knowledge Base',
+      '/web/accountant/dashboard': 'Finance Dashboard',
     };
     for (final entry in titles.entries) {
       if (path.startsWith(entry.key)) return entry.value;
@@ -272,7 +412,78 @@ class _WebShellState extends ConsumerState<WebShell> {
         ),
       ];
     }
-    // Admin / Principal / Teacher / Support — full menu
+    if (role == UserRole.support) {
+      return [
+        _MenuItem(
+          AppRoutes.webSupportDashboard,
+          'Dashboard',
+          Icons.dashboard_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webSupportTickets,
+          'Tickets',
+          Icons.confirmation_number_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webSupportComplaints,
+          'Complaints',
+          Icons.report_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webSupportKnowledgeBase,
+          'Knowledge Base',
+          Icons.menu_book_outlined,
+        ),
+      ];
+    }
+    if (role == UserRole.accountant) {
+      return [
+        _MenuItem(
+          AppRoutes.webAccountantDashboard,
+          'Dashboard',
+          Icons.dashboard_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webFeeCollect,
+          'Collect Fees',
+          Icons.point_of_sale_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webFinanceLedger,
+          'Finance Ledger',
+          Icons.account_balance_outlined,
+        ),
+      ];
+    }
+    if (role == UserRole.hod) {
+      return [
+        _MenuItem(AppRoutes.hodHome, 'My Home', Icons.home_outlined),
+        _MenuItem(
+          AppRoutes.webDashboard,
+          'Dashboard',
+          Icons.dashboard_outlined,
+        ),
+        _MenuItem(AppRoutes.webStudents, 'Students', Icons.people_outline),
+        _MenuItem(
+          AppRoutes.webTimetable,
+          'Timetable',
+          Icons.table_chart_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webReportCards,
+          'Report Cards',
+          Icons.grading_outlined,
+        ),
+        _MenuItem(AppRoutes.webMarksEntry, 'Marks Entry', Icons.grade_outlined),
+        _MenuItem(AppRoutes.webNotices, 'Notices', Icons.campaign_outlined),
+        _MenuItem(
+          AppRoutes.webAnalytics,
+          'Analytics',
+          Icons.bar_chart_outlined,
+        ),
+      ];
+    }
+    // Admin / Principal / Teacher / Super Admin — full menu
     return [
       _MenuItem(AppRoutes.webDashboard, 'Dashboard', Icons.dashboard_outlined),
       _MenuItem(

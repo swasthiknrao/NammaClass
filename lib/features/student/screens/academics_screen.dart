@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
@@ -8,6 +9,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../providers/student_providers.dart';
 
@@ -33,7 +35,9 @@ class AcademicsScreen extends ConsumerWidget {
     final attendanceAsync = ref.watch(studentAttendanceProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Academics')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Academics')),
       backgroundColor: Colors.transparent,
       body: DefaultTabController(
         length: 4,
@@ -833,6 +837,21 @@ class _ReportCardTile extends StatelessWidget {
 
 // ── Attendance tab: overall + per-subject (e.g. 10/13) ────────────────────────
 
+Color _attendanceStatusColor(String status) {
+  switch (status) {
+    case 'present':
+      return AppColors.success;
+    case 'absent':
+      return AppColors.error;
+    case 'leave':
+      return const Color(0xFF7D3C98);
+    case 'holiday':
+      return AppColors.warning;
+    default:
+      return AppColors.divider;
+  }
+}
+
 class _AttendanceTab extends StatelessWidget {
   const _AttendanceTab({
     required this.timetableAsync,
@@ -910,9 +929,54 @@ class _AttendanceTab extends StatelessWidget {
           );
         }).toList()..sort((a, b) => a.subject.compareTo(b.subject));
 
+        final eventMap = <DateTime, String>{};
+        for (final a in attendanceList) {
+          eventMap[DateTime(a.date.year, a.date.month, a.date.day)] = a.status;
+        }
+
         return ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
+            // Attendance heatmap calendar
+            NcCard(
+              padding: EdgeInsets.zero,
+              child: TableCalendar(
+                firstDay: DateTime.now().subtract(const Duration(days: 90)),
+                lastDay: DateTime.now().add(const Duration(days: 30)),
+                focusedDay: DateTime.now(),
+                calendarFormat: CalendarFormat.month,
+                availableCalendarFormats: const {
+                  CalendarFormat.month: 'Month',
+                  CalendarFormat.twoWeeks: '2 Weeks',
+                  CalendarFormat.week: 'Week',
+                },
+                calendarBuilders: CalendarBuilders(
+                  markerBuilder: (ctx, day, events) {
+                    final key = DateTime(day.year, day.month, day.day);
+                    final status = eventMap[key];
+                    if (status == null) return const SizedBox.shrink();
+                    final color = _attendanceStatusColor(status);
+                    return Positioned(
+                      bottom: 4,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                headerStyle: HeaderStyle(
+                  formatButtonVisible: true,
+                  titleCentered: true,
+                  titleTextStyle: AppTypography.headlineSmall,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
             // Overall card: "22/26 days"
             NcCard(
               padding: const EdgeInsets.all(AppSpacing.lg),

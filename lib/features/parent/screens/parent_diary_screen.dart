@@ -8,6 +8,7 @@ import '../../../core/utils/extensions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_shimmer.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/parent_providers.dart';
 
 class ParentDiaryScreen extends ConsumerWidget {
@@ -18,7 +19,9 @@ class ParentDiaryScreen extends ConsumerWidget {
     final diaryAsync = ref.watch(parentDiaryProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Daily Diary & Homework')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Daily Diary & Homework')),
       backgroundColor: Colors.transparent,
       body: diaryAsync.when(
         loading: () =>

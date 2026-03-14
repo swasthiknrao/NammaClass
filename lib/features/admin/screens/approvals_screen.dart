@@ -7,6 +7,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../providers/admin_providers.dart';
@@ -19,7 +20,9 @@ class ApprovalsScreen extends ConsumerWidget {
     final approvalsAsync = ref.watch(adminApprovalsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Approvals')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Approvals')),
       backgroundColor: Colors.transparent,
       body: approvalsAsync.when(
         loading: () =>

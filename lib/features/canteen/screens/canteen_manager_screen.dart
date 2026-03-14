@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 
 /// Canteen manager — menu, combos, subscriptions, online payments.
 class CanteenManagerScreen extends ConsumerStatefulWidget {

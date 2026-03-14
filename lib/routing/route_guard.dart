@@ -8,12 +8,13 @@ const _rolePrefixMap = {
   '/parent/': {UserRole.parent},
   '/teacher/': {UserRole.teacher},
   '/student/': {UserRole.student},
-  '/admin/': {UserRole.admin, UserRole.principal},
+  '/admin/': {UserRole.admin, UserRole.principal, UserRole.hod},
   '/staff/': {UserRole.staff, UserRole.teacher},
   '/driver/': {UserRole.driver},
   '/librarian/': {UserRole.librarian},
   '/warden/': {UserRole.warden},
   '/canteen/': {UserRole.canteenStaff},
+  '/hod/': {UserRole.hod},
   '/web/': {
     UserRole.admin,
     UserRole.principal,
@@ -21,6 +22,7 @@ const _rolePrefixMap = {
     UserRole.teacher,
     UserRole.librarian,
     UserRole.support,
+    UserRole.hod,
   },
 };
 
@@ -70,6 +72,16 @@ String? routeGuard(String path, AuthState authState) {
   return null;
 }
 
+/// Mobile home for hod; null for other roles.
+String? mobileHomeForExecRole(UserRole? role) {
+  switch (role) {
+    case UserRole.hod:
+      return AppRoutes.hodHome;
+    default:
+      return null;
+  }
+}
+
 String _roleHome(UserRole? role) {
   switch (role) {
     case UserRole.parent:
@@ -80,8 +92,11 @@ String _roleHome(UserRole? role) {
       return AppRoutes.studentHome;
     case UserRole.admin:
     case UserRole.principal:
-    case UserRole.accountant:
       return AppRoutes.adminHome;
+    case UserRole.accountant:
+      return AppRoutes.webAccountantDashboard;
+    case UserRole.support:
+      return AppRoutes.webSupportDashboard;
     case UserRole.staff:
       return AppRoutes.staffHome;
     case UserRole.driver:
@@ -92,7 +107,8 @@ String _roleHome(UserRole? role) {
       return AppRoutes.wardenHome;
     case UserRole.canteenStaff:
       return AppRoutes.canteenCounter;
-    case UserRole.support:
+    case UserRole.hod:
+      return AppRoutes.webDashboard;
     case null:
       return AppRoutes.login;
   }

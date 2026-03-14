@@ -31,7 +31,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootKey,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
-    redirect: (context, state) => routeGuard(state.uri.path, authState),
+    redirect: (context, state) {
+      final path = state.uri.path;
+      var result = routeGuard(path, authState);
+      if (result != null &&
+          (result == AppRoutes.webDashboard ||
+              result == AppRoutes.webMarksEntry)) {
+        final mobileHome = mobileHomeForExecRole(authState.role);
+        if (mobileHome != null && MediaQuery.sizeOf(context).width < 600) {
+          result = mobileHome;
+        }
+      }
+      return result;
+    },
     routes: [
       ...authRoutes,
       ...mainShellRoutes(_shellKey),

@@ -8,6 +8,7 @@ import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_input.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 
 class BroadcastScreen extends ConsumerStatefulWidget {
   const BroadcastScreen({super.key});
@@ -42,7 +43,9 @@ class _BroadcastScreenState extends ConsumerState<BroadcastScreen> {
         : _audiences.length * 350;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Broadcast Message')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Broadcast Message')),
       backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.md),

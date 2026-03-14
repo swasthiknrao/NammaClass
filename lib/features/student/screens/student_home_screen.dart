@@ -11,6 +11,8 @@ import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_async_error.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
+import '../../../core/widgets/notification_icon_button.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../routing/app_routes.dart';
@@ -41,97 +43,90 @@ class StudentHomeScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 120,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.teal, AppColors.primary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      AppSpacing.md,
-                      AppSpacing.md,
-                      0,
+          if (ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar != true)
+            SliverAppBar(
+              expandedHeight: 120,
+              pinned: true,
+              backgroundColor: AppColors.primary,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.teal, AppColors.primary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Hello, ${(user?.name ?? 'Student').split(' ').first}!',
-                                style: AppTypography.headlineMedium.copyWith(
+                  ),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md,
+                        AppSpacing.md,
+                        AppSpacing.md,
+                        0,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Hello, ${(user?.name ?? 'Student').split(' ').first}!',
+                                  style: AppTypography.headlineMedium.copyWith(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  'Class ${user?.classSection ?? '8-A'}',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Wallet chip
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.account_balance_wallet,
                                   color: Colors.white,
+                                  size: 16,
                                 ),
-                              ),
-                              Text(
-                                'Class ${user?.classSection ?? '8-A'}',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: Colors.white70,
+                                const SizedBox(width: 4),
+                                Text(
+                                  '₹350',
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        // Wallet chip
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                          const SizedBox(width: AppSpacing.xs),
+                          NcAvatar(
+                            name: user?.name ?? 'S',
+                            radius: 18,
+                            showBorder: true,
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.account_balance_wallet,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '₹350',
-                                style: AppTypography.labelMedium.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        NcAvatar(
-                          name: user?.name ?? 'S',
-                          radius: 18,
-                          showBorder: true,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
+              actions: [const NotificationIconButton(iconColor: Colors.white)],
             ),
-            actions: [
-              IconButton(
-                onPressed: () => context.go(AppRoutes.notifications),
-                icon: const Icon(
-                  Icons.notifications_outlined,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
 
           SliverToBoxAdapter(
             child: Padding(
@@ -225,50 +220,6 @@ class StudentHomeScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Food / Canteen quick access
-                  NcCard(
-                    onTap: () => context.go(AppRoutes.studentCanteen),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.restaurant,
-                            color: AppColors.success,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Canteen & Food',
-                                style: AppTypography.titleSmall,
-                              ),
-                              Text(
-                                'Order meals, view combos, manage subscription',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: AppColors.textSecondary,
-                        ),
-                      ],
-                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
 

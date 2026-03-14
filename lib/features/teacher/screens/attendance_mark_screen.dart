@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_avatar.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../providers/teacher_providers.dart';
 
@@ -24,7 +25,9 @@ class AttendanceMarkScreen extends ConsumerWidget {
     final absentCount = state.records.values.where((v) => v == 'A').length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mark Attendance')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Mark Attendance')),
       backgroundColor: Colors.transparent,
       body: Column(
         children: [

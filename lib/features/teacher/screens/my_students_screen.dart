@@ -6,6 +6,7 @@ import '../../../core/utils/launch_utils.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_avatar.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_bottom_sheet.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_shimmer.dart';
@@ -21,7 +22,9 @@ class MyStudentsScreen extends ConsumerWidget {
     final classes = ['8-A', '8-B', '9-A', '9-B', '10-A'];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Students')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('My Students')),
       backgroundColor: Colors.transparent,
       body: Column(
         children: [

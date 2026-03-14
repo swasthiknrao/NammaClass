@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
+import '../providers/driver_provider.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_avatar.dart';
@@ -20,20 +22,10 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
   bool _showQrOverlay = false;
   String? _scannedStudentName;
 
-  final _stopGroups = {
-    'Jayanagar 4th Block': [
-      'Arjun Kumar',
-      'Preethi Nair',
-      'Kiran Rao',
-      'Anjali Singh',
-    ],
-    'BTM Layout 2nd Stage': ['Ravi Shankar', 'Mohan Das', 'Sunil Kumar'],
-    'Koramangala 5th Block': ['Deepa Raj', 'Vikram Shetty', 'Lakshmi Bai'],
-  };
-
-  int get _boardedCount => _boarded.values.where((v) => v).length;
-  int get _totalCount =>
-      _stopGroups.values.fold(0, (sum, list) => sum + list.length);
+  int _boardedCount(Map<String, List<String>> stopGroups) =>
+      _boarded.values.where((v) => v).length;
+  int _totalCount(Map<String, List<String>> stopGroups) =>
+      stopGroups.values.fold(0, (sum, list) => sum + list.length);
 
   void _toggleBoarded(String name) {
     setState(() => _boarded[name] = !(_boarded[name] ?? false));
@@ -50,14 +42,14 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
     });
   }
 
-  void _submit() {
+  void _submit(Map<String, List<String>> stopGroups) {
+    final bc = _boardedCount(stopGroups);
+    final tc = _totalCount(stopGroups);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Submit Boarding Report'),
-        content: Text(
-          '$_boardedCount of $_totalCount students boarded. Submit?',
-        ),
+        content: Text('$bc of $tc students boarded. Submit?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -82,46 +74,49 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final stopGroups = ref.watch(driverStopStudentsProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Student Boarding'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          TextButton.icon(
-            onPressed: () => showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text(
-                  'SOS',
-                  style: TextStyle(color: AppColors.error),
-                ),
-                content: const Text('Send emergency alert?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Cancel'),
-                  ),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                    ),
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Send SOS'),
-                  ),
-                ],
-              ),
-            ),
-            style: TextButton.styleFrom(
-              backgroundColor: AppColors.error,
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Student Boarding'),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
+              actions: [
+                TextButton.icon(
+                  onPressed: () => showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text(
+                        'SOS',
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                      content: const Text('Send emergency alert?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                          ),
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Send SOS'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.emergency, size: 18),
+                  label: const Text('SOS'),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
             ),
-            icon: const Icon(Icons.emergency, size: 18),
-            label: const Text('SOS'),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-        ],
-      ),
       body: Stack(
         children: [
           Column(
@@ -164,10 +159,10 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: _stopGroups.length,
+                  itemCount: stopGroups.length,
                   itemBuilder: (_, i) {
-                    final stopName = _stopGroups.keys.elementAt(i);
-                    final students = _stopGroups.values.elementAt(i);
+                    final stopName = stopGroups.keys.elementAt(i);
+                    final students = stopGroups.values.elementAt(i);
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -276,14 +271,14 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Boarded: $_boardedCount / $_totalCount students',
+                      'Boarded: ${_boardedCount(stopGroups)} / ${_totalCount(stopGroups)} students',
                       style: AppTypography.titleSmall.copyWith(
                         color: AppColors.primary,
                       ),
                     ),
                   ),
                   FilledButton(
-                    onPressed: _submit,
+                    onPressed: () => _submit(stopGroups),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.accent,
                     ),

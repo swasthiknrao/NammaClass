@@ -63,6 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       UserRole.warden: UserModel.warden,
       UserRole.canteenStaff: UserModel.canteenStaff,
       UserRole.accountant: UserModel.accountant,
+      UserRole.hod: UserModel.hod,
     };
     ref.read(authProvider.notifier).loginAs(users[role]!);
   }
@@ -231,6 +232,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   icon: Icons.support_agent,
                   color: Colors.purple,
                   onTap: () => _loginDemo(UserRole.support),
+                ),
+                _DemoButton(
+                  label: 'HOD',
+                  icon: Icons.work_outline,
+                  color: Colors.teal,
+                  onTap: () => _loginDemo(UserRole.hod),
                 ),
               ],
             ),

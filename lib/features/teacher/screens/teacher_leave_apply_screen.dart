@@ -9,6 +9,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_input.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 
 class TeacherLeaveApplyScreen extends ConsumerStatefulWidget {
   const TeacherLeaveApplyScreen({super.key});
@@ -109,7 +110,9 @@ class _TeacherLeaveApplyScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Apply Leave')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Apply Leave')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Form(

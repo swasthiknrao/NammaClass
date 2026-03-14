@@ -89,6 +89,10 @@ class AppRoutes {
   static const String canteenManage = '/canteen/manage';
   static const String canteenProfile = '/canteen/profile';
 
+  // ── HOD (mobile-first) ───────────────────────────────────────────────────────
+  static const String hodHome = '/hod/home';
+  static const String hodProfile = '/hod/profile';
+
   // ── Shared Food/Canteen (for student, staff, parent) ──────────────────────
   static const String foodMenu = '/food';
 
@@ -141,4 +145,13 @@ class AppRoutes {
   static const String webUserManagement = '/web/settings/users';
   static const String webIntegrations = '/web/settings/integrations';
   static const String webSecurityLog = '/web/settings/security-log';
+
+  // ── Support Portal ─────────────────────────────────────────────────────────
+  static const String webSupportDashboard = '/web/support/dashboard';
+  static const String webSupportTickets = '/web/support/tickets';
+  static const String webSupportComplaints = '/web/support/complaints';
+  static const String webSupportKnowledgeBase = '/web/support/kb';
+
+  // ── Accountant Portal ──────────────────────────────────────────────────────
+  static const String webAccountantDashboard = '/web/accountant/dashboard';
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/mock/mock_data.dart';
+import '../../../core/utils/screen_size.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -27,44 +28,105 @@ class _WebMarksEntryScreenState extends State<WebMarksEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ScreenSize.isMobile(context);
+
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: EdgeInsets.all(isMobile ? AppSpacing.sm : AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              DropdownButton<String>(
-                value: '8-A',
-                items: ['8-A', '8-B', '9-A']
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (_) {},
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              DropdownButton<String>(
-                value: 'Term 1',
-                items: ['Term 1', 'Term 2', 'Term 3']
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                    .toList(),
-                onChanged: (_) {},
-              ),
-              const Spacer(),
-              OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.upload_file, size: 16),
-                label: const Text('Import Excel'),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              NcPrimaryButton(
-                label: 'Save Marks',
-                icon: Icons.save,
-                onPressed: () => ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Marks saved!'))),
-              ),
-            ],
-          ),
+          isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        DropdownButton<String>(
+                          value: '8-A',
+                          items: ['8-A', '8-B', '9-A']
+                              .map(
+                                (c) =>
+                                    DropdownMenuItem(value: c, child: Text(c)),
+                              )
+                              .toList(),
+                          onChanged: (_) {},
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        DropdownButton<String>(
+                          value: 'Term 1',
+                          items: ['Term 1', 'Term 2', 'Term 3']
+                              .map(
+                                (t) =>
+                                    DropdownMenuItem(value: t, child: Text(t)),
+                              )
+                              .toList(),
+                          onChanged: (_) {},
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {},
+                            icon: const Icon(Icons.upload_file, size: 16),
+                            label: Text(isMobile ? 'Import' : 'Import Excel'),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: NcPrimaryButton(
+                            label: 'Save Marks',
+                            icon: Icons.save,
+                            onPressed: () =>
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Marks saved!')),
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    DropdownButton<String>(
+                      value: '8-A',
+                      items: ['8-A', '8-B', '9-A']
+                          .map(
+                            (c) => DropdownMenuItem(value: c, child: Text(c)),
+                          )
+                          .toList(),
+                      onChanged: (_) {},
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    DropdownButton<String>(
+                      value: 'Term 1',
+                      items: ['Term 1', 'Term 2', 'Term 3']
+                          .map(
+                            (t) => DropdownMenuItem(value: t, child: Text(t)),
+                          )
+                          .toList(),
+                      onChanged: (_) {},
+                    ),
+                    const Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.upload_file, size: 16),
+                      label: const Text('Import Excel'),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    NcPrimaryButton(
+                      label: 'Save Marks',
+                      icon: Icons.save,
+                      onPressed: () =>
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Marks saved!')),
+                          ),
+                    ),
+                  ],
+                ),
           const SizedBox(height: AppSpacing.md),
           Expanded(
             child: NcCard(

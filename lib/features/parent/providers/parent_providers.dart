@@ -1,11 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/models/user_model.dart';
 import '../../../core/mock/mock_data.dart';
+import '../../auth/providers/auth_provider.dart';
 
 // ── Parent providers ────────────────────────────────────────────────────────────
 
 final parentChildProvider = Provider<MockStudent>((ref) {
-  return MockData.students.first;
+  final user = ref.watch(currentUserProvider);
+  if (user == null || user.role != UserRole.parent) {
+    return MockData.students.first;
+  }
+  final match = MockData.students.where(
+    (s) => s.parentPhone == user.phone || s.parentName == user.name,
+  );
+  return match.isNotEmpty ? match.first : MockData.students.first;
+});
+
+final parentLeaveApplicationsProvider = Provider<List<MockLeaveApplication>>((
+  ref,
+) {
+  final child = ref.watch(parentChildProvider);
+  return MockData.leaveApplications
+      .where((l) => l.childName == child.name)
+      .toList();
 });
 
 final parentTimetableProvider = FutureProvider<Map<String, List<MockPeriod>>>((

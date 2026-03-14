@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/parent_providers.dart';
 
 class ChatThreadScreen extends ConsumerWidget {
@@ -21,32 +22,38 @@ class ChatThreadScreen extends ConsumerWidget {
         .firstOrNull;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              thread?.teacherName ?? 'Chat',
-              style: AppTypography.headlineSmall.copyWith(color: Colors.white),
-            ),
-            if (thread != null)
-              Text(
-                thread.teacherSubject,
-                style: AppTypography.bodySmall.copyWith(color: Colors.white70),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    thread?.teacherName ?? 'Chat',
+                    style: AppTypography.headlineSmall.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (thread != null)
+                    Text(
+                      thread.teacherSubject,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.white70,
+                      ),
+                    ),
+                ],
               ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            onPressed: () => launchTel(
-              context,
-              phone: '9876543210',
-              fallbackSnackBar: 'Cannot launch dialer',
+              actions: [
+                IconButton(
+                  onPressed: () => launchTel(
+                    context,
+                    phone: '9876543210',
+                    fallbackSnackBar: 'Cannot launch dialer',
+                  ),
+                  icon: const Icon(Icons.call_outlined, color: Colors.white),
+                ),
+              ],
             ),
-            icon: const Icon(Icons.call_outlined, color: Colors.white),
-          ),
-        ],
-      ),
       backgroundColor: Colors.transparent,
       body: Column(
         children: [

@@ -9,6 +9,7 @@ import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_empty_state.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 
 class TeacherLeaveApprovalsScreen extends ConsumerStatefulWidget {
   const TeacherLeaveApprovalsScreen({super.key});
@@ -120,12 +121,14 @@ class _TeacherLeaveApprovalsScreenState
         )
         .toList();
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Leave Requests'),
-        actions: [
-          TextButton(onPressed: () {}, child: const Text('View History')),
-        ],
-      ),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Leave Requests'),
+              actions: [
+                TextButton(onPressed: () {}, child: const Text('View History')),
+              ],
+            ),
       body: remaining.isEmpty
           ? const NcEmptyState(
               title: 'No pending leave requests',

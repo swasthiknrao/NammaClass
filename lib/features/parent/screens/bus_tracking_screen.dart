@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 
 class BusTrackingScreen extends StatelessWidget {
   const BusTrackingScreen({super.key});
@@ -15,7 +16,9 @@ class BusTrackingScreen extends StatelessWidget {
     final bus = MockData.busInfo;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Live Bus Tracking')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Live Bus Tracking')),
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [

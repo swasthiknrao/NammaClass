@@ -6,6 +6,7 @@ class AppColors {
 
   // Primary brand
   static const Color primary = Color(0xFF1B4F72);
+  static const Color primaryDark = Color(0xFF163A57); // ~15% darker
   static const Color accent = Color(0xFFE67E22);
   static const Color success = Color(0xFF1E8449);
   static const Color teal = Color(0xFF117A65);
@@ -42,6 +43,23 @@ class AppColors {
   static const List<Color> accentGradient = [accent, Color(0xFFF39C12)];
   static const List<Color> successGradient = [success, teal];
   static const List<Color> errorGradient = [error, Color(0xFFCB4335)];
+
+  // Shadow definitions (Phase 4A)
+  static BoxShadow get shadowSm => BoxShadow(
+    color: Colors.black.withValues(alpha: 0.08),
+    blurRadius: 8,
+    offset: const Offset(0, 2),
+  );
+  static BoxShadow get shadowMd => BoxShadow(
+    color: Colors.black.withValues(alpha: 0.12),
+    blurRadius: 16,
+    offset: const Offset(0, 4),
+  );
+  static BoxShadow get shadowLg => BoxShadow(
+    color: Colors.black.withValues(alpha: 0.16),
+    blurRadius: 32,
+    offset: const Offset(0, 8),
+  );
 
   // Dark theme variants
   static const Color backgroundDark = Color(0xFF121212);

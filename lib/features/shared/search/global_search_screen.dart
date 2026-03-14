@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_empty_state.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 
 class GlobalSearchScreen extends ConsumerStatefulWidget {
   const GlobalSearchScreen({super.key});
@@ -92,31 +93,33 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
   Widget build(BuildContext context) {
     final results = _search(_query);
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _ctrl,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'Search students, staff, notices…',
-            border: InputBorder.none,
-            hintStyle: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: TextField(
+                controller: _ctrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search students, staff, notices…',
+                  border: InputBorder.none,
+                  hintStyle: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                style: AppTypography.bodyLarge,
+                onChanged: (v) => setState(() => _query = v),
+              ),
+              actions: [
+                if (_query.isNotEmpty)
+                  IconButton(
+                    onPressed: () {
+                      setState(() => _query = '');
+                      _ctrl.clear();
+                    },
+                    icon: const Icon(Icons.close),
+                  ),
+              ],
             ),
-          ),
-          style: AppTypography.bodyLarge,
-          onChanged: (v) => setState(() => _query = v),
-        ),
-        actions: [
-          if (_query.isNotEmpty)
-            IconButton(
-              onPressed: () {
-                setState(() => _query = '');
-                _ctrl.clear();
-              },
-              icon: const Icon(Icons.close),
-            ),
-        ],
-      ),
       body: _query.length < 2
           ? _RecentSearches(
               searches: _recentSearches,

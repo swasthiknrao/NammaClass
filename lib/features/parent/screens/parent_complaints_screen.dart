@@ -10,6 +10,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_empty_state.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../routing/app_routes.dart';
 
 class ParentComplaintsScreen extends ConsumerWidget {
@@ -195,7 +196,9 @@ class _ComplaintThreadScreenState extends State<_ComplaintThreadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('#${widget.complaint.ticketId}')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: Text('#${widget.complaint.ticketId}')),
       body: Column(
         children: [
           // Complaint summary

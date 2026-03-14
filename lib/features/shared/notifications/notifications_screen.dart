@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_empty_state.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import 'notification_service.dart';
 import 'notices_for_user_provider.dart';
 
@@ -15,7 +16,9 @@ class NotificationsScreen extends ConsumerWidget {
   void _markOrDismiss(WidgetRef ref, String noticeId, List notices) {
     if (noticeId.startsWith('lib_overdue_')) {
       final issueId = noticeId.replaceFirst('lib_overdue_', '');
-      ref.read(libraryOverdueDismissedProvider.notifier).update((s) => {...s, issueId});
+      ref
+          .read(libraryOverdueDismissedProvider.notifier)
+          .update((s) => {...s, issueId});
     } else {
       ref.read(notificationServiceProvider.notifier).markAsRead(noticeId);
     }
@@ -28,8 +31,9 @@ class NotificationsScreen extends ConsumerWidget {
         .map((n) => n.id.toString().replaceFirst('lib_overdue_', ''))
         .toList();
     if (libIds.isNotEmpty) {
-      ref.read(libraryOverdueDismissedProvider.notifier).update(
-          (s) => {...s, ...libIds});
+      ref
+          .read(libraryOverdueDismissedProvider.notifier)
+          .update((s) => {...s, ...libIds});
     }
   }
 
@@ -38,19 +42,21 @@ class NotificationsScreen extends ConsumerWidget {
     final notices = ref.watch(noticesForCurrentUserProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        actions: [
-          if (notices.isNotEmpty)
-            TextButton(
-              onPressed: () => _markAllRead(ref, notices),
-              child: const Text(
-                'Mark all read',
-                style: TextStyle(color: Colors.white),
-              ),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Notifications'),
+              actions: [
+                if (notices.isNotEmpty)
+                  TextButton(
+                    onPressed: () => _markAllRead(ref, notices),
+                    child: const Text(
+                      'Mark all read',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
       backgroundColor: Colors.transparent,
       body: notices.isEmpty
           ? const NcEmptyState(

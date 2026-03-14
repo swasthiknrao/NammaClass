@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_bottom_sheet.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../providers/parent_providers.dart';
 
@@ -20,7 +21,9 @@ class ParentAttendanceScreen extends ConsumerWidget {
     final attendanceAsync = ref.watch(parentAttendanceProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Attendance')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Attendance')),
       backgroundColor: Colors.transparent,
       body: attendanceAsync.when(
         loading: () =>

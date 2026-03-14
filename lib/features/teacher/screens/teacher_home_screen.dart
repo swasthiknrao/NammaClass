@@ -9,6 +9,8 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
+import '../../../core/widgets/notification_icon_button.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../routing/app_routes.dart';
 
@@ -26,78 +28,71 @@ class TeacherHomeScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 130,
-            floating: true,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: AppColors.primaryGradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      AppSpacing.md,
-                      AppSpacing.md,
-                      0,
+          if (ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar != true)
+            SliverAppBar(
+              expandedHeight: 130,
+              floating: true,
+              pinned: true,
+              backgroundColor: AppColors.primary,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: AppColors.primaryGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Good morning!',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: Colors.white70,
+                  ),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md,
+                        AppSpacing.md,
+                        AppSpacing.md,
+                        0,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Good morning!',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: Colors.white70,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                user?.name ?? 'Teacher',
-                                style: AppTypography.headlineLarge.copyWith(
-                                  color: Colors.white,
+                                Text(
+                                  user?.name ?? 'Teacher',
+                                  style: AppTypography.headlineLarge.copyWith(
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                user?.classSection != null
-                                    ? 'Class Teacher — ${user!.classSection}'
-                                    : 'Teacher',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: Colors.white60,
+                                Text(
+                                  user?.classSection != null
+                                      ? 'Class Teacher — ${user!.classSection}'
+                                      : 'Teacher',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: Colors.white60,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        NcAvatar(
-                          name: user?.name ?? 'T',
-                          radius: 22,
-                          showBorder: true,
-                        ),
-                      ],
+                          NcAvatar(
+                            name: user?.name ?? 'T',
+                            radius: 22,
+                            showBorder: true,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
+              actions: [const NotificationIconButton(iconColor: Colors.white)],
             ),
-            actions: [
-              IconButton(
-                onPressed: () => context.go(AppRoutes.notifications),
-                icon: const Icon(
-                  Icons.notifications_outlined,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
 
           SliverToBoxAdapter(
             child: Padding(

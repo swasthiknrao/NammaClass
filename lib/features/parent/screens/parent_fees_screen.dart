@@ -8,6 +8,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../providers/parent_providers.dart';
 
@@ -19,7 +20,9 @@ class ParentFeesScreen extends ConsumerWidget {
     final feesAsync = ref.watch(parentFeesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Fees & Payment')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Fees & Payment')),
       backgroundColor: Colors.transparent,
       body: feesAsync.when(
         loading: () =>

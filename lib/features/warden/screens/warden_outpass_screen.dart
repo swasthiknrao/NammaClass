@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/launch_utils.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/warden_provider.dart';
 
 /// Outpass / leave requests — approve, reject, track.
@@ -15,7 +16,8 @@ class WardenOutpassScreen extends ConsumerStatefulWidget {
   const WardenOutpassScreen({super.key});
 
   @override
-  ConsumerState<WardenOutpassScreen> createState() => _WardenOutpassScreenState();
+  ConsumerState<WardenOutpassScreen> createState() =>
+      _WardenOutpassScreenState();
 }
 
 class _WardenOutpassScreenState extends ConsumerState<WardenOutpassScreen>
@@ -49,9 +51,9 @@ class _WardenOutpassScreenState extends ConsumerState<WardenOutpassScreen>
 
   void _reject(MockHostelOutpass op) {
     setState(() => op.status = 'rejected');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Outpass rejected')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Outpass rejected')));
   }
 
   @override
@@ -61,16 +63,18 @@ class _WardenOutpassScreenState extends ConsumerState<WardenOutpassScreen>
     final other = outpasses.where((o) => o.status != 'pending').toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Outpass & Leave'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: 'Pending (${pending.length})'),
-            const Tab(text: 'History'),
-          ],
-        ),
-      ),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: const Text('Outpass & Leave'),
+              bottom: TabBar(
+                controller: _tabController,
+                tabs: [
+                  Tab(text: 'Pending (${pending.length})'),
+                  const Tab(text: 'History'),
+                ],
+              ),
+            ),
       body: TabBarView(
         controller: _tabController,
         children: [
@@ -79,7 +83,11 @@ class _WardenOutpassScreenState extends ConsumerState<WardenOutpassScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle, size: 48, color: AppColors.success.withValues(alpha: 0.5)),
+                      Icon(
+                        Icons.check_circle,
+                        size: 48,
+                        color: AppColors.success.withValues(alpha: 0.5),
+                      ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
                         'No pending requests',
@@ -165,7 +173,11 @@ class _OutpassCard extends StatelessWidget {
                   color: AppColors.teal.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.event_busy, color: AppColors.teal, size: 22),
+                child: const Icon(
+                  Icons.event_busy,
+                  color: AppColors.teal,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
@@ -185,16 +197,24 @@ class _OutpassCard extends StatelessWidget {
               if (showActions) ...[
                 TextButton(
                   onPressed: onReject,
-                  child: Text('Reject', style: TextStyle(color: AppColors.error)),
+                  child: Text(
+                    'Reject',
+                    style: TextStyle(color: AppColors.error),
+                  ),
                 ),
                 FilledButton(
                   onPressed: onApprove,
-                  style: FilledButton.styleFrom(backgroundColor: AppColors.success),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                  ),
                   child: const Text('Approve'),
                 ),
               ] else
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isApproved
                         ? AppColors.success.withValues(alpha: 0.15)
@@ -235,7 +255,9 @@ class _OutpassCard extends StatelessWidget {
                       fallbackSnackBar: 'Cannot call',
                     ),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppColors.success.withValues(alpha: 0.15),
+                      backgroundColor: AppColors.success.withValues(
+                        alpha: 0.15,
+                      ),
                       padding: const EdgeInsets.all(6),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,

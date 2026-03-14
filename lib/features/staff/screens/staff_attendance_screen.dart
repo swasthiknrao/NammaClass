@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/staff_providers.dart';
 
 class StaffAttendanceScreen extends ConsumerStatefulWidget {
@@ -42,7 +43,9 @@ class _StaffAttendanceScreenState extends ConsumerState<StaffAttendanceScreen> {
   Widget build(BuildContext context) {
     final attendanceAsync = ref.watch(staffAttendanceProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('My Attendance')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('My Attendance')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(

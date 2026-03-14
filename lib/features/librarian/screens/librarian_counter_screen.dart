@@ -8,16 +8,19 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/library_provider.dart';
 
 class LibrarianCounterScreen extends ConsumerStatefulWidget {
   const LibrarianCounterScreen({super.key});
 
   @override
-  ConsumerState<LibrarianCounterScreen> createState() => _LibrarianCounterScreenState();
+  ConsumerState<LibrarianCounterScreen> createState() =>
+      _LibrarianCounterScreenState();
 }
 
-class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen> {
+class _LibrarianCounterScreenState
+    extends ConsumerState<LibrarianCounterScreen> {
   String _mode = 'Issue';
   LibraryBorrowerInfo? _borrower;
   MockBook? _selectedBook;
@@ -52,7 +55,8 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
         }
       } else {
         _borrower = null;
-        _lookupError = 'Borrower not found. Try student ID, roll no, or staff ID.';
+        _lookupError =
+            'Borrower not found. Try student ID, roll no, or staff ID.';
       }
     });
   }
@@ -112,8 +116,8 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
     }
 
     final issued = issuedCountForBook(book.accessionOrId, issues);
-    final canIssue = book.format == BookFormat.softcopy ||
-        issued < book.totalCopies;
+    final canIssue =
+        book.format == BookFormat.softcopy || issued < book.totalCopies;
     if (!canIssue) {
       setState(() {
         _selectedBook = null;
@@ -163,9 +167,7 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
     ref.read(libraryBookIssuesProvider.notifier).addIssue(issue);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          'Issued! Return by: ${AppFormatters.shortDate(dueDate)}',
-        ),
+        content: Text('Issued! Return by: ${AppFormatters.shortDate(dueDate)}'),
         backgroundColor: AppColors.success,
       ),
     );
@@ -213,15 +215,19 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
       borrowerType: _scannedIssue!.borrowerType,
       borrowerId: _scannedIssue!.borrowerId,
     );
-    ref.read(libraryBookIssuesProvider.notifier).replaceAll(
-      ref.read(libraryBookIssuesProvider).map((i) {
-        if (i.id == _scannedIssue!.id) return updated;
-        return i;
-      }).toList(),
-    );
+    ref
+        .read(libraryBookIssuesProvider.notifier)
+        .replaceAll(
+          ref.read(libraryBookIssuesProvider).map((i) {
+            if (i.id == _scannedIssue!.id) return updated;
+            return i;
+          }).toList(),
+        );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Renewed! New due date: ${AppFormatters.shortDate(newDue)}'),
+        content: Text(
+          'Renewed! New due date: ${AppFormatters.shortDate(newDue)}',
+        ),
         backgroundColor: AppColors.success,
       ),
     );
@@ -243,17 +249,22 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
     final issues = ref.watch(libraryBookIssuesProvider);
     final today = DateTime.now();
     final issuedToday = issues
-        .where((i) =>
-            i.issueDate.year == today.year &&
-            i.issueDate.month == today.month &&
-            i.issueDate.day == today.day)
+        .where(
+          (i) =>
+              i.issueDate.year == today.year &&
+              i.issueDate.month == today.month &&
+              i.issueDate.day == today.day,
+        )
         .length;
     final overdueCount = issues.where((i) => i.isOverdue).length;
-    final finesTotal =
-        issues.where((i) => i.isOverdue).fold<int>(0, (s, i) => s + i.finePaise);
+    final finesTotal = issues
+        .where((i) => i.isOverdue)
+        .fold<int>(0, (s, i) => s + i.finePaise);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Library Counter')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Library Counter')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -264,7 +275,11 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                 _StatChip('Issued Today', '$issuedToday', AppColors.primary),
                 _StatChip('Active', '${issues.length}', AppColors.teal),
                 _StatChip('Overdue', '$overdueCount', AppColors.error),
-                _StatChip('Fines', AppFormatters.formatPaise(finesTotal), AppColors.warning),
+                _StatChip(
+                  'Fines',
+                  AppFormatters.formatPaise(finesTotal),
+                  AppColors.warning,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -305,8 +320,8 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                         Text(
                           _mode == 'Issue'
                               ? _borrower == null
-                                  ? 'Scan student/staff card'
-                                  : 'Scan book barcode'
+                                    ? 'Scan student/staff card'
+                                    : 'Scan book barcode'
                               : 'Scan book barcode',
                           style: AppTypography.bodyMedium.copyWith(
                             color: AppColors.primary,
@@ -361,10 +376,7 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
-                  FilledButton(
-                    onPressed: _onBookGo,
-                    child: const Text('Go'),
-                  ),
+                  FilledButton(onPressed: _onBookGo, child: const Text('Go')),
                 ],
               ),
             ] else
@@ -405,7 +417,10 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(_borrower!.name, style: AppTypography.titleSmall),
+                            Text(
+                              _borrower!.name,
+                              style: AppTypography.titleSmall,
+                            ),
                             Text(
                               '${_borrower!.info}  ·  ${_borrower!.currentIssuesCount} issued  ·  ${_borrower!.hasOverdue ? "Overdue" : "No fines"}',
                               style: AppTypography.bodySmall.copyWith(
@@ -427,7 +442,10 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                     children: [
                       Row(
                         children: [
-                          Text(_selectedBook!.title, style: AppTypography.titleSmall),
+                          Text(
+                            _selectedBook!.title,
+                            style: AppTypography.titleSmall,
+                          ),
                           const SizedBox(width: AppSpacing.xs),
                           if (_selectedBook!.format == BookFormat.softcopy)
                             Container(
@@ -463,7 +481,9 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _borrower!.canBorrow ? _confirmIssue : null,
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.deepPurple),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.deepPurple,
+                      ),
                       child: Text(
                         _borrower!.canBorrow
                             ? 'Issue Book'
@@ -475,12 +495,16 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
               ],
             ],
 
-            if ((_mode == 'Return' || _mode == 'Renew') && _scannedIssue != null) ...[
+            if ((_mode == 'Return' || _mode == 'Renew') &&
+                _scannedIssue != null) ...[
               NcCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_scannedIssue!.bookTitle, style: AppTypography.titleSmall),
+                    Text(
+                      _scannedIssue!.bookTitle,
+                      style: AppTypography.titleSmall,
+                    ),
                     Text(
                       'Borrower: ${_scannedIssue!.borrowerName} | ${_scannedIssue!.borrowerInfo}',
                       style: AppTypography.bodySmall.copyWith(
@@ -503,7 +527,11 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.warning_amber, color: AppColors.error, size: 14),
+                            const Icon(
+                              Icons.warning_amber,
+                              color: AppColors.error,
+                              size: 14,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Overdue | Fine: ${AppFormatters.formatPaise(_scannedIssue!.finePaise)}',
@@ -521,7 +549,9 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: _confirmReturn,
-                          style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.teal,
+                          ),
                           child: const Text('Confirm Return'),
                         ),
                       )
@@ -530,7 +560,9 @@ class _LibrarianCounterScreenState extends ConsumerState<LibrarianCounterScreen>
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: _confirmRenew,
-                          style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                          ),
                           child: const Text('Renew (+14 days)'),
                         ),
                       ),
@@ -593,15 +625,52 @@ class _ScanFramePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     const cornerLen = 20.0;
     const margin = 24.0;
-    final rect = Rect.fromLTRB(margin, margin, size.width - margin, size.height - margin);
-    canvas.drawLine(Offset(rect.left, rect.top), Offset(rect.left + cornerLen, rect.top), paint);
-    canvas.drawLine(Offset(rect.left, rect.top), Offset(rect.left, rect.top + cornerLen), paint);
-    canvas.drawLine(Offset(rect.right, rect.top), Offset(rect.right - cornerLen, rect.top), paint);
-    canvas.drawLine(Offset(rect.right, rect.top), Offset(rect.right, rect.top + cornerLen), paint);
-    canvas.drawLine(Offset(rect.left, rect.bottom), Offset(rect.left + cornerLen, rect.bottom), paint);
-    canvas.drawLine(Offset(rect.left, rect.bottom), Offset(rect.left, rect.bottom - cornerLen), paint);
-    canvas.drawLine(Offset(rect.right, rect.bottom), Offset(rect.right - cornerLen, rect.bottom), paint);
-    canvas.drawLine(Offset(rect.right, rect.bottom), Offset(rect.right, rect.bottom - cornerLen), paint);
+    final rect = Rect.fromLTRB(
+      margin,
+      margin,
+      size.width - margin,
+      size.height - margin,
+    );
+    canvas.drawLine(
+      Offset(rect.left, rect.top),
+      Offset(rect.left + cornerLen, rect.top),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(rect.left, rect.top),
+      Offset(rect.left, rect.top + cornerLen),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(rect.right, rect.top),
+      Offset(rect.right - cornerLen, rect.top),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(rect.right, rect.top),
+      Offset(rect.right, rect.top + cornerLen),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(rect.left, rect.bottom),
+      Offset(rect.left + cornerLen, rect.bottom),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(rect.left, rect.bottom),
+      Offset(rect.left, rect.bottom - cornerLen),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(rect.right, rect.bottom),
+      Offset(rect.right - cornerLen, rect.bottom),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(rect.right, rect.bottom),
+      Offset(rect.right, rect.bottom - cornerLen),
+      paint,
+    );
   }
 
   @override

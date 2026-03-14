@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_input.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../routing/app_routes.dart';
 
 class ParentComplaintNewScreen extends ConsumerStatefulWidget {
@@ -135,7 +136,9 @@ class _ParentComplaintNewScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Raise Complaint')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Raise Complaint')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Form(

@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../routing/app_routes.dart';
 
 /// Warden dashboard: today's overview, quick stats, pending tasks.
@@ -21,11 +22,14 @@ class WardenHomeScreen extends StatelessWidget {
     final activeVisitors = visitors.where((v) => v.checkOutTime == null).length;
     final absentCount = students.where((s) => !s.isPresent).length;
     final presentCount = students.length - absentCount;
-    final pendingOutpasses =
-        outpasses.where((o) => o.status == 'pending').length;
+    final pendingOutpasses = outpasses
+        .where((o) => o.status == 'pending')
+        .length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hostel Dashboard')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Hostel Dashboard')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(

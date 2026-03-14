@@ -1,4 +1,5 @@
 /// NammaClass user roles — covers all 12 portal personas.
+/// Extended with HOD per mission brief.
 enum UserRole {
   parent,
   teacher,
@@ -13,6 +14,8 @@ enum UserRole {
   librarian,
   warden,
   canteenStaff,
+  // Mission brief roles
+  hod,
 }
 
 /// Core user model used across all roles.
@@ -69,6 +72,8 @@ class UserModel {
         return 'Warden';
       case UserRole.canteenStaff:
         return 'Canteen Staff';
+      case UserRole.hod:
+        return 'HOD';
     }
   }
 
@@ -219,5 +224,16 @@ class UserModel {
     email: 'anita.rao@vidyashree.edu.in',
     schoolId: 'SCH_001',
     employeeId: 'ACC_001',
+  );
+
+  static const hod = UserModel(
+    id: 'usr_hod_001',
+    name: 'Kavitha Menon',
+    role: UserRole.hod,
+    phone: '9880005555',
+    email: 'hod@vidyashree.edu.in',
+    schoolId: 'SCH_001',
+    employeeId: 'HOD_001',
+    classSection: '8-A',
   );
 }

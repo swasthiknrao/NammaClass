@@ -35,6 +35,11 @@ import '../features/web/students/web_students_screen.dart';
 import '../features/web/transport/web_transport_live_screen.dart';
 import '../features/web/transport/web_transport_routes_screen.dart';
 import '../features/web/website/web_website_manager_screen.dart';
+import '../features/web/accountant/web_accountant_dashboard_screen.dart';
+import '../features/web/support/web_support_complaints_screen.dart';
+import '../features/web/support/web_support_dashboard_screen.dart';
+import '../features/web/support/web_support_knowledge_base_screen.dart';
+import '../features/web/support/web_support_tickets_screen.dart';
 import '../features/web_shell.dart';
 import 'app_routes.dart';
 
@@ -198,6 +203,33 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
         path: AppRoutes.webSecurityLog,
         pageBuilder: (c, s) =>
             fadeSlideTransition(c, s, WebSecurityLogScreen()),
+      ),
+      // Support portal
+      GoRoute(
+        path: AppRoutes.webSupportDashboard,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, WebSupportDashboardScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webSupportTickets,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, WebSupportTicketsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webSupportComplaints,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, WebSupportComplaintsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webSupportKnowledgeBase,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, WebSupportKnowledgeBaseScreen()),
+      ),
+      // Accountant portal
+      GoRoute(
+        path: AppRoutes.webAccountantDashboard,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, WebAccountantDashboardScreen()),
       ),
     ],
   ),

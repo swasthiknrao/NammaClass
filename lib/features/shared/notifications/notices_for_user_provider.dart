@@ -7,8 +7,7 @@ import '../../../features/librarian/providers/library_provider.dart';
 import 'notification_service.dart';
 
 /// Issue IDs that the user has dismissed from library overdue notices.
-final libraryOverdueDismissedProvider =
-    StateProvider<Set<String>>((ref) => {});
+final libraryOverdueDismissedProvider = StateProvider<Set<String>>((ref) => {});
 
 /// Borrower IDs for the current user (from MockData students/staff by name).
 String? _currentUserBorrowerId(String? userName) {
@@ -44,25 +43,36 @@ final noticesForCurrentUserProvider = Provider<List<MockNotice>>((ref) {
   for (final i in issues) {
     if (!i.isOverdue) continue;
     if (dismissed.contains(i.id)) continue;
-    final matches = (borrowerId != null && i.borrowerId == borrowerId) ||
+    final matches =
+        (borrowerId != null && i.borrowerId == borrowerId) ||
         (userName != null && i.studentName == userName);
     if (matches) {
-      overdueNotices.add(MockNotice(
-        id: 'lib_overdue_${i.id}',
-        title: 'Library book overdue: ${i.bookTitle}',
-        body:
-            'Please return "${i.bookTitle}" (${i.bookAccession}). '
-            'Due date was ${i.dueDate.day}/${i.dueDate.month}/${i.dueDate.year}. '
-            'Fine: ${AppFormatters.formatPaise(i.finePaise)}',
-        date: i.dueDate,
-        category: 'Library',
-        isRead: false,
-        targetUserId: borrowerId ?? userName,
-      ));
+      overdueNotices.add(
+        MockNotice(
+          id: 'lib_overdue_${i.id}',
+          title: 'Library book overdue: ${i.bookTitle}',
+          body:
+              'Please return "${i.bookTitle}" (${i.bookAccession}). '
+              'Due date was ${i.dueDate.day}/${i.dueDate.month}/${i.dueDate.year}. '
+              'Fine: ${AppFormatters.formatPaise(i.finePaise)}',
+          date: i.dueDate,
+          category: 'Library',
+          isRead: false,
+          targetUserId: borrowerId ?? userName,
+        ),
+      );
     }
   }
 
   final merged = [...filtered, ...overdueNotices];
   merged.sort((a, b) => b.date.compareTo(a.date));
   return merged;
+});
+
+/// Unread notice count for the current user (for nav badge).
+final unreadNoticeCountForUserProvider = Provider<int>((ref) {
+  return ref
+      .watch(noticesForCurrentUserProvider)
+      .where((n) => !n.isRead)
+      .length;
 });

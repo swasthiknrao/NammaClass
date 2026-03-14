@@ -6,9 +6,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/screen_size.dart';
 import '../../../core/widgets/nc_async_error.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_shimmer.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
+import '../../../features/auth/providers/auth_provider.dart';
 import '../../../routing/app_routes.dart';
 import '../providers/admin_providers.dart';
 
@@ -20,9 +23,44 @@ class AdminDashScreen extends ConsumerWidget {
     final kpisAsync = ref.watch(adminDashboardKpisProvider);
     final approvalsAsync = ref.watch(adminApprovalsProvider);
     final studentsAsync = ref.watch(adminStudentsProvider);
+    final user = ref.watch(currentUserProvider);
+    final isDesktop = ScreenSize.isDesktop(context);
+    final isTablet = ScreenSize.isTablet(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: Text(
+                user != null
+                    ? 'Hello, ${user.name.split(' ').first}'
+                    : 'Dashboard',
+              ),
+              actions: [
+                if (user != null)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          user.roleLabel,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
       backgroundColor: Colors.transparent,
       body: kpisAsync.when(
         loading: () =>
@@ -34,38 +72,114 @@ class AdminDashScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // KPI horizontal scroll strip
-              SizedBox(
-                height: 90,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _KpiCard(
-                      'Students',
-                      '${kpis['totalStudents']}',
-                      Icons.people,
-                      AppColors.primary,
+              // KPI grid: 4 cols desktop, 2 tablet, scroll mobile
+              LayoutBuilder(
+                builder: (ctx, constraints) {
+                  if (isDesktop) {
+                    return GridView.count(
+                      crossAxisCount: 4,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: AppSpacing.sm,
+                      crossAxisSpacing: AppSpacing.sm,
+                      childAspectRatio: 1.8,
+                      children: [
+                        _KpiCard(
+                          'Students',
+                          '${kpis['totalStudents']}',
+                          Icons.people,
+                          AppColors.primary,
+                        ),
+                        _KpiCard(
+                          'Present',
+                          '${kpis['presentToday']}',
+                          Icons.check_circle,
+                          AppColors.success,
+                        ),
+                        _KpiCard(
+                          'Absent',
+                          '${kpis['absentToday']}',
+                          Icons.cancel,
+                          AppColors.error,
+                        ),
+                        _KpiCard(
+                          'Staff',
+                          '${kpis['totalStaff']}',
+                          Icons.badge,
+                          AppColors.teal,
+                        ),
+                      ],
+                    );
+                  }
+                  if (isTablet) {
+                    return GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: AppSpacing.sm,
+                      crossAxisSpacing: AppSpacing.sm,
+                      childAspectRatio: 2.2,
+                      children: [
+                        _KpiCard(
+                          'Students',
+                          '${kpis['totalStudents']}',
+                          Icons.people,
+                          AppColors.primary,
+                        ),
+                        _KpiCard(
+                          'Present',
+                          '${kpis['presentToday']}',
+                          Icons.check_circle,
+                          AppColors.success,
+                        ),
+                        _KpiCard(
+                          'Absent',
+                          '${kpis['absentToday']}',
+                          Icons.cancel,
+                          AppColors.error,
+                        ),
+                        _KpiCard(
+                          'Staff',
+                          '${kpis['totalStaff']}',
+                          Icons.badge,
+                          AppColors.teal,
+                        ),
+                      ],
+                    );
+                  }
+                  return SizedBox(
+                    height: 100,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _KpiCard(
+                          'Students',
+                          '${kpis['totalStudents']}',
+                          Icons.people,
+                          AppColors.primary,
+                        ),
+                        _KpiCard(
+                          'Present',
+                          '${kpis['presentToday']}',
+                          Icons.check_circle,
+                          AppColors.success,
+                        ),
+                        _KpiCard(
+                          'Absent',
+                          '${kpis['absentToday']}',
+                          Icons.cancel,
+                          AppColors.error,
+                        ),
+                        _KpiCard(
+                          'Staff',
+                          '${kpis['totalStaff']}',
+                          Icons.badge,
+                          AppColors.teal,
+                        ),
+                      ],
                     ),
-                    _KpiCard(
-                      'Present',
-                      '${kpis['presentToday']}',
-                      Icons.check_circle,
-                      AppColors.success,
-                    ),
-                    _KpiCard(
-                      'Absent',
-                      '${kpis['absentToday']}',
-                      Icons.cancel,
-                      AppColors.error,
-                    ),
-                    _KpiCard(
-                      'Staff',
-                      '${kpis['totalStaff']}',
-                      Icons.badge,
-                      AppColors.teal,
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 

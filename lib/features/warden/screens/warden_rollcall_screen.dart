@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/launch_utils.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 
 class WardenRollcallScreen extends ConsumerStatefulWidget {
   const WardenRollcallScreen({super.key});
@@ -192,18 +193,18 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
-                    const Icon(Icons.medical_services,
-                        size: 18, color: AppColors.warning),
+                    const Icon(
+                      Icons.medical_services,
+                      size: 18,
+                      color: AppColors.warning,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Text('Medical', style: AppTypography.labelMedium),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 NcCard(
-                  child: Text(
-                    s.medicalNotes!,
-                    style: AppTypography.bodySmall,
-                  ),
+                  child: Text(s.medicalNotes!, style: AppTypography.bodySmall),
                 ),
               ],
               const SizedBox(height: AppSpacing.lg),
@@ -288,7 +289,9 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     return Scaffold(
-      appBar: AppBar(title: const Text('Evening Roll Call')),
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(title: const Text('Evening Roll Call')),
       body: Column(
         children: [
           // Roll call info + block selector
@@ -443,14 +446,21 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
                                     spacing: AppSpacing.xs,
                                     runSpacing: AppSpacing.xs,
                                     children: _reasonPresets
-                                        .map((r) => ActionChip(
-                                              label: Text(r, style: const TextStyle(fontSize: 12)),
-                                              onPressed: () {
-                                                s.absentReason = r;
-                                                _reasonCtrls[s.id]?.text = r;
-                                                setState(() {});
-                                              },
-                                            ))
+                                        .map(
+                                          (r) => ActionChip(
+                                            label: Text(
+                                              r,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              s.absentReason = r;
+                                              _reasonCtrls[s.id]?.text = r;
+                                              setState(() {});
+                                            },
+                                          ),
+                                        )
                                         .toList(),
                                   ),
                                   const SizedBox(height: AppSpacing.xs),
@@ -468,15 +478,24 @@ class _WardenRollcallScreenState extends ConsumerState<WardenRollcallScreen> {
                                           maxLength: 200,
                                         ),
                                       ),
-                                      if (s.parentPhone != null && s.parentPhone!.length >= 10) ...[
+                                      if (s.parentPhone != null &&
+                                          s.parentPhone!.length >= 10) ...[
                                         const SizedBox(width: AppSpacing.xs),
                                         FilledButton.icon(
-                                          onPressed: () => launchTel(context, phone: s.parentPhone!),
-                                          icon: const Icon(Icons.phone, size: 18),
+                                          onPressed: () => launchTel(
+                                            context,
+                                            phone: s.parentPhone!,
+                                          ),
+                                          icon: const Icon(
+                                            Icons.phone,
+                                            size: 18,
+                                          ),
                                           label: const Text('Call Parent'),
                                           style: FilledButton.styleFrom(
                                             backgroundColor: AppColors.success,
-                                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                            ),
                                           ),
                                         ),
                                       ],

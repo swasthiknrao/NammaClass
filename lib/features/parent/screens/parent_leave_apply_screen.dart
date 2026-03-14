@@ -11,6 +11,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_input.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
 import '../providers/parent_providers.dart';
 import '../../../routing/app_routes.dart';
 

@@ -37,7 +37,7 @@ class _WebUserManagementScreenState
     _User(
       'Suresh Kumar',
       'suresh@vidyashree.edu.in',
-      'Super Admin',
+      'Principal',
       '2026-03-05 09:12',
       'Active',
     ),
@@ -92,7 +92,6 @@ class _WebUserManagementScreenState
   ];
 
   static const _roles = [
-    ('Super Admin', ['All Modules']),
     ('Principal', ['Dashboard', 'Academics', 'HR', 'Reports', 'Analytics']),
     ('Accountant', ['Fees & Finance', 'Reports']),
     ('Librarian', ['Library']),
@@ -447,7 +446,7 @@ class _RolesTab extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: roles.map((role) {
-          final isSuperAdmin = role.$1 == 'Super Admin';
+          final hasFullAccess = role.$2.contains('All Modules');
           return ExpansionTile(
             title: Text(role.$1, style: AppTypography.titleSmall),
             subtitle: Text(
@@ -456,7 +455,7 @@ class _RolesTab extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
             ),
-            trailing: isSuperAdmin
+            trailing: hasFullAccess
                 ? const NcChip(label: 'Full Access', color: AppColors.success)
                 : null,
             children: [
@@ -492,7 +491,7 @@ class _RolesTab extends StatelessWidget {
                     ),
                     ...modules.map((m) {
                       final hasAccess =
-                          isSuperAdmin ||
+                          hasFullAccess ||
                           role.$2.contains(m) ||
                           role.$2.contains('All Modules');
                       return Padding(
