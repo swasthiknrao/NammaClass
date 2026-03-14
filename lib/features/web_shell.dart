@@ -356,6 +356,7 @@ class _WebShellState extends ConsumerState<WebShell> {
 
   String _titleFor(String path) {
     const titles = {
+      '/web/hod-home': 'Home',
       '/web/dashboard': 'Dashboard',
       '/web/analytics': 'Analytics',
       '/web/admissions': 'Admissions',
@@ -457,7 +458,7 @@ class _WebShellState extends ConsumerState<WebShell> {
     }
     if (role == UserRole.hod) {
       return [
-        _MenuItem(AppRoutes.hodHome, 'My Home', Icons.home_outlined),
+        _MenuItem(AppRoutes.webHodHome, 'My Home', Icons.home_outlined),
         _MenuItem(
           AppRoutes.webDashboard,
           'Dashboard',

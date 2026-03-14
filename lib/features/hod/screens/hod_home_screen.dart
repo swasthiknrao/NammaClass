@@ -104,7 +104,7 @@ class HodHomeScreen extends ConsumerWidget {
                 children: [
                   // Horizontal stat chips (different from Exam Controller)
                   SizedBox(
-                    height: 100,
+                    height: 108,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
@@ -162,62 +162,14 @@ class HodHomeScreen extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.lg),
                   ],
 
-                  // Students by class — bar style
+                  // Students by class — GitHub streaks style
                   _SectionHeader('Students by Class', onSeeAll: null),
                   const SizedBox(height: AppSpacing.sm),
                   NcCard(
                     padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Column(
-                      children: classes.take(6).map((c) {
-                        final count = classCounts[c] ?? 0;
-                        final maxCount = classCounts.values.isEmpty
-                            ? 1
-                            : classCounts.values.reduce(
-                                (a, b) => a > b ? a : b,
-                              );
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 56,
-                                child: Text(
-                                  c,
-                                  style: AppTypography.labelSmall.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: count / maxCount,
-                                    minHeight: 20,
-                                    backgroundColor: AppColors.teal.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      c == classes.first
-                                          ? AppColors.teal
-                                          : AppColors.teal.withValues(
-                                              alpha: 0.6,
-                                            ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Text(
-                                '$count',
-                                style: AppTypography.labelMedium.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                    child: _StudentsByClassStreaksGrid(
+                      classes: classes.take(6).toList(),
+                      classCounts: classCounts,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -387,21 +339,26 @@ class _HodStatChip extends StatelessWidget {
       child: SizedBox(
         width: 120,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: AppSpacing.xs),
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: AppSpacing.xxs),
             Text(
               value,
-              style: AppTypography.titleMedium.copyWith(
+              style: AppTypography.titleSmall.copyWith(
                 fontWeight: FontWeight.w700,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
             Text(
               label,
-              style: AppTypography.bodySmall.copyWith(
+              style: AppTypography.labelSmall.copyWith(
                 color: AppColors.textSecondary,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ],
         ),
@@ -464,6 +421,82 @@ class _LeaveRequestCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// GitHub-style contribution grid for students by class.
+class _StudentsByClassStreaksGrid extends StatelessWidget {
+  const _StudentsByClassStreaksGrid({
+    required this.classes,
+    required this.classCounts,
+  });
+
+  final List<String> classes;
+  final Map<String, int> classCounts;
+
+  static const int _gridColumns = 12;
+  static const double _cellSize = 12;
+  static const double _cellGap = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: classes.map((c) {
+        final count = classCounts[c] ?? 0;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 48,
+                child: Text(
+                  c,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              SizedBox(
+                width: (_cellSize + _cellGap) * _gridColumns - _cellGap,
+                height: _cellSize + 2,
+                child: Wrap(
+                  spacing: _cellGap,
+                  runSpacing: _cellGap,
+                  children: List.generate(_gridColumns, (i) {
+                    final isFilled = i < count;
+                    // GitHub contribution-style: empty = light, filled = darker shades
+                    final color = isFilled
+                        ? AppColors.teal
+                        : AppColors.teal.withValues(alpha: 0.1);
+                    return Container(
+                      width: _cellSize,
+                      height: _cellSize,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              SizedBox(
+                width: 20,
+                child: Text(
+                  '$count',
+                  style: AppTypography.labelMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

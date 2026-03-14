@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/mock/mock_data.dart';
 import '../../../core/utils/launch_utils.dart';
+import '../../../core/utils/screen_size.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -14,168 +15,259 @@ class BusTrackingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bus = MockData.busInfo;
+    final isDesktop = ScreenSize.isDesktop(context);
 
     return Scaffold(
       appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
           ? null
           : AppBar(title: const Text('Live Bus Tracking')),
       backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          // Map placeholder
-          CustomPaint(
-            size: Size(
-              MediaQuery.sizeOf(context).width,
-              MediaQuery.sizeOf(context).height * 0.6,
-            ),
-            painter: _MapPainter(),
-          ),
+      body: isDesktop
+          ? _DesktopBusLayout(bus: bus)
+          : _MobileBusLayout(bus: bus),
+    );
+  }
+}
 
-          // Draggable info sheet
-          DraggableScrollableSheet(
-            initialChildSize: 0.45,
-            minChildSize: 0.3,
-            maxChildSize: 0.85,
-            builder: (ctx, scrollCtrl) => Container(
-              decoration: const BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 12)],
+// ── Desktop: side-by-side layout ───────────────────────────────────────────────
+
+class _DesktopBusLayout extends StatelessWidget {
+  const _DesktopBusLayout({required this.bus});
+  final Map<String, dynamic> bus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(flex: 7, child: _MapArea()),
+        Container(
+          width: 380,
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(-4, 0),
               ),
-              child: ListView(
-                controller: scrollCtrl,
-                padding: const EdgeInsets.all(AppSpacing.md),
-                children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.divider,
-                        borderRadius: BorderRadius.circular(2),
+            ],
+          ),
+          child: _InfoCardsPanel(bus: bus),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoCardsPanel extends StatelessWidget {
+  const _InfoCardsPanel({required this.bus});
+  final Map<String, dynamic> bus;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      children: [
+        _RouteEtaCard(bus: bus),
+        const SizedBox(height: AppSpacing.md),
+        _DriverCard(bus: bus),
+        const SizedBox(height: AppSpacing.md),
+        _SosButton(),
+      ],
+    );
+  }
+}
+
+class _RouteEtaCard extends StatelessWidget {
+  const _RouteEtaCard({required this.bus});
+  final Map<String, dynamic> bus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {},
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1B4F72), Color(0xFF117A65)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.35),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.directions_bus_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      bus['route'] as String,
+                      style: AppTypography.titleMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // ETA card
-                  NcCard(
-                    gradient: const LinearGradient(
-                      colors: AppColors.primaryGradient,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                    const SizedBox(height: 2),
+                    Text(
+                      bus['busNumber'] as String,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.white70,
+                      ),
                     ),
-                    child: Row(
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
-                        const Icon(
-                          Icons.directions_bus,
-                          color: Colors.white,
-                          size: 40,
+                        Icon(
+                          Icons.location_on_rounded,
+                          size: 16,
+                          color: Colors.white.withValues(alpha: 0.9),
                         ),
-                        const SizedBox(width: AppSpacing.md),
+                        const SizedBox(width: 6),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                bus['route'] as String,
-                                style: AppTypography.labelLarge.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                bus['busNumber'] as String,
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              Text(
-                                'Next: ${bus['nextStop']}',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Next: ${bus['nextStop']}',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: Colors.white.withValues(alpha: 0.95),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Column(
-                          children: [
-                            Text(
-                              '${bus['etaMinutes']}',
-                              style: AppTypography.displayMedium.copyWith(
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              'min',
-                              style: AppTypography.bodySmall.copyWith(
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ],
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Driver info
-                  NcCard(
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                          backgroundColor: AppColors.teal,
-                          child: Icon(Icons.person, color: Colors.white),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                bus['driverName'] as String,
-                                style: AppTypography.labelLarge,
-                              ),
-                              Text(
-                                'Driver',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => launchTel(
-                            context,
-                            phone:
-                                bus['driverPhone'] as String? ?? '9876543210',
-                            fallbackSnackBar: 'Cannot launch dialer',
-                          ),
-                          icon: const Icon(Icons.call, size: 16),
-                          label: const Text('Call'),
-                        ),
-                      ],
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${bus['etaMinutes']}',
+                    style: AppTypography.headlineLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // SOS
-                  FilledButton.icon(
-                    onPressed: () => launchTel(
-                      context,
-                      phone: '112',
-                      fallbackSnackBar: 'Cannot launch emergency dialer',
-                    ),
-                    icon: const Icon(Icons.emergency),
-                    label: const Text('SOS Emergency'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      minimumSize: const Size(double.infinity, 48),
+                  Text(
+                    'min',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: Colors.white70,
                     ),
                   ),
                 ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DriverCard extends StatelessWidget {
+  const _DriverCard({required this.bus});
+  final Map<String, dynamic> bus;
+
+  @override
+  Widget build(BuildContext context) {
+    return NcCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: AppColors.teal.withValues(alpha: 0.15),
+            child: Text(
+              (bus['driverName'] as String).substring(0, 1),
+              style: AppTypography.headlineSmall.copyWith(
+                color: AppColors.teal,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  bus['driverName'] as String,
+                  style: AppTypography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Driver',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => launchTel(
+                context,
+                phone: bus['driverPhone'] as String? ?? '9876543210',
+                fallbackSnackBar: 'Cannot launch dialer',
+              ),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.success.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.call_rounded,
+                      size: 18,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Call',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -185,16 +277,161 @@ class BusTrackingScreen extends StatelessWidget {
   }
 }
 
+class _SosButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => launchTel(
+          context,
+          phone: '112',
+          fallbackSnackBar: 'Cannot launch emergency dialer',
+        ),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: AppColors.error,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.error.withValues(alpha: 0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.emergency_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'SOS Emergency',
+                style: AppTypography.titleMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MapArea extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return CustomPaint(
+          size: Size(constraints.maxWidth, constraints.maxHeight),
+          painter: _MapPainter(),
+        );
+      },
+    );
+  }
+}
+
+// ── Mobile: draggable bottom sheet ─────────────────────────────────────────────
+
+class _MobileBusLayout extends StatelessWidget {
+  const _MobileBusLayout({required this.bus});
+  final Map<String, dynamic> bus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        CustomPaint(
+          size: Size(
+            MediaQuery.sizeOf(context).width,
+            MediaQuery.sizeOf(context).height * 0.6,
+          ),
+          painter: _MapPainter(),
+        ),
+        DraggableScrollableSheet(
+          initialChildSize: 0.45,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          builder: (ctx, scrollCtrl) => Container(
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: ListView(
+              controller: scrollCtrl,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              children: [
+                Center(
+                  child: Container(
+                    width: 48,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: AppColors.divider,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _RouteEtaCard(bus: bus),
+                const SizedBox(height: AppSpacing.md),
+                _DriverCard(bus: bus),
+                const SizedBox(height: AppSpacing.md),
+                _SosButton(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _MapPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final bg = Paint()..color = const Color(0xFFE8F4F8);
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bg);
+    // Background gradient
+    final bgRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final bgGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [const Color(0xFFE3F2FD), const Color(0xFFE8F5E9)],
+    );
+    canvas.drawRect(bgRect, Paint()..shader = bgGradient.createShader(bgRect));
+
+    // Subtle grid
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.6)
+      ..strokeWidth = 1;
+    const gridStep = 40.0;
+    for (var x = 0.0; x <= size.width; x += gridStep) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (var y = 0.0; y <= size.height; y += gridStep) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
 
     // Roads
     final roadPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 12
+      ..color = Colors.white.withValues(alpha: 0.95)
+      ..strokeWidth = 14
       ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(
@@ -220,9 +457,10 @@ class _MapPainter extends CustomPainter {
 
     // Route polyline
     final routePaint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 3
+      ..color = AppColors.primary.withValues(alpha: 0.9)
+      ..strokeWidth = 4
       ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
     final routePath = Path()
       ..moveTo(size.width * 0.1, size.height * 0.2)
@@ -252,26 +490,31 @@ class _MapPainter extends CustomPainter {
       );
     canvas.drawPath(routePath, routePaint);
 
-    // Bus icon
-    final busPaint = Paint()..color = AppColors.accent;
-    canvas.drawCircle(
-      Offset(size.width * 0.55, size.height * 0.39),
-      12,
-      busPaint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.55, size.height * 0.39),
-      10,
-      Paint()..color = Colors.white,
-    );
+    // Bus marker (current location)
+    final busCenter = Offset(size.width * 0.55, size.height * 0.39);
+    final busOuter = Paint()..color = AppColors.accent.withValues(alpha: 0.3);
+    canvas.drawCircle(busCenter, 18, busOuter);
+    final busMid = Paint()..color = AppColors.accent;
+    canvas.drawCircle(busCenter, 14, busMid);
+    final busInner = Paint()..color = Colors.white;
+    canvas.drawCircle(busCenter, 10, busInner);
 
-    // Destination marker
+    // Next stop marker (orange ring)
+    final nextCenter = Offset(size.width * 0.25, size.height * 0.4);
+    final nextRing = Paint()
+      ..color = AppColors.accent.withValues(alpha: 0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+    canvas.drawCircle(nextCenter, 12, nextRing);
+    final nextFill = Paint()..color = AppColors.accent;
+    canvas.drawCircle(nextCenter, 6, nextFill);
+
+    // Destination marker (red)
+    final destCenter = Offset(size.width * 0.85, size.height * 0.55);
+    final destOuter = Paint()..color = AppColors.error.withValues(alpha: 0.3);
+    canvas.drawCircle(destCenter, 14, destOuter);
     final destPaint = Paint()..color = AppColors.error;
-    canvas.drawCircle(
-      Offset(size.width * 0.85, size.height * 0.55),
-      8,
-      destPaint,
-    );
+    canvas.drawCircle(destCenter, 10, destPaint);
   }
 
   @override

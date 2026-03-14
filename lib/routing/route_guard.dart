@@ -108,7 +108,7 @@ String _roleHome(UserRole? role) {
     case UserRole.canteenStaff:
       return AppRoutes.canteenCounter;
     case UserRole.hod:
-      return AppRoutes.webDashboard;
+      return AppRoutes.webHodHome;
     case null:
       return AppRoutes.login;
   }

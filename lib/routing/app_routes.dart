@@ -97,6 +97,7 @@ class AppRoutes {
   static const String foodMenu = '/food';
 
   // ── Web Portal (Part 1) ───────────────────────────────────────────────────
+  static const String webHodHome = '/web/hod-home';
   static const String webDashboard = '/web/dashboard';
   static const String webAnalytics = '/web/analytics';
   static const String webStudents = '/web/students';

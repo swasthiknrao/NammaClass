@@ -30,7 +30,7 @@ class _WebMarksEntryScreenState extends State<WebMarksEntryScreen> {
   Widget build(BuildContext context) {
     final isMobile = ScreenSize.isMobile(context);
 
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.all(isMobile ? AppSpacing.sm : AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,30 +128,35 @@ class _WebMarksEntryScreenState extends State<WebMarksEntryScreen> {
                   ],
                 ),
           const SizedBox(height: AppSpacing.md),
-          Expanded(
-            child: NcCard(
-              padding: EdgeInsets.zero,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: 900,
+          SingleChildScrollView(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: NcCard(
+                padding: EdgeInsets.zero,
+                child: IntrinsicHeight(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header
+                      // Sticky-style header
                       Container(
-                        color: AppColors.primary,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
+                        ),
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.sm,
-                          horizontal: AppSpacing.sm,
+                          horizontal: AppSpacing.md,
                         ),
                         child: Row(
                           children: [
-                            const SizedBox(
+                            SizedBox(
                               width: 180,
                               child: Text(
                                 'Student',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: Colors.white.withValues(alpha: 0.95),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -170,12 +175,12 @@ class _WebMarksEntryScreenState extends State<WebMarksEntryScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(
+                            SizedBox(
                               width: 80,
                               child: Text(
                                 'Total',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: Colors.white.withValues(alpha: 0.95),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -183,79 +188,123 @@ class _WebMarksEntryScreenState extends State<WebMarksEntryScreen> {
                           ],
                         ),
                       ),
-                      Expanded(
-                        child: ListView.separated(
-                          itemCount: students.length,
-                          separatorBuilder: (_, i) => const Divider(height: 1),
-                          itemBuilder: (ctx, i) {
-                            final s = students[i];
-                            int total = 0;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                                vertical: 4,
-                              ),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 180,
-                                    child: Text(
-                                      s.name,
-                                      style: AppTypography.labelSmall,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  ...subjects.map((sub) {
-                                    final mark = marks[s.id]?[sub] ?? 0;
-                                    total += mark;
-                                    return SizedBox(
-                                      width: 120,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                        ),
-                                        child: TextField(
-                                          decoration: InputDecoration(
-                                            isDense: true,
-                                            contentPadding:
-                                                const EdgeInsets.all(8),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
+                      // Rows — dynamic height, no wasted space
+                      ...List.generate(students.length, (i) {
+                        final s = students[i];
+                        int total = 0;
+                        final isEven = i.isEven;
+                        return Container(
+                          color: isEven ? null : AppColors.background,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.xs + 2,
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 180,
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: AppColors.primary
+                                          .withValues(alpha: 0.15),
+                                      child: Text(
+                                        s.name.substring(0, 1).toUpperCase(),
+                                        style: AppTypography.labelSmall
+                                            .copyWith(
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.w600,
                                             ),
-                                            fillColor: mark > 100
-                                                ? AppColors.errorBg
-                                                : null,
-                                            filled: mark > 100,
-                                          ),
-                                          keyboardType: TextInputType.number,
-                                          onChanged: (v) {
-                                            setState(() {
-                                              marks[s.id] ??= {};
-                                              marks[s.id]![sub] =
-                                                  int.tryParse(v) ?? 0;
-                                            });
-                                          },
-                                          style: AppTypography.bodySmall,
-                                        ),
-                                      ),
-                                    );
-                                  }),
-                                  SizedBox(
-                                    width: 80,
-                                    child: Text(
-                                      '$total',
-                                      style: AppTypography.labelMedium.copyWith(
-                                        color: AppColors.primary,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: AppSpacing.sm),
+                                    Expanded(
+                                      child: Text(
+                                        s.name,
+                                        style: AppTypography.labelSmall,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            );
-                          },
-                        ),
-                      ),
+                              ...subjects.map((sub) {
+                                final mark = marks[s.id]?[sub] ?? 0;
+                                total += mark;
+                                return SizedBox(
+                                  width: 120,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    child: TextFormField(
+                                      initialValue: mark > 0 ? '$mark' : '',
+                                      decoration: InputDecoration(
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 10,
+                                            ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        filled: true,
+                                        fillColor: mark > 100
+                                            ? AppColors.errorBg
+                                            : AppColors.card,
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: AppColors.divider,
+                                          ),
+                                        ),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (v) {
+                                        setState(() {
+                                          marks[s.id] ??= {};
+                                          marks[s.id]![sub] =
+                                              int.tryParse(v) ?? 0;
+                                        });
+                                      },
+                                      style: AppTypography.bodySmall,
+                                    ),
+                                  ),
+                                );
+                              }),
+                              SizedBox(
+                                width: 80,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '$total',
+                                    style: AppTypography.labelMedium.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ),

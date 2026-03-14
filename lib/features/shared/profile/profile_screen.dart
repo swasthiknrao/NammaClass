@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/utils/launch_utils.dart';
+import '../../../core/utils/screen_size.dart';
 import '../../../routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -23,234 +24,374 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final auth = ref.read(authProvider.notifier);
+    final isWide =
+        ScreenSize.isDesktop(context) || ScreenSize.isTablet(context);
 
     return Scaffold(
       appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
           ? null
           : AppBar(title: const Text('Profile & Settings')),
       backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Creative header — wave shape + pattern
-            _ProfileHeader(user: user),
-            const SizedBox(height: AppSpacing.sm),
-            // Profile section card
-            _ProfileSection(user: user),
-            const SizedBox(height: AppSpacing.lg),
-
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+      body: isWide
+          ? _DesktopProfileLayout(user: user, auth: auth)
+          : SingleChildScrollView(
               child: Column(
                 children: [
-                  _SectionHeader('Appearance'),
-                  NcCard(padding: EdgeInsets.zero, child: const _ThemeTile()),
+                  _ProfileHeader(user: user),
+                  const SizedBox(height: AppSpacing.sm),
+                  _ProfileSection(user: user),
                   const SizedBox(height: AppSpacing.lg),
-                  // Account section
-                  _SectionHeader('Account'),
-                  NcCard(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        _SettingsTile(Icons.person_outline, 'Edit Profile', () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Edit profile coming soon'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }),
-                        const Divider(height: 1),
-                        _SettingsTile(
-                          Icons.phone_outlined,
-                          user?.phone ?? '+91 XXXXX XXXXX',
-                          () {
-                            final phone = user?.phone;
-                            if (phone != null &&
-                                phone.contains(RegExp(r'\d')) &&
-                                !phone.contains('X')) {
-                              launchTel(context, phone: phone);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Phone number not available'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        const Divider(height: 1),
-                        _SettingsTile(
-                          Icons.email_outlined,
-                          user?.email ?? 'email@example.com',
-                          () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Preferences
-                  _SectionHeader('Preferences'),
-                  NcCard(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.language_outlined),
-                          title: Text(
-                            'Language',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          trailing: DropdownButton<String>(
-                            value: 'English',
-                            underline: const SizedBox.shrink(),
-                            items: ['English', 'Kannada', 'Hindi']
-                                .map(
-                                  (l) => DropdownMenuItem(
-                                    value: l,
-                                    child: Text(l),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (_) {},
-                          ),
-                        ),
-                        const Divider(height: 1),
-                        SwitchListTile(
-                          secondary: const Icon(Icons.notifications_outlined),
-                          title: Text(
-                            'Push Notifications',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          value: true,
-                          onChanged: (_) {},
-                        ),
-                        const Divider(height: 1),
-                        Consumer(
-                          builder: (context, ref, _) {
-                            final themeMode = ref.watch(themeModeProvider);
-                            return SwitchListTile(
-                              secondary: const Icon(Icons.dark_mode_outlined),
-                              title: Text(
-                                'Dark Mode',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              value: themeMode == ThemeMode.dark,
-                              onChanged: (v) {
-                                ref.read(themeModeProvider.notifier).state = v
-                                    ? ThemeMode.dark
-                                    : ThemeMode.light;
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Support
-                  _SectionHeader('Support'),
-                  NcCard(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        _SettingsTile(Icons.help_outline, 'Help & FAQ', () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Help & FAQ coming soon'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }),
-                        const Divider(height: 1),
-                        _SettingsTile(
-                          Icons.privacy_tip_outlined,
-                          'Privacy Policy',
-                          () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Privacy Policy coming soon'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                        ),
-                        const Divider(height: 1),
-                        _SettingsTile(
-                          Icons.info_outline,
-                          'About NammaClass',
-                          () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('About NammaClass coming soon'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Logout
-                  FilledButton.icon(
-                    onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (dialogContext) => AlertDialog(
-                          icon: Icon(
-                            Icons.logout_rounded,
-                            color: AppColors.error,
-                            size: 32,
-                          ),
-                          title: const Text('Log out?'),
-                          content: const Text(
-                            'You’ll need to sign in again to use NammaClass.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(dialogContext),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () async {
-                                Navigator.pop(dialogContext);
-                                await auth.logout();
-                                if (!context.mounted) return;
-                                WidgetsBinding.instance.addPostFrameCallback((
-                                  _,
-                                ) {
-                                  if (!context.mounted) return;
-                                  context.go(AppRoutes.login);
-                                });
-                              },
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.error,
-                              ),
-                              child: const Text('Log out'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.logout_rounded),
-                    label: const Text('Log out'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
+                  _ProfileContent(user: user, auth: auth),
                 ],
               ),
             ),
-          ],
+    );
+  }
+}
+
+class _DesktopProfileLayout extends ConsumerWidget {
+  const _DesktopProfileLayout({this.user, required this.auth});
+  final dynamic user;
+  final AuthNotifier auth;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              children: [
+                _ProfileHeader(user: user),
+                const SizedBox(height: AppSpacing.md),
+                _ProfileSection(user: user),
+                const SizedBox(height: AppSpacing.lg),
+                _ProfileContent(user: user, auth: auth),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(flex: 1, child: _ProfileSidebar(user: user)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileSidebar extends StatelessWidget {
+  const _ProfileSidebar({this.user});
+  final dynamic user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.08),
+                AppColors.teal.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.verified_user_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Account',
+                    style: AppTypography.labelLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _SidebarInfoRow(Icons.phone_rounded, user?.phone ?? '—'),
+              _SidebarInfoRow(Icons.email_rounded, user?.email ?? '—'),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.success.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.success,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Verified profile',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
+      ],
+    );
+  }
+}
+
+class _SidebarInfoRow extends StatelessWidget {
+  const _SidebarInfoRow(this.icon, this.text);
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.bodySmall,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileContent extends ConsumerWidget {
+  const _ProfileContent({this.user, required this.auth});
+  final dynamic user;
+  final AuthNotifier auth;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SectionHeader('Appearance', Icons.palette_outlined),
+          NcCard(padding: EdgeInsets.zero, child: const _ThemeTile()),
+          const SizedBox(height: AppSpacing.lg),
+          // Account section
+          _SectionHeader('Account', Icons.person_outline),
+          NcCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _SettingsTile(Icons.person_outline, 'Edit Profile', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Edit profile coming soon'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }),
+                const Divider(height: 1),
+                _SettingsTile(
+                  Icons.phone_outlined,
+                  user?.phone ?? '+91 XXXXX XXXXX',
+                  () {
+                    final phone = user?.phone;
+                    if (phone != null &&
+                        phone.contains(RegExp(r'\d')) &&
+                        !phone.contains('X')) {
+                      launchTel(context, phone: phone);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Phone number not available'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const Divider(height: 1),
+                _SettingsTile(
+                  Icons.email_outlined,
+                  user?.email ?? 'email@example.com',
+                  () {},
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Preferences
+          _SectionHeader('Preferences', Icons.tune_rounded),
+          NcCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.language_outlined),
+                  title: Text(
+                    'Language',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  trailing: DropdownButton<String>(
+                    value: 'English',
+                    underline: const SizedBox.shrink(),
+                    items: ['English', 'Kannada', 'Hindi']
+                        .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                        .toList(),
+                    onChanged: (_) {},
+                  ),
+                ),
+                const Divider(height: 1),
+                SwitchListTile(
+                  secondary: const Icon(Icons.notifications_outlined),
+                  title: Text(
+                    'Push Notifications',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  value: true,
+                  onChanged: (_) {},
+                ),
+                const Divider(height: 1),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final themeMode = ref.watch(themeModeProvider);
+                    return SwitchListTile(
+                      secondary: const Icon(Icons.dark_mode_outlined),
+                      title: Text(
+                        'Dark Mode',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      value: themeMode == ThemeMode.dark,
+                      onChanged: (v) {
+                        ref.read(themeModeProvider.notifier).state = v
+                            ? ThemeMode.dark
+                            : ThemeMode.light;
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Support
+          _SectionHeader('Support', Icons.help_outline_rounded),
+          NcCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _SettingsTile(Icons.help_outline, 'Help & FAQ', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Help & FAQ coming soon'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }),
+                const Divider(height: 1),
+                _SettingsTile(Icons.privacy_tip_outlined, 'Privacy Policy', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Privacy Policy coming soon'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }),
+                const Divider(height: 1),
+                _SettingsTile(Icons.info_outline, 'About NammaClass', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('About NammaClass coming soon'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Logout
+          FilledButton.icon(
+            onPressed: () {
+              showDialog<void>(
+                context: context,
+                barrierDismissible: false,
+                builder: (dialogContext) => AlertDialog(
+                  icon: Icon(
+                    Icons.logout_rounded,
+                    color: AppColors.error,
+                    size: 32,
+                  ),
+                  title: const Text('Log out?'),
+                  content: const Text(
+                    'You’ll need to sign in again to use NammaClass.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () async {
+                        Navigator.pop(dialogContext);
+                        await auth.logout();
+                        if (!context.mounted) return;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!context.mounted) return;
+                          context.go(AppRoutes.login);
+                        });
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                      ),
+                      child: const Text('Log out'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            icon: const Icon(Icons.logout_rounded),
+            label: const Text('Log out'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+        ],
       ),
     );
   }
@@ -605,17 +746,40 @@ class _ProfileSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: NcCard(
-        padding: EdgeInsets.zero,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
         child: Column(
           children: [
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Profile',
-              style: AppTypography.labelSmall.copyWith(
-                color: AppColors.textSecondary,
-                letterSpacing: 1,
-              ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.contact_phone_rounded,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Quick contact',
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.sm),
             if (_roleContextText(user) != null) ...[
@@ -717,7 +881,7 @@ class _ProfileSection extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -744,24 +908,47 @@ class _QuickActionChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
           ),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.12),
+                AppColors.teal.withValues(alpha: 0.08),
+              ],
+            ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.25),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: AppColors.primary),
-              const SizedBox(width: AppSpacing.xs),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 20, color: AppColors.primary),
+              ),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 label,
-                style: AppTypography.labelMedium.copyWith(
+                style: AppTypography.labelLarge.copyWith(
                   color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -865,16 +1052,34 @@ class _ThemeTile extends ConsumerWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
+  const _SectionHeader(this.title, [this.icon]);
   final String title;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(title, style: AppTypography.headlineSmall),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon!, size: 18, color: AppColors.primary),
+            ),
+            const SizedBox(width: 10),
+          ],
+          Text(
+            title,
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -889,12 +1094,22 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.textSecondary),
-      title: Text(label, style: Theme.of(context).textTheme.bodyMedium),
-      trailing: const Icon(
-        Icons.chevron_right,
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: AppColors.primary, size: 20),
+      ),
+      title: Text(
+        label,
+        style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+      ),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
         color: AppColors.textSecondary,
-        size: 18,
+        size: 20,
       ),
       onTap: onTap,
     );

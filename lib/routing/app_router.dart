@@ -36,7 +36,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       var result = routeGuard(path, authState);
       if (result != null &&
           (result == AppRoutes.webDashboard ||
-              result == AppRoutes.webMarksEntry)) {
+              result == AppRoutes.webMarksEntry ||
+              result == AppRoutes.webHodHome)) {
         final mobileHome = mobileHomeForExecRole(authState.role);
         if (mobileHome != null && MediaQuery.sizeOf(context).width < 600) {
           result = mobileHome;

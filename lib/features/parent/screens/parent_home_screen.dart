@@ -14,6 +14,7 @@ import '../../../core/widgets/nc_async_error.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/notification_icon_button.dart';
+import '../../../shared/widgets/layout/constrained_content.dart';
 import '../../../shared/widgets/layout/responsive_builder.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_shimmer.dart';
@@ -117,13 +118,21 @@ class ParentHomeScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: ResponsiveBuilder(
               builder: (context, breakpoint, isMobile, isTablet, isDesktop) {
+                if (isDesktop) {
+                  return _ParentHomeDesktopLayout(
+                    child: child,
+                    feesAsync: feesAsync,
+                    noticesAsync: noticesAsync,
+                    timetableAsync: timetableAsync,
+                    attendanceAsync: attendanceAsync,
+                    weekdays: _weekdays,
+                  );
+                }
                 final padding = isMobile ? AppSpacing.sm : AppSpacing.md;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: AppSpacing.md),
-
-                    // Child selector chip
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: padding),
                       child: Row(
@@ -155,8 +164,6 @@ class ParentHomeScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-
-                    // Fee alert banner
                     feesAsync.when(
                       data: (fees) {
                         final overdue = fees
@@ -204,8 +211,6 @@ class ParentHomeScreen extends ConsumerWidget {
                       error: (e, _) => const SizedBox.shrink(),
                     ),
                     const SizedBox(height: AppSpacing.md),
-
-                    // Quick actions — 5 per row, wrapped, no scroll
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: padding),
                       child: Text(
@@ -295,8 +300,6 @@ class ParentHomeScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-
-                    // Bus ETA card
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: padding),
                       child: NcCard(
@@ -354,8 +357,6 @@ class ParentHomeScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-
-                    // Today's timetable — child's schedule + attendance (Present/Absent)
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: padding),
                       child: _TodaysTimetableSection(
@@ -366,8 +367,6 @@ class ParentHomeScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-
-                    // Notices preview
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: padding),
                       child: Row(
@@ -403,7 +402,6 @@ class ParentHomeScreen extends ConsumerWidget {
                         child: NcAsyncError(message: 'Unable to load notices'),
                       ),
                     ),
-
                     const SizedBox(height: 100),
                   ],
                 );
@@ -420,6 +418,627 @@ class ParentHomeScreen extends ConsumerWidget {
     if (h < 12) return 'morning';
     if (h < 17) return 'afternoon';
     return 'evening';
+  }
+}
+
+// ── Desktop layout: bento-style grid ─────────────────────────────────────────
+
+class _ParentHomeDesktopLayout extends StatelessWidget {
+  const _ParentHomeDesktopLayout({
+    required this.child,
+    required this.feesAsync,
+    required this.noticesAsync,
+    required this.timetableAsync,
+    required this.attendanceAsync,
+    required this.weekdays,
+  });
+
+  final MockStudent child;
+  final AsyncValue<List<MockFeeInstallment>> feesAsync;
+  final AsyncValue<List<MockNotice>> noticesAsync;
+  final AsyncValue<Map<String, List<MockPeriod>>> timetableAsync;
+  final AsyncValue<List<MockAttendanceDay>> attendanceAsync;
+  final List<String> weekdays;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedContent(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Hero: child info + attendance
+            _DesktopHeroCard(child: child),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Fee alert
+            feesAsync.when(
+              data: (fees) {
+                final overdue = fees
+                    .where((f) => f.status == 'overdue')
+                    .toList();
+                if (overdue.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                  child: _DesktopFeeAlert(overdueCount: overdue.length),
+                );
+              },
+              loading: () => const NcShimmerBox(height: 56, radius: 12),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+
+            // Bento grid
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final useNarrow = w < 1000;
+                return useNarrow
+                    ? _DesktopNarrowLayout(
+                        timetableAsync: timetableAsync,
+                        attendanceAsync: attendanceAsync,
+                        noticesAsync: noticesAsync,
+                        weekdays: weekdays,
+                      )
+                    : _DesktopWideLayout(
+                        timetableAsync: timetableAsync,
+                        attendanceAsync: attendanceAsync,
+                        noticesAsync: noticesAsync,
+                        weekdays: weekdays,
+                      );
+              },
+            ),
+            const SizedBox(height: 80),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopHeroCard extends StatelessWidget {
+  const _DesktopHeroCard({required this.child});
+  final MockStudent child;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPresent = child.attendancePercent >= 0.85;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            AppColors.primary.withValues(alpha: 0.9),
+            AppColors.teal,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              child.name.substring(0, 1).toUpperCase(),
+              style: AppTypography.headlineMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  child.name,
+                  style: AppTypography.headlineSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  '${child.classSection} • ${AppConstants.schoolName}',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: (isPresent ? AppColors.success : AppColors.error)
+                  .withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.5),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isPresent ? Icons.check_circle : Icons.warning_amber_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  child.attendancePercent.asPercent,
+                  style: AppTypography.titleMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'attendance',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DesktopFeeAlert extends StatelessWidget {
+  const _DesktopFeeAlert({required this.overdueCount});
+  final int overdueCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.go(AppRoutes.parentFees),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.errorBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.error.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.error.withValues(alpha: 0.12),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.error,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  '$overdueCount overdue fee installment(s). Please clear dues.',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'Pay Now',
+                  style: AppTypography.labelLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopWideLayout extends StatelessWidget {
+  const _DesktopWideLayout({
+    required this.timetableAsync,
+    required this.attendanceAsync,
+    required this.noticesAsync,
+    required this.weekdays,
+  });
+
+  final AsyncValue<Map<String, List<MockPeriod>>> timetableAsync;
+  final AsyncValue<List<MockAttendanceDay>> attendanceAsync;
+  final AsyncValue<List<MockNotice>> noticesAsync;
+  final List<String> weekdays;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left: Quick Actions + Bus
+        Expanded(
+          flex: 4,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DesktopQuickActionsGrid(),
+              const SizedBox(height: AppSpacing.lg),
+              _DesktopBusCard(),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.lg),
+        // Right: Schedule + Notices
+        Expanded(
+          flex: 6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _TodaysTimetableSection(
+                timetableAsync: timetableAsync,
+                attendanceAsync: attendanceAsync,
+                weekdays: weekdays,
+                sectionTitle: "Child's schedule today",
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _DesktopNoticesSection(noticesAsync: noticesAsync),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DesktopNarrowLayout extends StatelessWidget {
+  const _DesktopNarrowLayout({
+    required this.timetableAsync,
+    required this.attendanceAsync,
+    required this.noticesAsync,
+    required this.weekdays,
+  });
+
+  final AsyncValue<Map<String, List<MockPeriod>>> timetableAsync;
+  final AsyncValue<List<MockAttendanceDay>> attendanceAsync;
+  final AsyncValue<List<MockNotice>> noticesAsync;
+  final List<String> weekdays;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _DesktopQuickActionsGrid(),
+        const SizedBox(height: AppSpacing.lg),
+        _DesktopBusCard(),
+        const SizedBox(height: AppSpacing.lg),
+        _TodaysTimetableSection(
+          timetableAsync: timetableAsync,
+          attendanceAsync: attendanceAsync,
+          weekdays: weekdays,
+          sectionTitle: "Child's schedule today",
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        _DesktopNoticesSection(noticesAsync: noticesAsync),
+      ],
+    );
+  }
+}
+
+class _DesktopQuickActionsGrid extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final actions = [
+      (
+        Icons.calendar_month,
+        'Attendance',
+        AppColors.primary,
+        AppRoutes.parentAttendance,
+      ),
+      (Icons.payments, 'Fees', AppColors.error, AppRoutes.parentFees),
+      (Icons.book, 'Diary', AppColors.teal, AppRoutes.parentDiary),
+      (Icons.chat, 'Chat', AppColors.accent, AppRoutes.parentChatList),
+      (
+        Icons.event_busy,
+        'Leave',
+        AppColors.warning,
+        AppRoutes.parentLeaveApply,
+      ),
+      (Icons.directions_bus, 'Bus', AppColors.warning, AppRoutes.parentBus),
+      (Icons.campaign, 'Notices', AppColors.primary, AppRoutes.parentNotices),
+      (Icons.restaurant, 'Canteen', AppColors.success, AppRoutes.parentCanteen),
+      (Icons.hotel, 'Hostel', AppColors.teal, AppRoutes.hostel),
+    ];
+    return NcCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.bolt, color: AppColors.primary, size: 18),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Quick Actions',
+                style: AppTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: actions.map((a) {
+              return _DesktopQuickActionTile(
+                icon: a.$1,
+                label: a.$2,
+                color: a.$3,
+                route: a.$4,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DesktopQuickActionTile extends StatelessWidget {
+  const _DesktopQuickActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.route,
+  });
+  final IconData icon;
+  final String label;
+  final Color color;
+  final String route;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.go(route),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 100,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 26),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: AppTypography.labelSmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopBusCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.go(AppRoutes.parentBus),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1B4F72), Color(0xFF117A65)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.directions_bus_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      MockData.busInfo['route'] as String,
+                      style: AppTypography.titleMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      MockData.busInfo['busNumber'] as String,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${MockData.busInfo['etaMinutes']} min',
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    'ETA',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopNoticesSection extends StatelessWidget {
+  const _DesktopNoticesSection({required this.noticesAsync});
+  final AsyncValue<List<MockNotice>> noticesAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    return NcCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.campaign,
+                      color: AppColors.accent,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Recent Notices',
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () => context.go(AppRoutes.parentNotices),
+                child: const Text('See all'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          noticesAsync.when(
+            data: (notices) => Column(
+              children: notices
+                  .take(3)
+                  .map((n) => _NoticePreview(notice: n))
+                  .toList(),
+            ),
+            loading: () => const NcShimmerList(itemCount: 3),
+            error: (e, _) =>
+                const NcAsyncError(message: 'Unable to load notices'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -105,22 +105,35 @@ class WebNoticesScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.lg),
-          // Compose panel
+          // Compose panel — dynamic height
           SizedBox(
             width: 360,
             child: NcCard(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Draft Notice', style: AppTypography.headlineSmall),
                   const SizedBox(height: AppSpacing.md),
-                  const TextField(
-                    decoration: InputDecoration(labelText: 'Title'),
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  const TextField(
-                    decoration: InputDecoration(labelText: 'Message'),
-                    maxLines: 6,
+                  TextField(
+                    minLines: 3,
+                    maxLines: null,
+                    decoration: InputDecoration(
+                      labelText: 'Message',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   ElevatedButton.icon(

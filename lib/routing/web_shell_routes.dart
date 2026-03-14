@@ -40,6 +40,7 @@ import '../features/web/support/web_support_complaints_screen.dart';
 import '../features/web/support/web_support_dashboard_screen.dart';
 import '../features/web/support/web_support_knowledge_base_screen.dart';
 import '../features/web/support/web_support_tickets_screen.dart';
+import '../features/hod/screens/hod_home_screen.dart';
 import '../features/web_shell.dart';
 import 'app_routes.dart';
 
@@ -48,6 +49,10 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
     navigatorKey: navigatorKey,
     builder: (context, state, child) => WebShell(child: child),
     routes: [
+      GoRoute(
+        path: AppRoutes.webHodHome,
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, const HodHomeScreen()),
+      ),
       GoRoute(
         path: AppRoutes.webDashboard,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, WebDashboardScreen()),
