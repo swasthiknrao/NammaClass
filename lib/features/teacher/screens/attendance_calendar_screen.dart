@@ -176,7 +176,7 @@ class _AttendanceCalendarScreenState
           SizedBox(height: 700, child: _buildCalendarContent(context)),
           if (sessions.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.lg),
-            _buildDetailsPanelContent(context, sessions),
+            _buildDetailsPanelContent(context, sessions, scrollable: false),
           ],
         ],
       ),
@@ -730,21 +730,30 @@ class _AttendanceCalendarScreenState
           child: child,
         ),
       ),
-      child:
+      child: SizedBox(
+        key: ValueKey(
           _calendarFormat == CalendarFormat.week ||
-              _calendarFormat == CalendarFormat.twoWeeks
-          ? _WeekViewGrid(
-              key: ValueKey('week_${_focusedDay.millisecondsSinceEpoch}'),
-              focusedDay: _focusedDay,
-              twoWeeks: _calendarFormat == CalendarFormat.twoWeeks,
-              sessionsFor: _sessionsFor,
-              formatTime: _formatTime,
-              colorFor: _colorForSession,
-              bgColorFor: _bgColorForSession,
-              onDayTap: (d) => setState(() => _selectedDay = d),
-              selectedDay: _selectedDay,
-            )
-          : _buildMonthCalendar(context, key: const ValueKey('month')),
+                  _calendarFormat == CalendarFormat.twoWeeks
+              ? 'week_${_focusedDay.millisecondsSinceEpoch}'
+              : 'month',
+        ),
+        width: double.infinity,
+        height: 700,
+        child:
+            _calendarFormat == CalendarFormat.week ||
+                _calendarFormat == CalendarFormat.twoWeeks
+            ? _WeekViewGrid(
+                focusedDay: _focusedDay,
+                twoWeeks: _calendarFormat == CalendarFormat.twoWeeks,
+                sessionsFor: _sessionsFor,
+                formatTime: _formatTime,
+                colorFor: _colorForSession,
+                bgColorFor: _bgColorForSession,
+                onDayTap: (d) => setState(() => _selectedDay = d),
+                selectedDay: _selectedDay,
+              )
+            : _buildMonthCalendar(context, key: const ValueKey('month')),
+      ),
     );
   }
 
@@ -915,7 +924,13 @@ class _AttendanceCalendarScreenState
               ),
             ),
           const Divider(height: 24),
-          Expanded(child: _buildDetailsPanelContent(context, sessions)),
+          Expanded(
+            child: _buildDetailsPanelContent(
+              context,
+              sessions,
+              scrollable: true,
+            ),
+          ),
         ],
       ),
     );
@@ -923,8 +938,9 @@ class _AttendanceCalendarScreenState
 
   Widget _buildDetailsPanelContent(
     BuildContext context,
-    List<MockAttendanceSession> sessions,
-  ) {
+    List<MockAttendanceSession> sessions, {
+    bool scrollable = true,
+  }) {
     if (sessions.isEmpty) {
       return Center(
         child: Column(
@@ -947,6 +963,8 @@ class _AttendanceCalendarScreenState
       );
     }
     return ListView.builder(
+      shrinkWrap: !scrollable,
+      physics: scrollable ? null : const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
@@ -1053,7 +1071,7 @@ class _AttendanceCalendarScreenState
 
 // ── Gantt-style Week View (left item list + right timeline) ───────────────────
 
-class _WeekViewGrid extends StatelessWidget {
+class _WeekViewGrid extends StatefulWidget {
   const _WeekViewGrid({
     super.key,
     required this.focusedDay,
@@ -1074,6 +1092,28 @@ class _WeekViewGrid extends StatelessWidget {
   final void Function(DateTime) onDayTap;
   final DateTime? selectedDay;
 
+  @override
+  State<_WeekViewGrid> createState() => _WeekViewGridState();
+}
+
+class _WeekViewGridState extends State<_WeekViewGrid> {
+  late final ScrollController _verticalController;
+  late final ScrollController _horizontalController;
+
+  @override
+  void initState() {
+    super.initState();
+    _verticalController = ScrollController();
+    _horizontalController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
   static const _gridColor = Color(0xFFE8E8E8);
   static const _dayHeaderBg = Color(0xFFF5F5F5);
   static const _todayHighlight = Color(0xFFE3F2FD);
@@ -1087,8 +1127,10 @@ class _WeekViewGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final start = focusedDay.subtract(Duration(days: focusedDay.weekday - 1));
-    final daysCount = twoWeeks ? 14 : 7;
+    final start = widget.focusedDay.subtract(
+      Duration(days: widget.focusedDay.weekday - 1),
+    );
+    final daysCount = widget.twoWeeks ? 14 : 7;
     final dayColumns = List.generate(
       daysCount,
       (i) => start.add(Duration(days: i)),
@@ -1096,7 +1138,7 @@ class _WeekViewGrid extends StatelessWidget {
 
     final allSessionsInWeek = <MockAttendanceSession>[];
     for (final date in dayColumns) {
-      allSessionsInWeek.addAll(sessionsFor(date));
+      allSessionsInWeek.addAll(widget.sessionsFor(date));
     }
 
     final trackKeys = <String>{};
@@ -1122,7 +1164,7 @@ class _WeekViewGrid extends StatelessWidget {
       sessionMap[key] = {};
     }
     for (final date in dayColumns) {
-      for (final s in sessionsFor(date)) {
+      for (final s in widget.sessionsFor(date)) {
         final key = '${s.classSection} • ${s.subject}';
         final dayIdx = dayColumns.indexWhere(
           (d) =>
@@ -1138,6 +1180,12 @@ class _WeekViewGrid extends StatelessWidget {
         ? 120.0
         : trackOrder.length * rowHeight;
     const headerHeight = 48.0;
+    // Cap grid height so Column fits in parent (700px) - reserve space for header
+    const maxAvailableHeight = 650.0;
+    final effectiveGridHeight = gridContentHeight.clamp(
+      120.0,
+      maxAvailableHeight,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -1195,7 +1243,7 @@ class _WeekViewGrid extends StatelessWidget {
                         children: dayColumns.map((date) {
                           final isToday = _isToday(date);
                           return GestureDetector(
-                            onTap: () => onDayTap(date),
+                            onTap: () => widget.onDayTap(date),
                             child: Container(
                               width: effectiveColWidth,
                               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1227,249 +1275,258 @@ class _WeekViewGrid extends StatelessWidget {
               ],
             ),
             SizedBox(
-              height: gridContentHeight,
+              height: effectiveGridHeight,
               child: Scrollbar(
+                controller: _verticalController,
                 thumbVisibility: true,
                 child: SingleChildScrollView(
+                  controller: _verticalController,
                   scrollDirection: Axis.vertical,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: leftPanelWidth,
-                        height: gridContentHeight,
-                        child: Column(
-                          children: List.generate(trackOrder.length, (r) {
-                            final key = trackOrder[r];
-                            final isAlt = r.isOdd;
-                            return Container(
-                              height: rowHeight,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isAlt ? _rowAltBg : Colors.white,
-                                border: Border(
-                                  right: BorderSide(color: _gridColor),
-                                  bottom: BorderSide(
-                                    color: _gridColor.withValues(alpha: 0.7),
+                  child: SizedBox(
+                    height: gridContentHeight,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: leftPanelWidth,
+                          height: gridContentHeight,
+                          child: Column(
+                            children: List.generate(trackOrder.length, (r) {
+                              final key = trackOrder[r];
+                              final isAlt = r.isOdd;
+                              return Container(
+                                height: rowHeight,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isAlt ? _rowAltBg : Colors.white,
+                                  border: Border(
+                                    right: BorderSide(color: _gridColor),
+                                    bottom: BorderSide(
+                                      color: _gridColor.withValues(alpha: 0.7),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              alignment: Alignment.centerLeft,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: _barColorForTrack(r),
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      key,
-                                      style: AppTypography.bodySmall.copyWith(
-                                        fontWeight: FontWeight.w500,
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: _barColorForTrack(r),
+                                        borderRadius: BorderRadius.circular(2),
                                       ),
-                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        key,
+                                        style: AppTypography.bodySmall.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: Scrollbar(
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SizedBox(
-                              width: daysCount * effectiveColWidth,
-                              height: gridContentHeight,
-                              child: Stack(
-                                children: [
-                                  Row(
-                                    children: List.generate(daysCount, (
-                                      colIdx,
-                                    ) {
-                                      final date = dayColumns[colIdx];
-                                      final isToday = _isToday(date);
-                                      return Container(
-                                        width: effectiveColWidth,
-                                        decoration: BoxDecoration(
-                                          color: isToday
-                                              ? _todayHighlight.withValues(
-                                                  alpha: 0.2,
-                                                )
-                                              : Colors.transparent,
-                                          border: Border(
-                                            right: BorderSide(
-                                              color: _gridColor,
+                        Expanded(
+                          child: Scrollbar(
+                            controller: _horizontalController,
+                            thumbVisibility: true,
+                            child: SingleChildScrollView(
+                              controller: _horizontalController,
+                              scrollDirection: Axis.horizontal,
+                              child: SizedBox(
+                                width: daysCount * effectiveColWidth,
+                                height: gridContentHeight,
+                                child: Stack(
+                                  children: [
+                                    Row(
+                                      children: List.generate(daysCount, (
+                                        colIdx,
+                                      ) {
+                                        final date = dayColumns[colIdx];
+                                        final isToday = _isToday(date);
+                                        return Container(
+                                          width: effectiveColWidth,
+                                          decoration: BoxDecoration(
+                                            color: isToday
+                                                ? _todayHighlight.withValues(
+                                                    alpha: 0.2,
+                                                  )
+                                                : Colors.transparent,
+                                            border: Border(
+                                              right: BorderSide(
+                                                color: _gridColor,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        child: Column(
-                                          children: List.generate(trackOrder.length, (
-                                            r,
-                                          ) {
-                                            final key = trackOrder[r];
-                                            final session =
-                                                sessionMap[key]?[colIdx];
-                                            final isAlt = r.isOdd;
-                                            return GestureDetector(
-                                              onTap: session != null
-                                                  ? () => context.go(
-                                                      AppRoutes
-                                                          .teacherAttendanceMark,
-                                                    )
-                                                  : null,
-                                              child: Container(
-                                                height: rowHeight,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 4,
-                                                      vertical: 4,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: isAlt
-                                                      ? _rowAltBg
-                                                      : Colors.white,
-                                                  border: Border(
-                                                    bottom: BorderSide(
-                                                      color: _gridColor
-                                                          .withValues(
-                                                            alpha: 0.7,
-                                                          ),
+                                          child: Column(
+                                            children: List.generate(trackOrder.length, (
+                                              r,
+                                            ) {
+                                              final key = trackOrder[r];
+                                              final session =
+                                                  sessionMap[key]?[colIdx];
+                                              final isAlt = r.isOdd;
+                                              return GestureDetector(
+                                                onTap: session != null
+                                                    ? () => context.go(
+                                                        AppRoutes
+                                                            .teacherAttendanceMark,
+                                                      )
+                                                    : null,
+                                                child: Container(
+                                                  height: rowHeight,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 4,
+                                                        vertical: 4,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: isAlt
+                                                        ? _rowAltBg
+                                                        : Colors.white,
+                                                    border: Border(
+                                                      bottom: BorderSide(
+                                                        color: _gridColor
+                                                            .withValues(
+                                                              alpha: 0.7,
+                                                            ),
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                                child: session != null
-                                                    ? Center(
-                                                        child: Material(
-                                                          color: Colors
-                                                              .transparent,
-                                                          child: InkWell(
-                                                            onTap: () => context.go(
-                                                              AppRoutes
-                                                                  .teacherAttendanceMark,
-                                                            ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  6,
-                                                                ),
-                                                            child: Container(
-                                                              width: double
-                                                                  .infinity,
-                                                              padding:
-                                                                  const EdgeInsets.symmetric(
-                                                                    horizontal:
-                                                                        6,
-                                                                    vertical: 4,
+                                                  child: session != null
+                                                      ? Center(
+                                                          child: Material(
+                                                            color: Colors
+                                                                .transparent,
+                                                            child: InkWell(
+                                                              onTap: () =>
+                                                                  context.go(
+                                                                    AppRoutes
+                                                                        .teacherAttendanceMark,
                                                                   ),
-                                                              decoration: BoxDecoration(
-                                                                color:
-                                                                    session.status ==
-                                                                        'marked'
-                                                                    ? _barBlue
-                                                                    : _barGreen,
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      6,
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    6,
+                                                                  ),
+                                                              child: Container(
+                                                                width: double
+                                                                    .infinity,
+                                                                padding:
+                                                                    const EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          6,
+                                                                      vertical:
+                                                                          4,
                                                                     ),
-                                                                boxShadow: [
-                                                                  BoxShadow(
-                                                                    color: Colors
-                                                                        .black
-                                                                        .withValues(
-                                                                          alpha:
-                                                                              0.08,
-                                                                        ),
-                                                                    blurRadius:
-                                                                        2,
-                                                                    offset:
-                                                                        const Offset(
-                                                                          0,
-                                                                          1,
-                                                                        ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              child: FittedBox(
-                                                                fit: BoxFit
-                                                                    .scaleDown,
-                                                                alignment: Alignment
-                                                                    .centerLeft,
-                                                                child: Text(
-                                                                  '${session.subject} P${session.period} ${_formatTimeCompact(session.startTime)}',
-                                                                  style: AppTypography
-                                                                      .labelSmall
-                                                                      .copyWith(
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontWeight:
-                                                                            FontWeight.w600,
-                                                                        fontSize:
-                                                                            9,
+                                                                decoration: BoxDecoration(
+                                                                  color:
+                                                                      session.status ==
+                                                                          'marked'
+                                                                      ? _barBlue
+                                                                      : _barGreen,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        6,
                                                                       ),
-                                                                  maxLines: 1,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
+                                                                  boxShadow: [
+                                                                    BoxShadow(
+                                                                      color: Colors
+                                                                          .black
+                                                                          .withValues(
+                                                                            alpha:
+                                                                                0.08,
+                                                                          ),
+                                                                      blurRadius:
+                                                                          2,
+                                                                      offset:
+                                                                          const Offset(
+                                                                            0,
+                                                                            1,
+                                                                          ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                child: FittedBox(
+                                                                  fit: BoxFit
+                                                                      .scaleDown,
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .centerLeft,
+                                                                  child: Text(
+                                                                    '${session.subject} P${session.period} ${_formatTimeCompact(session.startTime)}',
+                                                                    style: AppTypography.labelSmall.copyWith(
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600,
+                                                                      fontSize:
+                                                                          9,
+                                                                    ),
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                  ),
                                                                 ),
                                                               ),
                                                             ),
                                                           ),
-                                                        ),
-                                                      )
-                                                    : const SizedBox.shrink(),
+                                                        )
+                                                      : const SizedBox.shrink(),
+                                                ),
+                                              );
+                                            }),
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                    if (todayIdx >= 0)
+                                      Positioned(
+                                        left:
+                                            todayIdx * effectiveColWidth +
+                                            effectiveColWidth / 2 -
+                                            1,
+                                        top: 0,
+                                        bottom: 0,
+                                        child: IgnorePointer(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              CustomPaint(
+                                                size: const Size(12, 8),
+                                                painter: _TodayMarkerPainter(
+                                                  color: _todayLineColor,
+                                                ),
                                               ),
-                                            );
-                                          }),
-                                        ),
-                                      );
-                                    }),
-                                  ),
-                                  if (todayIdx >= 0)
-                                    Positioned(
-                                      left:
-                                          todayIdx * effectiveColWidth +
-                                          effectiveColWidth / 2 -
-                                          1,
-                                      top: 0,
-                                      bottom: 0,
-                                      child: IgnorePointer(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            CustomPaint(
-                                              size: const Size(12, 8),
-                                              painter: _TodayMarkerPainter(
-                                                color: _todayLineColor,
+                                              Expanded(
+                                                child: Container(
+                                                  width: 2,
+                                                  color: _todayLineColor,
+                                                ),
                                               ),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                width: 2,
-                                                color: _todayLineColor,
-                                              ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
