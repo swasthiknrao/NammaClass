@@ -192,16 +192,16 @@ class _DesktopAttendanceLayout extends StatelessWidget {
     final now = DateTime.now();
     final monthName = _monthName(now.month);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           // Hero + stats inline (fill width)
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Expanded(
                 flex: 3,
                 child: _AttendanceHeroBanner(
@@ -229,10 +229,10 @@ class _DesktopAttendanceLayout extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
 
           // Calendar + legend row
           Row(
@@ -918,47 +918,47 @@ class _MobileAttendanceLayout extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          NcCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Attendance', style: AppTypography.labelLarge),
-                    Text(
-                      '${(pct * 100).toStringAsFixed(1)}%',
-                      style: AppTypography.headlineSmall.copyWith(
-                        color: pct >= 0.85
-                            ? AppColors.success
-                            : AppColors.error,
+                NcCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Attendance', style: AppTypography.labelLarge),
+                          Text(
+                            '${(pct * 100).toStringAsFixed(1)}%',
+                            style: AppTypography.headlineSmall.copyWith(
+                              color: pct >= 0.85
+                                  ? AppColors.success
+                                  : AppColors.error,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: pct,
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      pct >= 0.85 ? AppColors.success : AppColors.error,
-                    ),
-                    minHeight: 8,
+                      const SizedBox(height: AppSpacing.xs),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            pct >= 0.85 ? AppColors.success : AppColors.error,
+                          ),
+                          minHeight: 8,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        '$present out of $total working days',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xxs),
-                Text(
-                  '$present out of $total working days',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.md),
           _AttendanceCalendar(
             eventMap: eventMap,
             attendance: attendance,
@@ -1025,33 +1025,33 @@ class _AttendanceCalendar extends StatelessWidget {
               flex: 1,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
-                child: TableCalendar(
-                  firstDay: DateTime.now().subtract(const Duration(days: 90)),
-                  lastDay: DateTime.now().add(const Duration(days: 30)),
-                  focusedDay: DateTime.now(),
-                  calendarFormat: CalendarFormat.month,
-                  availableCalendarFormats: const {
-                    CalendarFormat.month: 'Month',
-                  },
-                  calendarBuilders: CalendarBuilders(
-                    markerBuilder: (ctx, day, events) {
-                      final key = DateTime(day.year, day.month, day.day);
-                      final status = eventMap[key];
-                      if (status == null) return const SizedBox.shrink();
+                  child: TableCalendar(
+                    firstDay: DateTime.now().subtract(const Duration(days: 90)),
+                    lastDay: DateTime.now().add(const Duration(days: 30)),
+                    focusedDay: DateTime.now(),
+                    calendarFormat: CalendarFormat.month,
+                    availableCalendarFormats: const {
+                      CalendarFormat.month: 'Month',
+                    },
+                    calendarBuilders: CalendarBuilders(
+                      markerBuilder: (ctx, day, events) {
+                        final key = DateTime(day.year, day.month, day.day);
+                        final status = eventMap[key];
+                        if (status == null) return const SizedBox.shrink();
                       final color = statusColor(status);
-                      return Positioned(
-                        bottom: 4,
-                        child: Container(
+                        return Positioned(
+                          bottom: 4,
+                          child: Container(
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
                                 color: color.withValues(alpha: 0.4),
                                 blurRadius: 4,
-                              ),
+                                ),
                             ],
                           ),
                         ),
@@ -1059,9 +1059,9 @@ class _AttendanceCalendar extends StatelessWidget {
                     },
                   ),
                   onDaySelected: (selectedDay, _) => onDaySelected(selectedDay),
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
+                    headerStyle: HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
                     titleTextStyle: AppTypography.headlineSmall.copyWith(
                       fontWeight: FontWeight.w700,
                     ),

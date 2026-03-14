@@ -40,6 +40,31 @@ class MockAttendanceDay {
   final List<String> periods;
 }
 
+/// Teacher attendance session — class, period, concept, time for calendar view.
+class MockAttendanceSession {
+  const MockAttendanceSession({
+    required this.id,
+    required this.date,
+    required this.classSection,
+    required this.period,
+    required this.subject,
+    required this.concept,
+    required this.startTime,
+    required this.endTime,
+    this.status = 'pending', // 'pending' | 'marked'
+  });
+
+  final String id;
+  final DateTime date;
+  final String classSection;
+  final int period;
+  final String subject;
+  final String concept;
+  final String startTime;
+  final String endTime;
+  final String status;
+}
+
 // ── Fee model ──────────────────────────────────────────────────────────────────
 class MockFeeInstallment {
   const MockFeeInstallment({
@@ -1730,6 +1755,48 @@ class MockData {
       ),
     ],
   };
+
+  // ── Attendance sessions (teacher calendar) ────────────────────────────────────
+  static final List<MockAttendanceSession> attendanceSessions = () {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const classes = ['8-A', '8-B', '9-A'];
+    const concepts = {
+      'Mathematics': 'Polynomials — factorization',
+      'Science': 'Photosynthesis — light reactions',
+      'English': 'Comprehension — The Last Leaf',
+      'Social Studies': 'Indian Parliament structure',
+      'Kannada': 'ವ್ಯಾಕರಣ — ಕ್ರಿಯಾಪದಗಳು',
+      'Computer Science': 'Python loops and conditionals',
+      'Physical Ed': 'Basketball — dribbling drills',
+      'Art & Craft': 'Watercolor techniques',
+    };
+    final sessions = <MockAttendanceSession>[];
+    var id = 0;
+    for (var d = 0; d < 21; d++) {
+      final date = DateTime.now().subtract(Duration(days: 20 - d));
+      if (date.weekday == 6 || date.weekday == 7) continue;
+      final dayName = days[date.weekday - 1];
+      final periods = timetable[dayName] ?? [];
+      for (final p in periods) {
+        for (final cls in classes) {
+          sessions.add(
+            MockAttendanceSession(
+              id: 'sess_${id++}',
+              date: date,
+              classSection: cls,
+              period: p.period,
+              subject: p.subject,
+              concept: concepts[p.subject] ?? p.subject,
+              startTime: p.startTime,
+              endTime: p.endTime,
+              status: (id % 3 == 0) ? 'marked' : 'pending',
+            ),
+          );
+        }
+      }
+    }
+    return sessions;
+  }();
 
   // ── 30 Library Books ─────────────────────────────────────────────────────────
   static const List<MockBook> books = [

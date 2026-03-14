@@ -27,6 +27,7 @@ class AppRoutes {
   // ── Teacher ───────────────────────────────────────────────────────────────
   static const String teacherHome = '/teacher/home';
   static const String teacherAttendance = '/teacher/attendance';
+  static const String teacherAttendanceMark = '/teacher/attendance/mark';
   static const String teacherDiary = '/teacher/diary';
   static const String teacherStudents = '/teacher/students';
   static const String teacherProfile = '/teacher/profile';

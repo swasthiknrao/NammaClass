@@ -28,6 +28,7 @@ import '../features/shared/search/global_search_screen.dart';
 import '../features/student/screens/academics_screen.dart';
 import '../features/student/screens/library_screen.dart';
 import '../features/student/screens/student_home_screen.dart';
+import '../features/teacher/screens/attendance_calendar_screen.dart';
 import '../features/teacher/screens/attendance_mark_screen.dart';
 import '../features/teacher/screens/diary_entry_screen.dart';
 import '../features/teacher/screens/my_students_screen.dart';
@@ -121,7 +122,12 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       GoRoute(
         path: AppRoutes.teacherAttendance,
         pageBuilder: (c, s) =>
-            fadeSlideTransition(c, s, AttendanceMarkScreen()),
+            fadeSlideTransition(c, s, const AttendanceCalendarScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.teacherAttendanceMark,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AttendanceMarkScreen()),
       ),
       GoRoute(
         path: AppRoutes.teacherDiary,

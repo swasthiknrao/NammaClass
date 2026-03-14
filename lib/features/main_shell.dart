@@ -453,7 +453,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       AppRoutes.parentComplaintNew: 'Raise Complaint',
       AppRoutes.parentComplaints: 'My Complaints',
       AppRoutes.teacherHome: 'Home',
-      AppRoutes.teacherAttendance: 'Mark Attendance',
+      AppRoutes.teacherAttendance: 'Attendance',
       AppRoutes.teacherDiary: 'Diary & Homework',
       AppRoutes.teacherStudents: 'My Students',
       AppRoutes.teacherProfile: 'Profile',
