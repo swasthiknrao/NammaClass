@@ -10,19 +10,32 @@ import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../providers/teacher_providers.dart';
 
+(int, int) _presentAbsentCounts(Map<String, String> records) {
+  var present = 0;
+  var absent = 0;
+  for (final v in records.values) {
+    if (v == 'P') present++;
+    if (v == 'A') absent++;
+  }
+  return (present, absent);
+}
+
 class AttendanceMarkScreen extends ConsumerWidget {
   const AttendanceMarkScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(attendanceMarkProvider);
     final notifier = ref.read(attendanceMarkProvider.notifier);
     final students = MockData.students
         .where((s) => s.classSection == '8-A')
         .toList();
 
-    final presentCount = state.records.values.where((v) => v == 'P').length;
-    final absentCount = state.records.values.where((v) => v == 'A').length;
+    final (presentCount, absentCount) = ref.watch(
+      attendanceMarkProvider.select((s) => _presentAbsentCounts(s.records)),
+    );
+    final (saved, isSaving) = ref.watch(
+      attendanceMarkProvider.select((s) => (s.saved, s.isSaving)),
+    );
 
     return Scaffold(
       appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
@@ -113,75 +126,7 @@ class AttendanceMarkScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSpacing.md),
               itemCount: students.length,
               itemBuilder: (ctx, i) {
-                final s = students[i];
-                final status = state.records[s.id] ?? 'P';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(AppSpacing.sm),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 28,
-                          child: Text(
-                            s.rollNo,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        NcAvatar(name: s.name, radius: 16),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(s.name, style: AppTypography.labelMedium),
-                        ),
-                        // P/A/L SegmentedButton
-                        SegmentedButton<String>(
-                          segments: const [
-                            ButtonSegment(
-                              value: 'P',
-                              label: Text('P'),
-                              icon: Icon(Icons.check, size: 14),
-                            ),
-                            ButtonSegment(
-                              value: 'A',
-                              label: Text('A'),
-                              icon: Icon(Icons.close, size: 14),
-                            ),
-                            ButtonSegment(
-                              value: 'L',
-                              label: Text('L'),
-                              icon: Icon(Icons.event_busy, size: 14),
-                            ),
-                          ],
-                          selected: {status},
-                          onSelectionChanged: (v) =>
-                              notifier.mark(s.id, v.first),
-                          style: ButtonStyle(
-                            visualDensity: VisualDensity.compact,
-                            padding: const WidgetStatePropertyAll(
-                              EdgeInsets.symmetric(horizontal: 8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _AttendanceStudentRow(student: students[i]);
               },
             ),
           ),
@@ -190,7 +135,7 @@ class AttendanceMarkScreen extends ConsumerWidget {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         color: AppColors.card,
-        child: state.saved
+        child: saved
             ? const NcPrimaryButton(
                 label: '✓ Attendance Saved',
                 color: AppColors.success,
@@ -198,9 +143,89 @@ class AttendanceMarkScreen extends ConsumerWidget {
             : NcPrimaryButton(
                 label: 'Submit Attendance',
                 fullWidth: true,
-                loading: state.isSaving,
+                loading: isSaving,
                 onPressed: () => notifier.submit(),
               ),
+      ),
+    );
+  }
+}
+
+class _AttendanceStudentRow extends ConsumerWidget {
+  const _AttendanceStudentRow({required this.student});
+
+  final MockStudent student;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(
+      attendanceMarkProvider.select((s) => s.records[student.id] ?? 'P'),
+    );
+    final notifier = ref.read(attendanceMarkProvider.notifier);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(AppSpacing.sm),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 28,
+              child: Text(
+                student.rollNo,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            NcAvatar(name: student.name, radius: 16),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(student.name, style: AppTypography.labelMedium),
+            ),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(
+                  value: 'P',
+                  label: Text('P'),
+                  icon: Icon(Icons.check, size: 14),
+                ),
+                ButtonSegment(
+                  value: 'A',
+                  label: Text('A'),
+                  icon: Icon(Icons.close, size: 14),
+                ),
+                ButtonSegment(
+                  value: 'L',
+                  label: Text('L'),
+                  icon: Icon(Icons.event_busy, size: 14),
+                ),
+              ],
+              selected: {status},
+              onSelectionChanged: (v) => notifier.mark(student.id, v.first),
+              style: ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                padding: const WidgetStatePropertyAll(
+                  EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

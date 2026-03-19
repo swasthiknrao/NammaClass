@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,6 +7,7 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/app_animations.dart';
 import '../../../core/utils/screen_size.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
@@ -637,7 +639,17 @@ class _StudentsTab extends StatelessWidget {
                           itemCount: filtered.length,
                           itemBuilder: (ctx, i) {
                             final s = filtered[i];
-                            return _StudentCard(student: s);
+                            return _StudentCard(student: s)
+                                .animate()
+                                .fadeIn(
+                                  duration: 260.ms,
+                                  delay: AppAnimations.staggerDelay(i % 12),
+                                )
+                                .slideY(
+                                  begin: 0.03,
+                                  end: 0,
+                                  curve: Curves.easeOut,
+                                );
                           },
                         );
                       },
@@ -711,29 +723,32 @@ class _StudentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: ListTile(
-        tileColor: index % 2 == 0 ? AppColors.card : AppColors.background,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.sm),
-        ),
-        leading: NcAvatar(name: student.name, radius: 20),
-        title: Text(student.name, style: AppTypography.labelMedium),
-        subtitle: Text(
-          '${student.classSection} • Roll: ${student.rollNo}',
-          style: AppTypography.bodySmall,
-        ),
-        trailing: NcChip(
-          label: student.feeStatus,
-          selected: student.feeStatus == 'paid',
-          color: student.feeStatus == 'paid'
-              ? AppColors.success
-              : student.feeStatus == 'overdue'
-              ? AppColors.error
-              : AppColors.warning,
-        ),
-      ),
-    );
+          margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: ListTile(
+            tileColor: index % 2 == 0 ? AppColors.card : AppColors.background,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.sm),
+            ),
+            leading: NcAvatar(name: student.name, radius: 20),
+            title: Text(student.name, style: AppTypography.labelMedium),
+            subtitle: Text(
+              '${student.classSection} • Roll: ${student.rollNo}',
+              style: AppTypography.bodySmall,
+            ),
+            trailing: NcChip(
+              label: student.feeStatus,
+              selected: student.feeStatus == 'paid',
+              color: student.feeStatus == 'paid'
+                  ? AppColors.success
+                  : student.feeStatus == 'overdue'
+                  ? AppColors.error
+                  : AppColors.warning,
+            ),
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 260.ms, delay: AppAnimations.staggerDelay(index % 12))
+        .slideY(begin: 0.03, end: 0, curve: Curves.easeOut);
   }
 }
 
@@ -1055,7 +1070,17 @@ class _StaffTab extends StatelessWidget {
                           itemCount: filtered.length,
                           itemBuilder: (ctx, i) {
                             final s = filtered[i];
-                            return _StaffCard(staff: s);
+                            return _StaffCard(staff: s)
+                                .animate()
+                                .fadeIn(
+                                  duration: 260.ms,
+                                  delay: AppAnimations.staggerDelay(i % 12),
+                                )
+                                .slideY(
+                                  begin: 0.03,
+                                  end: 0,
+                                  curve: Curves.easeOut,
+                                );
                           },
                         );
                       },
@@ -1127,24 +1152,29 @@ class _StaffTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: ListTile(
-        tileColor: index % 2 == 0 ? AppColors.card : AppColors.background,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.sm),
-        ),
-        leading: NcAvatar(name: staff.name, radius: 20),
-        title: Text(staff.name, style: AppTypography.labelMedium),
-        subtitle: Text(
-          '${staff.role} • ${staff.department}',
-          style: AppTypography.bodySmall,
-        ),
-        trailing: NcChip(
-          label: staff.status,
-          selected: staff.status == 'active',
-          color: staff.status == 'active' ? AppColors.success : AppColors.error,
-        ),
-      ),
-    );
+          margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: ListTile(
+            tileColor: index % 2 == 0 ? AppColors.card : AppColors.background,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.sm),
+            ),
+            leading: NcAvatar(name: staff.name, radius: 20),
+            title: Text(staff.name, style: AppTypography.labelMedium),
+            subtitle: Text(
+              '${staff.role} • ${staff.department}',
+              style: AppTypography.bodySmall,
+            ),
+            trailing: NcChip(
+              label: staff.status,
+              selected: staff.status == 'active',
+              color: staff.status == 'active'
+                  ? AppColors.success
+                  : AppColors.error,
+            ),
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 260.ms, delay: AppAnimations.staggerDelay(index % 12))
+        .slideY(begin: 0.03, end: 0, curve: Curves.easeOut);
   }
 }

@@ -10,6 +10,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/screen_size.dart';
 import '../../../core/widgets/shell_layout_scope.dart';
+import '../widgets/timeline/timeline_roadmap_view.dart';
 import '../../../routing/app_routes.dart';
 
 class AttendanceCalendarScreen extends ConsumerStatefulWidget {
@@ -24,7 +25,9 @@ class _AttendanceCalendarScreenState
     extends ConsumerState<AttendanceCalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  final ValueNotifier<MockAttendanceSession?> _selectedSessionNotifier =
+      ValueNotifier(null);
+  CalendarFormat _calendarFormat = CalendarFormat.week;
   bool _showFilterPanel = true;
   bool _showDetailsPanel = true;
   final Set<String> _filterClasses = {'8-A', '8-B', '9-A'};
@@ -34,6 +37,16 @@ class _AttendanceCalendarScreenState
   void initState() {
     super.initState();
     _selectedDay = DateTime.now();
+    final todaySessions = _sessionsFor(_selectedDay!);
+    if (todaySessions.isNotEmpty) {
+      _selectedSessionNotifier.value = todaySessions.first;
+    }
+  }
+
+  @override
+  void dispose() {
+    _selectedSessionNotifier.dispose();
+    super.dispose();
   }
 
   List<MockAttendanceSession> _sessionsFor(DateTime date) {
@@ -47,6 +60,17 @@ class _AttendanceCalendarScreenState
         return false;
       return true;
     }).toList()..sort((a, b) => a.period.compareTo(b.period));
+  }
+
+  void _syncSelectionToSessionsForSelectedDay() {
+    if (_selectedDay == null) return;
+    final daySessions = _sessionsFor(_selectedDay!);
+    final cur = _selectedSessionNotifier.value;
+    if (daySessions.isEmpty) {
+      _selectedSessionNotifier.value = null;
+    } else if (cur == null || !daySessions.any((s) => s.id == cur.id)) {
+      _selectedSessionNotifier.value = daySessions.first;
+    }
   }
 
   int _totalInRange(DateTime start, DateTime end) {
@@ -72,6 +96,65 @@ class _AttendanceCalendarScreenState
 
   bool _isWide(BuildContext c) =>
       ScreenSize.isDesktop(c) || ScreenSize.isTablet(c);
+
+  double _calendarViewportHeight(BuildContext context) {
+    final screenH = MediaQuery.sizeOf(context).height;
+    final isMobile = ScreenSize.isMobile(context);
+    if (!isMobile) return 700;
+    return (screenH * 0.62).clamp(400.0, 560.0);
+  }
+
+  List<MockAttendanceSession> _sessionHistory(MockAttendanceSession session) {
+    final items =
+        MockData.attendanceSessions
+            .where(
+              (s) =>
+                  s.classSection == session.classSection &&
+                  s.subject == session.subject &&
+                  s.date.isBefore(session.date),
+            )
+            .toList()
+          ..sort((a, b) => b.date.compareTo(a.date));
+    return items.take(5).toList();
+  }
+
+  void _shiftFocusedRange(int direction) {
+    final days = _calendarFormat == CalendarFormat.week ? 7 : 14;
+    setState(() {
+      _focusedDay = _focusedDay.add(Duration(days: days * direction));
+    });
+  }
+
+  void _showMobileTaskDetailsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final sessions = _selectedDay != null
+            ? _sessionsFor(_selectedDay!)
+            : <MockAttendanceSession>[];
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+          ),
+          decoration: const BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: _buildDetailsPanelContent(
+              context,
+              sessions,
+              scrollable: true,
+              mobileSheet: true,
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,10 +211,12 @@ class _AttendanceCalendarScreenState
     int marked,
     int pending,
   ) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isTabletLayout = width < 1240;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_showFilterPanel) _buildFilterPanel(),
+        if (_showFilterPanel && !isTabletLayout) _buildFilterPanel(),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -142,7 +227,7 @@ class _AttendanceCalendarScreenState
                 const SizedBox(height: AppSpacing.md),
                 _buildCalendarControls(context),
                 const SizedBox(height: AppSpacing.sm),
-                SizedBox(height: 700, child: _buildCalendarContent(context)),
+                _buildCalendarContent(context),
               ],
             ),
           ),
@@ -173,104 +258,45 @@ class _AttendanceCalendarScreenState
           const SizedBox(height: AppSpacing.md),
           _buildCalendarControls(context),
           const SizedBox(height: AppSpacing.sm),
-          SizedBox(height: 700, child: _buildCalendarContent(context)),
-          if (sessions.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.lg),
-            _buildDetailsPanelContent(context, sessions, scrollable: false),
-          ],
-        ],
-      ),
-    );
-  }
-
-  void _showFilterSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.6,
-        ),
-        decoration: const BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Filter',
+          _buildCalendarContent(context),
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.divider.withValues(alpha: 0.7),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                  ),
+                  child: Text(
+                    'Task Details',
                     style: AppTypography.titleSmall.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _FilterSection(
-                      title: 'Class',
-                      items: ['8-A', '8-B', '9-A'],
-                      selected: _filterClasses,
-                      onToggle: (v) {
-                        setState(() {
-                          if (_filterClasses.contains(v))
-                            _filterClasses.remove(v);
-                          else
-                            _filterClasses.add(v);
-                        });
-                      },
-                    ),
-                    _FilterSection(
-                      title: 'Subject',
-                      items:
-                          MockData.attendanceSessions
-                              .map((s) => s.subject)
-                              .toSet()
-                              .toList()
-                            ..sort(),
-                      selected: _filterSubjects,
-                      emptyMeansAll: true,
-                      onToggle: (v) {
-                        setState(() {
-                          final all = MockData.attendanceSessions
-                              .map((s) => s.subject)
-                              .toSet();
-                          if (_filterSubjects.isEmpty) {
-                            _filterSubjects.addAll(all);
-                            _filterSubjects.remove(v);
-                          } else if (_filterSubjects.contains(v)) {
-                            _filterSubjects.remove(v);
-                          } else {
-                            _filterSubjects.add(v);
-                            if (_filterSubjects.length == all.length)
-                              _filterSubjects.clear();
-                          }
-                        });
-                      },
-                    ),
-                  ],
                 ),
-              ),
+                const SizedBox(height: AppSpacing.xs),
+                SizedBox(
+                  height: 360,
+                  child: _buildDetailsPanelContent(
+                    context,
+                    sessions,
+                    scrollable: true,
+                    mobileSheet: false,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -331,6 +357,7 @@ class _AttendanceCalendarScreenState
                       else
                         _filterClasses.add(v);
                     });
+                    _syncSelectionToSessionsForSelectedDay();
                   },
                 ),
                 _FilterSection(
@@ -359,6 +386,7 @@ class _AttendanceCalendarScreenState
                           _filterSubjects.clear();
                       }
                     });
+                    _syncSelectionToSessionsForSelectedDay();
                   },
                 ),
               ],
@@ -441,11 +469,6 @@ class _AttendanceCalendarScreenState
           );
   }
 
-  static Color _colorForSession(MockAttendanceSession s) =>
-      s.status == 'marked' ? AppColors.success : AppColors.warning;
-  static Color _bgColorForSession(MockAttendanceSession s) =>
-      s.status == 'marked' ? AppColors.successBg : AppColors.warningBg;
-
   String _formatTime(String t) {
     if (t.length >= 5) {
       final parts = t.split(':');
@@ -466,72 +489,23 @@ class _AttendanceCalendarScreenState
       runSpacing: AppSpacing.sm,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        PopupMenuButton<DateTime>(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          tooltip: 'Month & year',
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.teal.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  DateFormat.yMMMM().format(_focusedDay),
-                  style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.teal,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Icon(Icons.arrow_drop_down, color: AppColors.teal),
-              ],
-            ),
-          ),
-          itemBuilder: (context) {
-            final items = <PopupMenuEntry<DateTime>>[];
-            for (
-              var y = DateTime.now().year - 1;
-              y <= DateTime.now().year + 1;
-              y++
-            ) {
-              for (var m = 1; m <= 12; m++) {
-                final d = DateTime(y, m, 1);
-                items.add(
-                  PopupMenuItem(
-                    value: d,
-                    child: Text(DateFormat.yMMMM().format(d)),
-                  ),
-                );
-              }
-            }
-            return items;
-          },
-          onSelected: (d) => setState(
-            () => _focusedDay = DateTime(
-              d.year,
-              d.month,
-              _focusedDay.day.clamp(1, 28),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (_isWide(context))
-                setState(() => _showFilterPanel = !_showFilterPanel);
-              else
-                _showFilterSheet(context);
+              if (_isWide(context)) {
+                setState(() => _showDetailsPanel = !_showDetailsPanel);
+              } else {
+                _showMobileTaskDetailsSheet(context);
+              }
             },
             borderRadius: BorderRadius.circular(8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.teal.withValues(alpha: 0.12),
+                color: _showDetailsPanel
+                    ? AppColors.teal.withValues(alpha: 0.16)
+                    : AppColors.teal.withValues(alpha: 0.09),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: AppColors.teal.withValues(alpha: 0.3),
@@ -541,14 +515,17 @@ class _AttendanceCalendarScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons.filter_list,
+                    Icons.segment_rounded,
                     size: 18,
                     color: AppColors.teal,
                   ),
-                  const Icon(
-                    Icons.arrow_drop_down,
-                    size: 18,
-                    color: AppColors.teal,
+                  const SizedBox(width: 4),
+                  Text(
+                    'Details',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.teal,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -576,11 +553,7 @@ class _AttendanceCalendarScreenState
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _calendarFormat == CalendarFormat.month
-                      ? 'Month'
-                      : _calendarFormat == CalendarFormat.week
-                      ? 'Week'
-                      : '2 Weeks',
+                  _calendarFormat == CalendarFormat.week ? 'Week' : '2 Weeks',
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.teal,
                     fontWeight: FontWeight.w500,
@@ -600,88 +573,47 @@ class _AttendanceCalendarScreenState
               value: CalendarFormat.twoWeeks,
               child: Text('2 Weeks'),
             ),
-            PopupMenuItem(value: CalendarFormat.month, child: Text('Month')),
           ],
           onSelected: (v) => setState(() => _calendarFormat = v),
         ),
-        if (_calendarFormat != CalendarFormat.month)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.teal.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: () => setState(() {
-                    _focusedDay = _focusedDay.subtract(
-                      Duration(
-                        days: _calendarFormat == CalendarFormat.week ? 7 : 14,
-                      ),
-                    );
-                  }),
-                  style: IconButton.styleFrom(
-                    padding: const EdgeInsets.all(4),
-                    minimumSize: const Size(32, 32),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatHeader(),
-                  style: AppTypography.labelLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.teal,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () => setState(() {
-                    _focusedDay = _focusedDay.add(
-                      Duration(
-                        days: _calendarFormat == CalendarFormat.week ? 7 : 14,
-                      ),
-                    );
-                  }),
-                  style: IconButton.styleFrom(
-                    padding: const EdgeInsets.all(4),
-                    minimumSize: const Size(32, 32),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          Text(
-            _formatHeader(),
-            style: AppTypography.titleMedium.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.teal.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
           ),
-        if (_calendarFormat == CalendarFormat.month) ...[
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: () => setState(
-              () => _focusedDay = DateTime(
-                _focusedDay.year,
-                _focusedDay.month - 1,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: () => _shiftFocusedRange(-1),
+                style: IconButton.styleFrom(
+                  padding: const EdgeInsets.all(4),
+                  minimumSize: const Size(32, 32),
+                ),
               ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            onPressed: () => setState(
-              () => _focusedDay = DateTime(
-                _focusedDay.year,
-                _focusedDay.month + 1,
+              const SizedBox(width: 8),
+              Text(
+                _formatHeader(),
+                style: AppTypography.labelLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.teal,
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: () => _shiftFocusedRange(1),
+                style: IconButton.styleFrom(
+                  padding: const EdgeInsets.all(4),
+                  minimumSize: const Size(32, 32),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
         const SizedBox(width: AppSpacing.sm),
         FilledButton.icon(
           onPressed: () => context.go(AppRoutes.teacherAttendanceMark),
@@ -716,153 +648,12 @@ class _AttendanceCalendarScreenState
   }
 
   Widget _buildCalendarContent(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) => FadeTransition(
-        opacity: animation,
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, 0.03),
-            end: Offset.zero,
-          ).animate(animation),
-          child: child,
-        ),
-      ),
+    final viewportHeight = _calendarViewportHeight(context);
+    return RepaintBoundary(
       child: SizedBox(
-        key: ValueKey(
-          _calendarFormat == CalendarFormat.week ||
-                  _calendarFormat == CalendarFormat.twoWeeks
-              ? 'week_${_focusedDay.millisecondsSinceEpoch}'
-              : 'month',
-        ),
         width: double.infinity,
-        height: 700,
-        child:
-            _calendarFormat == CalendarFormat.week ||
-                _calendarFormat == CalendarFormat.twoWeeks
-            ? _WeekViewGrid(
-                focusedDay: _focusedDay,
-                twoWeeks: _calendarFormat == CalendarFormat.twoWeeks,
-                sessionsFor: _sessionsFor,
-                formatTime: _formatTime,
-                colorFor: _colorForSession,
-                bgColorFor: _bgColorForSession,
-                onDayTap: (d) => setState(() => _selectedDay = d),
-                selectedDay: _selectedDay,
-              )
-            : _buildMonthCalendar(context, key: const ValueKey('month')),
-      ),
-    );
-  }
-
-  Widget _buildMonthCalendar(BuildContext context, {Key? key}) {
-    return Container(
-      key: key,
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.md),
-        boxShadow: [AppColors.shadowSm],
-      ),
-      child: TableCalendar<MockAttendanceSession>(
-        firstDay: DateTime(2020, 1, 1),
-        lastDay: DateTime(2030, 12, 31),
-        focusedDay: _focusedDay,
-        calendarFormat: CalendarFormat.month,
-        rowHeight: ScreenSize.isMobile(context) ? 85 : 115,
-        selectedDayPredicate: (d) => isSameDay(_selectedDay, d),
-        onDaySelected: (selected, focused) => setState(() {
-          _selectedDay = selected;
-          _focusedDay = focused;
-        }),
-        onPageChanged: (focused) => setState(() => _focusedDay = focused),
-        eventLoader: (date) => _sessionsFor(date),
-        calendarStyle: CalendarStyle(
-          defaultTextStyle: AppTypography.bodyMedium,
-          weekendTextStyle: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
-          outsideTextStyle: AppTypography.bodySmall.copyWith(
-            color: AppColors.textDisabled,
-          ),
-          selectedDecoration: BoxDecoration(
-            color: AppColors.teal.withValues(alpha: 0.2),
-            shape: BoxShape.rectangle,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: AppColors.teal, width: 2),
-          ),
-          todayDecoration: BoxDecoration(
-            color: AppColors.teal.withValues(alpha: 0.15),
-            shape: BoxShape.rectangle,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: AppColors.teal, width: 1),
-          ),
-          outsideDaysVisible: true,
-        ),
-        calendarBuilders: CalendarBuilders<MockAttendanceSession>(
-          markerBuilder: (context, date, events) {
-            if (events.isEmpty) return null;
-            final isMobile = ScreenSize.isMobile(context);
-            final maxEvents = isMobile ? 2 : 3;
-            final eventList = events.take(maxEvents).toList();
-            final hasMore = events.length > maxEvents;
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                final maxW =
-                    constraints.maxWidth.isFinite && constraints.maxWidth > 0
-                    ? constraints.maxWidth
-                    : 120.0;
-                final usableHeight =
-                    constraints.maxHeight.isFinite && constraints.maxHeight > 0
-                    ? constraints.maxHeight
-                    : 80.0;
-                final maxH = (usableHeight * 0.5).clamp(48.0, 75.0);
-                return Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SizedBox(
-                    width: maxW,
-                    height: maxH,
-                    child: ClipRect(
-                      child: SingleChildScrollView(
-                        physics: const NeverScrollableScrollPhysics(),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ...eventList.map<Widget>((s) {
-                              return _CalendarEventBlock(
-                                session: s,
-                                formatTime: _formatTime,
-                                colorFor: _colorForSession,
-                                bgColorFor: _bgColorForSession,
-                                compact: true,
-                              );
-                            }),
-                            if (hasMore)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Text(
-                                  '+${events.length - maxEvents} more',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 10,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-        headerVisible: true,
+        height: viewportHeight,
+        child: const TimelineRoadmapView(),
       ),
     );
   }
@@ -872,15 +663,20 @@ class _AttendanceCalendarScreenState
     List<MockAttendanceSession> sessions,
   ) {
     final panelWidth = MediaQuery.sizeOf(context).width > 1400 ? 340.0 : 300.0;
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
       width: panelWidth,
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: AppColors.card.withValues(alpha: 0.98),
         border: Border(left: BorderSide(color: AppColors.divider)),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(14),
+          bottomLeft: Radius.circular(14),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 14,
             offset: const Offset(2, 0),
           ),
         ],
@@ -940,129 +736,370 @@ class _AttendanceCalendarScreenState
     BuildContext context,
     List<MockAttendanceSession> sessions, {
     bool scrollable = true,
+    bool mobileSheet = false,
   }) {
-    if (sessions.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.event_busy_rounded,
-              size: 48,
-              color: AppColors.textDisabled,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'No classes scheduled',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    return ListView.builder(
-      shrinkWrap: !scrollable,
-      physics: scrollable ? null : const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      itemCount: sessions.length,
-      itemBuilder: (ctx, i) {
-        final s = sessions[i];
-        final isMarked = s.status == 'marked';
-        return Container(
-          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-          padding: const EdgeInsets.all(AppSpacing.sm),
-          decoration: BoxDecoration(
-            color: isMarked ? AppColors.successBg : AppColors.warningBg,
-            borderRadius: BorderRadius.circular(AppSpacing.sm),
-            border: Border.all(
-              color: isMarked
-                  ? AppColors.success.withValues(alpha: 0.3)
-                  : AppColors.warning.withValues(alpha: 0.3),
+    final edgePadding = EdgeInsets.fromLTRB(
+      AppSpacing.md,
+      mobileSheet ? AppSpacing.md : AppSpacing.xs,
+      AppSpacing.md,
+      AppSpacing.md,
+    );
+
+    return ValueListenableBuilder<MockAttendanceSession?>(
+      valueListenable: _selectedSessionNotifier,
+      builder: (context, selected, _) {
+        final history = selected == null
+            ? <MockAttendanceSession>[]
+            : _sessionHistory(selected);
+        final hasSelectedFromDay =
+            selected != null && sessions.any((s) => s.id == selected.id);
+
+        final slivers = <Widget>[
+          SliverPadding(
+            padding: edgePadding,
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                if (mobileSheet)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Task Details',
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (sessions.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.event_busy_rounded,
+                          size: 42,
+                          color: AppColors.textDisabled,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          'No classes scheduled on this date',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  )
+                else ...[
+                  Text(
+                    'Lessons',
+                    style: AppTypography.labelLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+              ]),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
+          if (sessions.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              sliver: SliverList.separated(
+                itemCount: sessions.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: AppSpacing.sm),
+                itemBuilder: (context, index) {
+                  final s = sessions[index];
+                  final isActive = selected?.id == s.id;
+                  final isMarked = s.status == 'marked';
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
                     decoration: BoxDecoration(
-                      color: isMarked ? AppColors.success : AppColors.warning,
-                      borderRadius: BorderRadius.circular(4),
+                      color: isActive
+                          ? AppColors.teal.withValues(alpha: 0.1)
+                          : isMarked
+                          ? AppColors.successBg
+                          : AppColors.warningBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isActive
+                            ? AppColors.teal
+                            : isMarked
+                            ? AppColors.success.withValues(alpha: 0.3)
+                            : AppColors.warning.withValues(alpha: 0.3),
+                      ),
+                      boxShadow: isActive
+                          ? [
+                              BoxShadow(
+                                color: AppColors.teal.withValues(alpha: 0.14),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
                     ),
-                    child: Text(
-                      isMarked ? 'Marked' : 'Pending',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => _selectedSessionNotifier.value = s,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.sm),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${s.classSection} • ${s.subject}',
+                                      style: AppTypography.labelLarge.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${s.concept} • P${s.period}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.bodySmall.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                '${_formatTime(s.startTime)} - ${_formatTime(s.endTime)}',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${s.classSection} • P${s.period}',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-              const SizedBox(height: 6),
-              Text(
-                s.subject,
-                style: AppTypography.titleSmall.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                s.concept,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Icon(
-                    Icons.access_time_rounded,
-                    size: 14,
+            ),
+          SliverPadding(
+            padding: edgePadding,
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                if (sessions.isNotEmpty) const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Selected Lesson',
+                  style: AppTypography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${s.startTime} – ${s.endTime}',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.textSecondary,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                if (!hasSelectedFromDay)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: Text(
+                      sessions.isEmpty
+                          ? 'Select another date to view class details.'
+                          : 'Select a lesson above to view complete details.',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${selected.classSection} • ${selected.subject}',
+                                style: AppTypography.titleSmall.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: selected.status == 'marked'
+                                    ? AppColors.success
+                                    : AppColors.warning,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                selected.status == 'marked'
+                                    ? 'Marked'
+                                    : 'Pending',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(selected.concept, style: AppTypography.bodyMedium),
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          children: [
+                            const Icon(Icons.schedule_rounded, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Period ${selected.period} • ${_formatTime(selected.startTime)} - ${_formatTime(selected.endTime)}',
+                              style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () =>
+                                context.go(AppRoutes.teacherAttendanceMark),
+                            icon: const Icon(
+                              Icons.how_to_reg_rounded,
+                              size: 16,
+                            ),
+                            label: Text(
+                              selected.status == 'marked'
+                                  ? 'Open Attendance'
+                                  : 'Mark Attendance',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => context.go(AppRoutes.teacherAttendanceMark),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    minimumSize: Size.zero,
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Notes & History',
+                  style: AppTypography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
                   ),
-                  child: Text(isMarked ? 'View' : 'Mark Attendance'),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.sm),
+                if (!hasSelectedFromDay || history.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: Text(
+                      'No previous notes/history available for this lesson yet.',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  )
+                else
+                  ...history.map((h) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.divider),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 2),
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: h.status == 'marked'
+                                  ? AppColors.success
+                                  : AppColors.warning,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  DateFormat('dd MMM yyyy').format(h.date),
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  h.concept,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'Period ${h.period} • ${_formatTime(h.startTime)}',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+              ]),
+            ),
           ),
+        ];
+
+        return CustomScrollView(
+          shrinkWrap: !scrollable,
+          physics: scrollable ? null : const NeverScrollableScrollPhysics(),
+          slivers: slivers,
         );
       },
     );
@@ -1080,6 +1117,10 @@ class _WeekViewGrid extends StatefulWidget {
     required this.colorFor,
     required this.bgColorFor,
     required this.onDayTap,
+    required this.onSessionTap,
+    required this.onNavigatePrevious,
+    required this.onNavigateNext,
+    // ignore: unused_element_parameter
     this.selectedDay,
   });
   final DateTime focusedDay;
@@ -1089,6 +1130,9 @@ class _WeekViewGrid extends StatefulWidget {
   final Color Function(MockAttendanceSession) colorFor;
   final Color Function(MockAttendanceSession) bgColorFor;
   final void Function(DateTime) onDayTap;
+  final void Function(MockAttendanceSession) onSessionTap;
+  final VoidCallback onNavigatePrevious;
+  final VoidCallback onNavigateNext;
   final DateTime? selectedDay;
 
   @override
@@ -1097,20 +1141,55 @@ class _WeekViewGrid extends StatefulWidget {
 
 class _WeekViewGridState extends State<_WeekViewGrid> {
   late final ScrollController _verticalController;
-  late final ScrollController _horizontalController;
+  late final ScrollController _headerHorizontalController;
+  late final ScrollController _bodyHorizontalController;
+  bool _syncingHorizontalScroll = false;
 
   @override
   void initState() {
     super.initState();
     _verticalController = ScrollController();
-    _horizontalController = ScrollController();
+    _headerHorizontalController = ScrollController();
+    _bodyHorizontalController = ScrollController();
+    _headerHorizontalController.addListener(_syncFromHeader);
+    _bodyHorizontalController.addListener(_syncFromBody);
   }
 
   @override
   void dispose() {
+    _headerHorizontalController.removeListener(_syncFromHeader);
+    _bodyHorizontalController.removeListener(_syncFromBody);
     _verticalController.dispose();
-    _horizontalController.dispose();
+    _headerHorizontalController.dispose();
+    _bodyHorizontalController.dispose();
     super.dispose();
+  }
+
+  void _syncFromHeader() => _syncHorizontal(
+    source: _headerHorizontalController,
+    target: _bodyHorizontalController,
+  );
+
+  void _syncFromBody() => _syncHorizontal(
+    source: _bodyHorizontalController,
+    target: _headerHorizontalController,
+  );
+
+  void _syncHorizontal({
+    required ScrollController source,
+    required ScrollController target,
+  }) {
+    if (_syncingHorizontalScroll) return;
+    if (!source.hasClients || !target.hasClients) return;
+    _syncingHorizontalScroll = true;
+    final targetOffset = source.offset.clamp(
+      target.position.minScrollExtent,
+      target.position.maxScrollExtent,
+    );
+    if ((target.offset - targetOffset).abs() > 0.5) {
+      target.jumpTo(targetOffset);
+    }
+    _syncingHorizontalScroll = false;
   }
 
   static const _gridColor = Color(0xFFE8E8E8);
@@ -1123,6 +1202,25 @@ class _WeekViewGridState extends State<_WeekViewGrid> {
   static const _barYellow = Color(0xFFFFC107);
   static const _barTeal = Color(0xFF009688);
   static const _todayLineColor = Color(0xFFFF9800);
+  static const _swipeVelocityThreshold = 420.0;
+
+  void _handleHorizontalSwipe(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    if (velocity.abs() < _swipeVelocityThreshold) return;
+    if (!_bodyHorizontalController.hasClients) return;
+
+    final maxOffset = _bodyHorizontalController.position.maxScrollExtent;
+    final offset = _bodyHorizontalController.offset;
+    const edgeSlack = 16.0;
+
+    if (velocity < 0 && offset >= (maxOffset - edgeSlack)) {
+      widget.onNavigateNext();
+      return;
+    }
+    if (velocity > 0 && offset <= edgeSlack) {
+      widget.onNavigatePrevious();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1151,11 +1249,8 @@ class _WeekViewGridState extends State<_WeekViewGrid> {
     }
     trackOrder.sort();
 
-    final rowHeight = 44.0;
-    final leftPanelWidth = 200.0;
-    final colWidth = 100.0;
+    const rowHeight = 44.0;
     final isMobile = MediaQuery.sizeOf(context).width < 600;
-    final effectiveColWidth = isMobile ? 80.0 : colWidth;
     final todayIdx = dayColumns.indexWhere((d) => _isToday(d));
 
     final sessionMap = <String, Map<int, MockAttendanceSession>>{};
@@ -1179,358 +1274,400 @@ class _WeekViewGridState extends State<_WeekViewGrid> {
         ? 120.0
         : trackOrder.length * rowHeight;
     const headerHeight = 48.0;
-    // Cap grid height so Column fits in parent (700px) - reserve space for header
-    const maxAvailableHeight = 650.0;
-    final effectiveGridHeight = gridContentHeight.clamp(
-      120.0,
-      maxAvailableHeight,
-    );
+    const fallbackGridHeight = 420.0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                SizedBox(
-                  width: leftPanelWidth,
-                  height: headerHeight,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: _dayHeaderBg,
-                      border: Border(
-                        right: BorderSide(color: _gridColor),
-                        bottom: BorderSide(color: _gridColor),
-                      ),
-                    ),
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Class • Subject',
-                      style: AppTypography.labelMedium.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: daysCount * effectiveColWidth,
-                      height: headerHeight,
-                      child: Row(
-                        children: dayColumns.map((date) {
-                          final isToday = _isToday(date);
-                          return GestureDetector(
-                            onTap: () => widget.onDayTap(date),
-                            child: Container(
-                              width: effectiveColWidth,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isToday ? _todayHighlight : _dayHeaderBg,
-                                border: Border(
-                                  right: BorderSide(color: _gridColor),
-                                  bottom: BorderSide(color: _gridColor),
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${_dayName(date.weekday)} ${date.day}',
-                                  style: AppTypography.labelMedium.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: isToday
-                                        ? _todayLineColor
-                                        : AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: isMobile ? _handleHorizontalSwipe : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE0E0E0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
             ),
-            SizedBox(
-              height: effectiveGridHeight,
-              child: Scrollbar(
-                controller: _verticalController,
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  controller: _verticalController,
-                  scrollDirection: Axis.vertical,
-                  child: SizedBox(
-                    height: gridContentHeight,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: leftPanelWidth,
-                          height: gridContentHeight,
-                          child: Column(
-                            children: List.generate(trackOrder.length, (r) {
-                              final key = trackOrder[r];
-                              final isAlt = r.isOdd;
-                              return Container(
-                                height: rowHeight,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isAlt ? _rowAltBg : Colors.white,
-                                  border: Border(
-                                    right: BorderSide(color: _gridColor),
-                                    bottom: BorderSide(
-                                      color: _gridColor.withValues(alpha: 0.7),
-                                    ),
-                                  ),
-                                ),
-                                alignment: Alignment.centerLeft,
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: _barColorForTrack(r),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        key,
-                                        style: AppTypography.bodySmall.copyWith(
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final leftPanelWidth = isMobile
+                  ? (constraints.maxWidth * 0.37).clamp(124.0, 156.0)
+                  : 200.0;
+              final rightViewportWidth = (constraints.maxWidth - leftPanelWidth)
+                  .clamp(120.0, 1400.0);
+              final effectiveColWidth = isMobile
+                  ? (rightViewportWidth / (widget.twoWeeks ? 4.6 : 3.5)).clamp(
+                      74.0,
+                      110.0,
+                    )
+                  : 100.0;
+              final contentWidth = daysCount * effectiveColWidth;
+              final maxBodyHeight = constraints.maxHeight.isFinite
+                  ? (constraints.maxHeight - headerHeight).clamp(120.0, 900.0)
+                  : fallbackGridHeight;
+              final effectiveGridHeight = gridContentHeight.clamp(
+                120.0,
+                maxBodyHeight,
+              );
+              return Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: leftPanelWidth,
+                        height: headerHeight,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: _dayHeaderBg,
+                            border: Border(
+                              right: BorderSide(color: _gridColor),
+                              bottom: BorderSide(color: _gridColor),
+                            ),
+                          ),
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Class • Subject',
+                            style: AppTypography.labelMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
-                        Expanded(
-                          child: Scrollbar(
-                            controller: _horizontalController,
-                            thumbVisibility: true,
-                            child: SingleChildScrollView(
-                              controller: _horizontalController,
-                              scrollDirection: Axis.horizontal,
-                              child: SizedBox(
-                                width: daysCount * effectiveColWidth,
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: _headerHorizontalController,
+                          scrollDirection: Axis.horizontal,
+                          physics: const ClampingScrollPhysics(),
+                          child: SizedBox(
+                            width: contentWidth,
+                            height: headerHeight,
+                            child: Row(
+                              children: dayColumns.map((date) {
+                                final isToday = _isToday(date);
+                                final isSelected =
+                                    widget.selectedDay != null &&
+                                    isSameDay(widget.selectedDay, date);
+                                return GestureDetector(
+                                  onTap: () => widget.onDayTap(date),
+                                  child: Container(
+                                    width: effectiveColWidth,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppColors.teal.withValues(
+                                              alpha: 0.16,
+                                            )
+                                          : isToday
+                                          ? _todayHighlight
+                                          : _dayHeaderBg,
+                                      border: Border(
+                                        right: BorderSide(color: _gridColor),
+                                        bottom: BorderSide(color: _gridColor),
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${_dayName(date.weekday)} ${date.day}',
+                                        style: AppTypography.labelMedium
+                                            .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: isSelected
+                                                  ? AppColors.teal
+                                                  : isToday
+                                                  ? _todayLineColor
+                                                  : AppColors.textSecondary,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: effectiveGridHeight,
+                    child: Scrollbar(
+                      controller: _verticalController,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: _verticalController,
+                        scrollDirection: Axis.vertical,
+                        physics: const ClampingScrollPhysics(),
+                        child: SizedBox(
+                          height: gridContentHeight,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: leftPanelWidth,
                                 height: gridContentHeight,
-                                child: Stack(
-                                  children: [
-                                    Row(
-                                      children: List.generate(daysCount, (
-                                        colIdx,
-                                      ) {
-                                        final date = dayColumns[colIdx];
-                                        final isToday = _isToday(date);
-                                        return Container(
-                                          width: effectiveColWidth,
-                                          decoration: BoxDecoration(
-                                            color: isToday
-                                                ? _todayHighlight.withValues(
-                                                    alpha: 0.2,
-                                                  )
-                                                : Colors.transparent,
-                                            border: Border(
-                                              right: BorderSide(
-                                                color: _gridColor,
-                                              ),
+                                child: Column(
+                                  children: List.generate(trackOrder.length, (
+                                    r,
+                                  ) {
+                                    final key = trackOrder[r];
+                                    final isAlt = r.isOdd;
+                                    return Container(
+                                      height: rowHeight,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isAlt ? _rowAltBg : Colors.white,
+                                        border: Border(
+                                          right: BorderSide(color: _gridColor),
+                                          bottom: BorderSide(
+                                            color: _gridColor.withValues(
+                                              alpha: 0.7,
                                             ),
                                           ),
-                                          child: Column(
-                                            children: List.generate(trackOrder.length, (
-                                              r,
+                                        ),
+                                      ),
+                                      alignment: Alignment.centerLeft,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: _barColorForTrack(r),
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              key,
+                                              style: AppTypography.bodySmall
+                                                  .copyWith(
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                              Expanded(
+                                child: Scrollbar(
+                                  controller: _bodyHorizontalController,
+                                  thumbVisibility: true,
+                                  child: SingleChildScrollView(
+                                    controller: _bodyHorizontalController,
+                                    scrollDirection: Axis.horizontal,
+                                    physics: const ClampingScrollPhysics(),
+                                    child: SizedBox(
+                                      width: contentWidth,
+                                      height: gridContentHeight,
+                                      child: Stack(
+                                        children: [
+                                          Row(
+                                            children: List.generate(daysCount, (
+                                              colIdx,
                                             ) {
-                                              final key = trackOrder[r];
-                                              final session =
-                                                  sessionMap[key]?[colIdx];
-                                              final isAlt = r.isOdd;
-                                              return GestureDetector(
-                                                onTap: session != null
-                                                    ? () => context.go(
-                                                        AppRoutes
-                                                            .teacherAttendanceMark,
-                                                      )
-                                                    : null,
-                                                child: Container(
-                                                  height: rowHeight,
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 4,
-                                                        vertical: 4,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: isAlt
-                                                        ? _rowAltBg
-                                                        : Colors.white,
-                                                    border: Border(
-                                                      bottom: BorderSide(
-                                                        color: _gridColor
+                                              final date = dayColumns[colIdx];
+                                              final isToday = _isToday(date);
+                                              return Container(
+                                                width: effectiveColWidth,
+                                                decoration: BoxDecoration(
+                                                  color: isToday
+                                                      ? _todayHighlight
                                                             .withValues(
-                                                              alpha: 0.7,
-                                                            ),
-                                                      ),
+                                                              alpha: 0.2,
+                                                            )
+                                                      : Colors.transparent,
+                                                  border: Border(
+                                                    right: BorderSide(
+                                                      color: _gridColor,
                                                     ),
                                                   ),
-                                                  child: session != null
-                                                      ? Center(
-                                                          child: Material(
-                                                            color: Colors
-                                                                .transparent,
-                                                            child: InkWell(
-                                                              onTap: () =>
-                                                                  context.go(
-                                                                    AppRoutes
-                                                                        .teacherAttendanceMark,
+                                                ),
+                                                child: Column(
+                                                  children: List.generate(trackOrder.length, (
+                                                    r,
+                                                  ) {
+                                                    final key = trackOrder[r];
+                                                    final session =
+                                                        sessionMap[key]?[colIdx];
+                                                    final isAlt = r.isOdd;
+                                                    return GestureDetector(
+                                                      onTap: session != null
+                                                          ? () => widget
+                                                                .onSessionTap(
+                                                                  session,
+                                                                )
+                                                          : null,
+                                                      child: Container(
+                                                        height: rowHeight,
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 4,
+                                                              vertical: 4,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: isAlt
+                                                              ? _rowAltBg
+                                                              : Colors.white,
+                                                          border: Border(
+                                                            bottom: BorderSide(
+                                                              color: _gridColor
+                                                                  .withValues(
+                                                                    alpha: 0.7,
                                                                   ),
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    6,
-                                                                  ),
-                                                              child: Container(
-                                                                width: double
-                                                                    .infinity,
-                                                                padding:
-                                                                    const EdgeInsets.symmetric(
-                                                                      horizontal:
-                                                                          6,
-                                                                      vertical:
-                                                                          4,
-                                                                    ),
-                                                                decoration: BoxDecoration(
-                                                                  color:
-                                                                      session.status ==
-                                                                          'marked'
-                                                                      ? _barBlue
-                                                                      : _barGreen,
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(
-                                                                        6,
-                                                                      ),
-                                                                  boxShadow: [
-                                                                    BoxShadow(
-                                                                      color: Colors
-                                                                          .black
-                                                                          .withValues(
-                                                                            alpha:
-                                                                                0.08,
-                                                                          ),
-                                                                      blurRadius:
-                                                                          2,
-                                                                      offset:
-                                                                          const Offset(
-                                                                            0,
-                                                                            1,
-                                                                          ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                                child: FittedBox(
-                                                                  fit: BoxFit
-                                                                      .scaleDown,
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .centerLeft,
-                                                                  child: Text(
-                                                                    '${session.subject} P${session.period} ${_formatTimeCompact(session.startTime)}',
-                                                                    style: AppTypography.labelSmall.copyWith(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w600,
-                                                                      fontSize:
-                                                                          9,
-                                                                    ),
-                                                                    maxLines: 1,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                  ),
-                                                                ),
-                                                              ),
                                                             ),
                                                           ),
-                                                        )
-                                                      : const SizedBox.shrink(),
+                                                        ),
+                                                        child: session != null
+                                                            ? Center(
+                                                                child: Material(
+                                                                  color: Colors
+                                                                      .transparent,
+                                                                  child: InkWell(
+                                                                    onTap: () =>
+                                                                        widget.onSessionTap(
+                                                                          session,
+                                                                        ),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          6,
+                                                                        ),
+                                                                    child: Container(
+                                                                      width: double
+                                                                          .infinity,
+                                                                      padding: const EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            6,
+                                                                        vertical:
+                                                                            4,
+                                                                      ),
+                                                                      decoration: BoxDecoration(
+                                                                        color:
+                                                                            session.status ==
+                                                                                'marked'
+                                                                            ? _barBlue
+                                                                            : _barGreen,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(
+                                                                              6,
+                                                                            ),
+                                                                        boxShadow: [
+                                                                          BoxShadow(
+                                                                            color: Colors.black.withValues(
+                                                                              alpha: 0.08,
+                                                                            ),
+                                                                            blurRadius:
+                                                                                2,
+                                                                            offset: const Offset(
+                                                                              0,
+                                                                              1,
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                      child: FittedBox(
+                                                                        fit: BoxFit
+                                                                            .scaleDown,
+                                                                        alignment:
+                                                                            Alignment.centerLeft,
+                                                                        child: Text(
+                                                                          '${session.subject} P${session.period} ${_formatTimeCompact(session.startTime)}',
+                                                                          style: AppTypography.labelSmall.copyWith(
+                                                                            color:
+                                                                                Colors.white,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                            fontSize:
+                                                                                9,
+                                                                          ),
+                                                                          maxLines:
+                                                                              1,
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              )
+                                                            : const SizedBox.shrink(),
+                                                      ),
+                                                    );
+                                                  }),
                                                 ),
                                               );
                                             }),
                                           ),
-                                        );
-                                      }),
-                                    ),
-                                    if (todayIdx >= 0)
-                                      Positioned(
-                                        left:
-                                            todayIdx * effectiveColWidth +
-                                            effectiveColWidth / 2 -
-                                            1,
-                                        top: 0,
-                                        bottom: 0,
-                                        child: IgnorePointer(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              CustomPaint(
-                                                size: const Size(12, 8),
-                                                painter: _TodayMarkerPainter(
-                                                  color: _todayLineColor,
+                                          if (todayIdx >= 0)
+                                            Positioned(
+                                              left:
+                                                  todayIdx * effectiveColWidth +
+                                                  effectiveColWidth / 2 -
+                                                  1,
+                                              top: 0,
+                                              bottom: 0,
+                                              child: IgnorePointer(
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    CustomPaint(
+                                                      size: const Size(12, 8),
+                                                      painter:
+                                                          _TodayMarkerPainter(
+                                                            color:
+                                                                _todayLineColor,
+                                                          ),
+                                                    ),
+                                                    Expanded(
+                                                      child: Container(
+                                                        width: 2,
+                                                        color: _todayLineColor,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                              Expanded(
-                                                child: Container(
-                                                  width: 2,
-                                                  color: _todayLineColor,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                            ),
+                                        ],
                                       ),
-                                  ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ],
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -1580,80 +1717,6 @@ class _TodayMarkerPainter extends CustomPainter {
 }
 
 // ── Shared widgets ───────────────────────────────────────────────────────────
-
-class _CalendarEventBlock extends StatelessWidget {
-  const _CalendarEventBlock({
-    required this.session,
-    required this.formatTime,
-    required this.colorFor,
-    required this.bgColorFor,
-    this.compact = false,
-  });
-  final MockAttendanceSession session;
-  final String Function(String) formatTime;
-  final Color Function(MockAttendanceSession) colorFor;
-  final Color Function(MockAttendanceSession) bgColorFor;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = colorFor(session);
-    final bg = bgColorFor(session);
-    return Container(
-      margin: EdgeInsets.only(top: compact ? 1 : 2),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 3 : 4,
-        vertical: compact ? 2 : 3,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            session.classSection,
-            style: AppTypography.labelSmall.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: compact ? 8 : 9,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            session.concept,
-            style: AppTypography.labelSmall.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: compact ? 9 : 10,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Row(
-            children: [
-              Text(
-                formatTime(session.startTime),
-                style: AppTypography.labelSmall.copyWith(
-                  fontSize: compact ? 8 : 9,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                width: compact ? 5 : 6,
-                height: compact ? 5 : 6,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _FilterSection extends StatelessWidget {
   const _FilterSection({

@@ -1,8 +1,21 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <windows.h>
 
 #include "flutter/generated_plugin_registrant.h"
+
+namespace {
+
+// Flutter can assert in RawKeyboard when the Windows embedder forwards a bare
+// Alt key-down with an empty modifier mask. Consuming those messages here keeps
+// Alt+character combos (different virtual keys) working while dropping the
+// problematic "Alt alone" events. See docs/WINDOWS_FLUTTER_DEBUG.md.
+bool IsBareAltVirtualKey(WPARAM vk) {
+  return vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU;
+}
+
+}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -51,6 +64,20 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // Must run before HandleTopLevelWindowProc so the engine never sees the
+  // half-baked Alt key packet that triggers raw_keyboard.dart assertions.
+  if (message == WM_SYSKEYDOWN || message == WM_SYSKEYUP) {
+    if (IsBareAltVirtualKey(wparam)) {
+      return 0;
+    }
+  }
+  if (message == WM_KEYDOWN || message == WM_KEYUP) {
+    // Left/right Alt sometimes arrive on the non-system key path (0xA4 / 0xA5).
+    if (wparam == VK_LMENU || wparam == VK_RMENU) {
+      return 0;
+    }
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
