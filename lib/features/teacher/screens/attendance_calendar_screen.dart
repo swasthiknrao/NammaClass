@@ -1073,7 +1073,6 @@ class _AttendanceCalendarScreenState
 
 class _WeekViewGrid extends StatefulWidget {
   const _WeekViewGrid({
-    super.key,
     required this.focusedDay,
     required this.twoWeeks,
     required this.sessionsFor,

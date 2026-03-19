@@ -82,168 +82,187 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _form() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-                AppConstants.appName,
-                style: AppTypography.displayMedium.copyWith(
-                  color: AppColors.primary,
-                ),
-              )
-              .animate()
-              .fadeIn(duration: 400.ms)
-              .slideY(begin: -0.1, end: 0, curve: Curves.easeOut),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-                'Login to your account',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              )
-              .animate()
-              .fadeIn(duration: 400.ms, delay: 100.ms)
-              .slideY(begin: -0.05, end: 0, curve: Curves.easeOut),
-          const SizedBox(height: AppSpacing.xl),
-
-          // Phone field
-          NcTextField(
-            controller: _phoneController,
-            label: 'Mobile Number',
-            hint: 'Enter 10-digit mobile number',
-            prefixIcon: Icons.phone_outlined,
-            keyboardType: TextInputType.phone,
-            textInputAction: TextInputAction.done,
-            maxLength: 10,
-            validator: AppValidators.phone,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
           ),
-          const SizedBox(height: AppSpacing.lg),
-
-          NcPrimaryButton(
-                label: 'Send OTP',
-                fullWidth: true,
-                icon: Icons.send_outlined,
-                loading: _loading,
-                onPressed: _sendOtp,
-              )
-              .animate()
-              .fadeIn(duration: 350.ms, delay: 200.ms)
-              .slideY(begin: 0.03, end: 0, curve: Curves.easeOut),
-
-          if (kDebugMode || EnvConfig.env == 'dev') ...[
-            const SizedBox(height: AppSpacing.xl),
-            const Row(
-              children: [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                  child: Text('OR'),
-                ),
-                Expanded(child: Divider()),
-              ],
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.hasBoundedHeight
+                  ? constraints.maxHeight
+                  : 0,
             ),
-            const SizedBox(height: AppSpacing.md),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                        AppConstants.appName,
+                        style: AppTypography.displayMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      )
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: -0.1, end: 0, curve: Curves.easeOut),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                        'Login to your account',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      )
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 100.ms)
+                      .slideY(begin: -0.05, end: 0, curve: Curves.easeOut),
+                  const SizedBox(height: AppSpacing.xl),
 
-            // Demo role selector (dev/debug only)
-            Text(
-              'Demo Mode — Select Role',
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondary,
+                  // Phone field
+                  NcTextField(
+                    controller: _phoneController,
+                    label: 'Mobile Number',
+                    hint: 'Enter 10-digit mobile number',
+                    prefixIcon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.done,
+                    maxLength: 10,
+                    validator: AppValidators.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  NcPrimaryButton(
+                        label: 'Send OTP',
+                        fullWidth: true,
+                        icon: Icons.send_outlined,
+                        loading: _loading,
+                        onPressed: _sendOtp,
+                      )
+                      .animate()
+                      .fadeIn(duration: 350.ms, delay: 200.ms)
+                      .slideY(begin: 0.03, end: 0, curve: Curves.easeOut),
+
+                  if (kDebugMode || EnvConfig.env == 'dev') ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    const Row(
+                      children: [
+                        Expanded(child: Divider()),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
+                          child: Text('OR'),
+                        ),
+                        Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Demo role selector (dev/debug only)
+                    Text(
+                      'Demo Mode — Select Role',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _DemoButton(
+                          label: 'Parent',
+                          icon: Icons.family_restroom,
+                          color: AppColors.primary,
+                          onTap: () => _loginDemo(UserRole.parent),
+                        ),
+                        _DemoButton(
+                          label: 'Teacher',
+                          icon: Icons.school,
+                          color: AppColors.teal,
+                          onTap: () => _loginDemo(UserRole.teacher),
+                        ),
+                        _DemoButton(
+                          label: 'Student',
+                          icon: Icons.person,
+                          color: AppColors.accent,
+                          onTap: () => _loginDemo(UserRole.student),
+                        ),
+                        _DemoButton(
+                          label: 'Admin',
+                          icon: Icons.admin_panel_settings,
+                          color: AppColors.error,
+                          onTap: () => _loginDemo(UserRole.admin),
+                        ),
+                        _DemoButton(
+                          label: 'Principal',
+                          icon: Icons.school_outlined,
+                          color: AppColors.primary,
+                          onTap: () => _loginDemo(UserRole.principal),
+                        ),
+                        _DemoButton(
+                          label: 'Staff',
+                          icon: Icons.badge_outlined,
+                          color: AppColors.teal,
+                          onTap: () => _loginDemo(UserRole.staff),
+                        ),
+                        _DemoButton(
+                          label: 'Driver',
+                          icon: Icons.directions_bus,
+                          color: Colors.orange,
+                          onTap: () => _loginDemo(UserRole.driver),
+                        ),
+                        _DemoButton(
+                          label: 'Librarian',
+                          icon: Icons.menu_book,
+                          color: Colors.indigo,
+                          onTap: () => _loginDemo(UserRole.librarian),
+                        ),
+                        _DemoButton(
+                          label: 'Warden',
+                          icon: Icons.night_shelter,
+                          color: Colors.brown,
+                          onTap: () => _loginDemo(UserRole.warden),
+                        ),
+                        _DemoButton(
+                          label: 'Canteen',
+                          icon: Icons.restaurant,
+                          color: Colors.deepOrange,
+                          onTap: () => _loginDemo(UserRole.canteenStaff),
+                        ),
+                        _DemoButton(
+                          label: 'Accountant',
+                          icon: Icons.calculate,
+                          color: Colors.green,
+                          onTap: () => _loginDemo(UserRole.accountant),
+                        ),
+                        _DemoButton(
+                          label: 'Support',
+                          icon: Icons.support_agent,
+                          color: Colors.purple,
+                          onTap: () => _loginDemo(UserRole.support),
+                        ),
+                        _DemoButton(
+                          label: 'HOD',
+                          icon: Icons.work_outline,
+                          color: Colors.teal,
+                          onTap: () => _loginDemo(UserRole.hod),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
-              alignment: WrapAlignment.center,
-              children: [
-                _DemoButton(
-                  label: 'Parent',
-                  icon: Icons.family_restroom,
-                  color: AppColors.primary,
-                  onTap: () => _loginDemo(UserRole.parent),
-                ),
-                _DemoButton(
-                  label: 'Teacher',
-                  icon: Icons.school,
-                  color: AppColors.teal,
-                  onTap: () => _loginDemo(UserRole.teacher),
-                ),
-                _DemoButton(
-                  label: 'Student',
-                  icon: Icons.person,
-                  color: AppColors.accent,
-                  onTap: () => _loginDemo(UserRole.student),
-                ),
-                _DemoButton(
-                  label: 'Admin',
-                  icon: Icons.admin_panel_settings,
-                  color: AppColors.error,
-                  onTap: () => _loginDemo(UserRole.admin),
-                ),
-                _DemoButton(
-                  label: 'Principal',
-                  icon: Icons.school_outlined,
-                  color: AppColors.primary,
-                  onTap: () => _loginDemo(UserRole.principal),
-                ),
-                _DemoButton(
-                  label: 'Staff',
-                  icon: Icons.badge_outlined,
-                  color: AppColors.teal,
-                  onTap: () => _loginDemo(UserRole.staff),
-                ),
-                _DemoButton(
-                  label: 'Driver',
-                  icon: Icons.directions_bus,
-                  color: Colors.orange,
-                  onTap: () => _loginDemo(UserRole.driver),
-                ),
-                _DemoButton(
-                  label: 'Librarian',
-                  icon: Icons.menu_book,
-                  color: Colors.indigo,
-                  onTap: () => _loginDemo(UserRole.librarian),
-                ),
-                _DemoButton(
-                  label: 'Warden',
-                  icon: Icons.night_shelter,
-                  color: Colors.brown,
-                  onTap: () => _loginDemo(UserRole.warden),
-                ),
-                _DemoButton(
-                  label: 'Canteen',
-                  icon: Icons.restaurant,
-                  color: Colors.deepOrange,
-                  onTap: () => _loginDemo(UserRole.canteenStaff),
-                ),
-                _DemoButton(
-                  label: 'Accountant',
-                  icon: Icons.calculate,
-                  color: Colors.green,
-                  onTap: () => _loginDemo(UserRole.accountant),
-                ),
-                _DemoButton(
-                  label: 'Support',
-                  icon: Icons.support_agent,
-                  color: Colors.purple,
-                  onTap: () => _loginDemo(UserRole.support),
-                ),
-                _DemoButton(
-                  label: 'HOD',
-                  icon: Icons.work_outline,
-                  color: Colors.teal,
-                  onTap: () => _loginDemo(UserRole.hod),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
+          ),
+        );
+      },
     );
   }
 }

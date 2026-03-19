@@ -192,16 +192,16 @@ class _DesktopAttendanceLayout extends StatelessWidget {
     final now = DateTime.now();
     final monthName = _monthName(now.month);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           // Hero + stats inline (fill width)
           Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Expanded(
                 flex: 3,
                 child: _AttendanceHeroBanner(
@@ -213,26 +213,15 @@ class _DesktopAttendanceLayout extends StatelessWidget {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 flex: 4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _DesktopStatCards(
-                      present: present,
-                      absent: absent,
-                      leave: leave,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _DesktopProgressCard(
-                      present: present,
-                      total: total,
-                      pct: pct,
-                    ),
-                  ],
+                child: _DesktopProgressCard(
+                  present: present,
+                  total: total,
+                  pct: pct,
                 ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
 
           // Calendar + legend row
           Row(
@@ -658,128 +647,6 @@ class _AttendanceTipCard extends StatelessWidget {
   }
 }
 
-class _DesktopStatCards extends StatelessWidget {
-  const _DesktopStatCards({
-    required this.present,
-    required this.absent,
-    required this.leave,
-  });
-  final int present;
-  final int absent;
-  final int leave;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _DesktopStatCard(
-            label: 'Present',
-            value: present.toString(),
-            color: AppColors.success,
-            icon: Icons.check_circle_rounded,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _DesktopStatCard(
-            label: 'Absent',
-            value: absent.toString(),
-            color: AppColors.error,
-            icon: Icons.cancel_rounded,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _DesktopStatCard(
-            label: 'Leave',
-            value: leave.toString(),
-            color: AppColors.warning,
-            icon: Icons.event_busy_rounded,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DesktopStatCard extends StatelessWidget {
-  const _DesktopStatCard({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-  });
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.lg,
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.12),
-            color.withValues(alpha: 0.06),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.12),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: AppTypography.headlineMedium.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  label,
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DesktopProgressCard extends StatelessWidget {
   const _DesktopProgressCard({
     required this.present,
@@ -908,57 +775,47 @@ class _MobileAttendanceLayout extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              _StatCard('Present', present.toString(), AppColors.success),
-              const SizedBox(width: AppSpacing.sm),
-              _StatCard('Absent', absent.toString(), AppColors.error),
-              const SizedBox(width: AppSpacing.sm),
-              _StatCard('Leave', leave.toString(), AppColors.warning),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-                NcCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Attendance', style: AppTypography.labelLarge),
-                          Text(
-                            '${(pct * 100).toStringAsFixed(1)}%',
-                            style: AppTypography.headlineSmall.copyWith(
-                              color: pct >= 0.85
-                                  ? AppColors.success
-                                  : AppColors.error,
-                            ),
-                          ),
-                        ],
+          NcCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Attendance', style: AppTypography.labelLarge),
+                    Text(
+                      '${(pct * 100).toStringAsFixed(1)}%',
+                      style: AppTypography.headlineSmall.copyWith(
+                        color: pct >= 0.85
+                            ? AppColors.success
+                            : AppColors.error,
                       ),
-                      const SizedBox(height: AppSpacing.xs),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: pct,
-                          backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            pct >= 0.85 ? AppColors.success : AppColors.error,
-                          ),
-                          minHeight: 8,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        '$present out of $total working days',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: pct,
+                    backgroundColor: Colors.transparent,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      pct >= 0.85 ? AppColors.success : AppColors.error,
+                    ),
+                    minHeight: 8,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  '$present out of $total working days',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
           _AttendanceCalendar(
             eventMap: eventMap,
             attendance: attendance,
@@ -996,107 +853,153 @@ class _AttendanceCalendar extends StatelessWidget {
     final mLeave = monthAttendance.where((a) => a.status == 'leave').length;
     final mHoliday = monthAttendance.where((a) => a.status == 'holiday').length;
 
-    return SizedBox(
-      height: 400,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.04),
-              blurRadius: 24,
-              offset: const Offset(0, 6),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Calendar — constrained width (~420px max)
-            Flexible(
-              flex: 1,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                  child: TableCalendar(
-                    firstDay: DateTime.now().subtract(const Duration(days: 90)),
-                    lastDay: DateTime.now().add(const Duration(days: 30)),
-                    focusedDay: DateTime.now(),
-                    calendarFormat: CalendarFormat.month,
-                    availableCalendarFormats: const {
-                      CalendarFormat.month: 'Month',
-                    },
-                    calendarBuilders: CalendarBuilders(
-                      markerBuilder: (ctx, day, events) {
-                        final key = DateTime(day.year, day.month, day.day);
-                        final status = eventMap[key];
-                        if (status == null) return const SizedBox.shrink();
-                      final color = statusColor(status);
-                        return Positioned(
-                          bottom: 4,
-                          child: Container(
-                          width: 8,
-                          height: 8,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: color.withValues(alpha: 0.4),
-                                blurRadius: 4,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  onDaySelected: (selectedDay, _) => onDaySelected(selectedDay),
-                    headerStyle: HeaderStyle(
-                      formatButtonVisible: false,
-                      titleCentered: true,
-                    titleTextStyle: AppTypography.headlineSmall.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                    leftChevronIcon: Icon(
-                      Icons.chevron_left,
-                      color: AppColors.primary,
-                    ),
-                    rightChevronIcon: Icon(
-                      Icons.chevron_right,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  calendarStyle: CalendarStyle(
-                    todayDecoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.2),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 720;
+        final padding = isNarrow ? AppSpacing.md : AppSpacing.lg;
+
+        final calendar = ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: TableCalendar(
+            firstDay: DateTime.now().subtract(const Duration(days: 90)),
+            lastDay: DateTime.now().add(const Duration(days: 30)),
+            focusedDay: DateTime.now(),
+            calendarFormat: CalendarFormat.month,
+            availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+            rowHeight: isNarrow ? 44 : 52,
+            daysOfWeekHeight: isNarrow ? 20 : 24,
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (ctx, day, events) {
+                final key = DateTime(day.year, day.month, day.day);
+                final status = eventMap[key];
+                if (status == null) return const SizedBox.shrink();
+                final color = statusColor(status);
+                return Positioned(
+                  bottom: 4,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: color,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.4),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
+                  ),
+                );
+              },
+            ),
+            onDaySelected: (selectedDay, _) => onDaySelected(selectedDay),
+            headerStyle: HeaderStyle(
+              formatButtonVisible: false,
+              titleCentered: true,
+              titleTextStyle:
+                  (isNarrow
+                          ? AppTypography.titleMedium
+                          : AppTypography.headlineSmall)
+                      .copyWith(fontWeight: FontWeight.w700),
+              leftChevronIcon: Icon(
+                Icons.chevron_left,
+                color: AppColors.primary,
+              ),
+              rightChevronIcon: Icon(
+                Icons.chevron_right,
+                color: AppColors.primary,
+              ),
+            ),
+            calendarStyle: CalendarStyle(
+              todayDecoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+            ),
+          ),
+        );
+
+        if (isNarrow) {
+          return Container(
+            padding: EdgeInsets.all(padding),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.15),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.04),
+                  blurRadius: 24,
+                  offset: const Offset(0, 6),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(child: calendar),
+                const SizedBox(height: AppSpacing.md),
+                _CalendarSidePanel(
+                  present: mPresent,
+                  absent: mAbsent,
+                  leave: mLeave,
+                  holiday: mHoliday,
+                ),
+              ],
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 400,
+          child: Container(
+            padding: EdgeInsets.all(padding),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.15),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.04),
+                  blurRadius: 24,
+                  offset: const Offset(0, 6),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Flexible(flex: 1, child: calendar),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: _CalendarSidePanel(
+                    present: mPresent,
+                    absent: mAbsent,
+                    leave: mLeave,
+                    holiday: mHoliday,
                   ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.lg),
-            // Side panel — fills the gap
-            Expanded(
-              child: _CalendarSidePanel(
-                present: mPresent,
-                absent: mAbsent,
-                leave: mLeave,
-                holiday: mHoliday,
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -1253,30 +1156,6 @@ class _MiniStatRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard(this.label, this.value, this.color);
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: NcCard(
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: AppTypography.headlineLarge.copyWith(color: color),
-            ),
-            Text(label, style: AppTypography.bodySmall),
-          ],
-        ),
       ),
     );
   }

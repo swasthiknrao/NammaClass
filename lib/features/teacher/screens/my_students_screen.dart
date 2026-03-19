@@ -31,20 +31,22 @@ class MyStudentsScreen extends ConsumerWidget {
             ),
       backgroundColor: AppColors.background,
       extendBodyBehindAppBar: false,
-      body: Column(
-        children: [
-          _HeroHeader(
-            classes: classes,
-            showTabs: studentsAsync.valueOrNull != null,
-          ),
-          studentsAsync.when(
-            loading: () => const Expanded(
+      body: studentsAsync.when(
+        loading: () => Column(
+          children: [
+            const _HeroHeader(classes: [], showTabs: false),
+            const Expanded(
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: NcShimmerList(),
               ),
             ),
-            error: (e, _) => Expanded(
+          ],
+        ),
+        error: (e, _) => Column(
+          children: [
+            const _HeroHeader(classes: [], showTabs: false),
+            Expanded(
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
@@ -58,41 +60,38 @@ class MyStudentsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            data: (students) => Expanded(
-              child: DefaultTabController(
-                length: classes.length,
-                child: Column(
-                  children: [
-                    // Search bar
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        AppSpacing.sm,
-                        AppSpacing.md,
-                        AppSpacing.sm,
-                      ),
-                      child: _SearchBar(),
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        children: classes.map((cls) {
-                          final filtered = students
-                              .where((s) => s.classSection == cls)
-                              .toList();
-                          return _StudentList(
-                            students: filtered,
-                            emptyMessage:
-                                'No students in $cls',
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
+          ],
+        ),
+        data: (students) => DefaultTabController(
+          length: classes.length,
+          child: Column(
+            children: [
+              _HeroHeader(classes: classes, showTabs: true),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                ),
+                child: _SearchBar(),
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: classes.map((cls) {
+                    final filtered = students
+                        .where((s) => s.classSection == cls)
+                        .toList();
+                    return _StudentList(
+                      students: filtered,
+                      emptyMessage: 'No students in $cls',
+                    );
+                  }).toList(),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -162,39 +161,39 @@ class _HeroHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              if (showTabs) ...[
+              if (showTabs && classes.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.lg),
                 TabBar(
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white.withValues(alpha: 0.8),
+                  labelStyle: AppTypography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  unselectedLabelStyle: AppTypography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                  dividerColor: Colors.transparent,
+                  padding: EdgeInsets.zero,
+                  labelPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  tabs: classes.map((c) => Tab(text: c)).toList(),
                 ),
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white.withValues(alpha: 0.8),
-                labelStyle: AppTypography.labelLarge.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                unselectedLabelStyle: AppTypography.labelLarge.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-                dividerColor: Colors.transparent,
-                padding: EdgeInsets.zero,
-                labelPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                tabs: classes.map((c) => Tab(text: c)).toList(),
-              ),
               ],
             ],
           ),
@@ -235,10 +234,7 @@ class _SearchBar extends StatelessWidget {
 }
 
 class _StudentList extends StatelessWidget {
-  const _StudentList({
-    required this.students,
-    required this.emptyMessage,
-  });
+  const _StudentList({required this.students, required this.emptyMessage});
   final List<MockStudent> students;
   final String emptyMessage;
 
@@ -308,9 +304,7 @@ class _StudentCard extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.divider.withValues(alpha: 0.4),
-            ),
+            border: Border.all(color: AppColors.divider.withValues(alpha: 0.4)),
           ),
           child: Row(
             children: [
@@ -353,11 +347,15 @@ class _StudentCard extends StatelessWidget {
                             value: pct,
                             strokeWidth: 4,
                             backgroundColor: perfColor.withValues(alpha: 0.15),
-                            valueColor: AlwaysStoppedAnimation<Color>(perfColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              perfColor,
+                            ),
                           ),
                         ),
                         Icon(
-                          pct >= 0.85 ? Icons.trending_up_rounded : Icons.trending_flat_rounded,
+                          pct >= 0.85
+                              ? Icons.trending_up_rounded
+                              : Icons.trending_flat_rounded,
                           size: 18,
                           color: perfColor,
                         ),
@@ -408,10 +406,7 @@ class _StudentCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             _InfoRow('Class', s.classSection),
             _InfoRow('Roll No', s.rollNo),
-            _InfoRow(
-              'Attendance',
-              '${(s.attendancePercent * 100).round()}%',
-            ),
+            _InfoRow('Attendance', '${(s.attendancePercent * 100).round()}%'),
             _InfoRow('Fee Status', s.feeStatus.toUpperCase()),
             if (s.parentName != null) _InfoRow('Parent', s.parentName!),
             if (s.parentPhone != null) ...[
