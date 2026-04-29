@@ -1,6 +1,7 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <cstdio>
 #include <windows.h>
 
 #include "flutter/generated_plugin_registrant.h"
@@ -13,6 +14,22 @@ namespace {
 // problematic "Alt alone" events. See docs/WINDOWS_FLUTTER_DEBUG.md.
 bool IsBareAltVirtualKey(WPARAM vk) {
   return vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU;
+}
+
+int g_altInterceptLogCount = 0;
+constexpr int kAltInterceptLogLimit = 30;
+
+void LogBareAltIntercept(UINT message, WPARAM wparam) {
+  if (g_altInterceptLogCount >= kAltInterceptLogLimit) return;
+  char buf[256];
+  sprintf_s(
+      buf,
+      "BareAltIntercept: message=%u wparam=%u swallowed=%d\n",
+      static_cast<unsigned>(message),
+      static_cast<unsigned>(wparam),
+      g_altInterceptLogCount + 1);
+  OutputDebugStringA(buf);
+  g_altInterceptLogCount++;
 }
 
 }  // namespace
@@ -68,12 +85,14 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   // half-baked Alt key packet that triggers raw_keyboard.dart assertions.
   if (message == WM_SYSKEYDOWN || message == WM_SYSKEYUP) {
     if (IsBareAltVirtualKey(wparam)) {
+      LogBareAltIntercept(message, wparam);
       return 0;
     }
   }
   if (message == WM_KEYDOWN || message == WM_KEYUP) {
     // Left/right Alt sometimes arrive on the non-system key path (0xA4 / 0xA5).
     if (wparam == VK_LMENU || wparam == VK_RMENU) {
+      LogBareAltIntercept(message, wparam);
       return 0;
     }
   }

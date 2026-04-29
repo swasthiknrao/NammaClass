@@ -8,35 +8,67 @@ import '../../../../core/utils/agent_debug_logger.dart';
 import '../../models/timeline_models.dart';
 import '../../providers/teacher_providers.dart';
 
-class TimelineFiltersToolbar extends ConsumerWidget {
+class TimelineFiltersToolbar extends ConsumerStatefulWidget {
   const TimelineFiltersToolbar({super.key});
 
+  @override
+  ConsumerState<TimelineFiltersToolbar> createState() =>
+      _TimelineFiltersToolbarState();
+}
+
+class _TimelineFiltersToolbarState
+    extends ConsumerState<TimelineFiltersToolbar> {
   static TimelineZoom? _lastLoggedZoom;
 
+  int? _lastItemsIdentity;
+  List<String> _cachedAssignees = const [];
+  List<String> _cachedFeatures = const [];
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final buildStart = Stopwatch()..start();
-    final state = ref.watch(teacherTimelineProvider);
     final notifier = ref.read(teacherTimelineProvider.notifier);
-    final zoom = state.zoom;
+
+    final zoom = ref.watch(
+      teacherTimelineProvider.select((s) => s.zoom),
+    );
+    final items = ref.watch(
+      teacherTimelineProvider.select((s) => s.items),
+    );
+    final statusFilter = ref.watch(
+      teacherTimelineProvider.select((s) => s.statusFilter),
+    );
+    final assigneeFilter = ref.watch(
+      teacherTimelineProvider.select((s) => s.assigneeFilter),
+    );
+    final featureFilter = ref.watch(
+      teacherTimelineProvider.select((s) => s.featureFilter),
+    );
+    final linkMode = ref.watch(
+      teacherTimelineProvider.select((s) => s.linkMode),
+    );
+
     final shouldLog = _lastLoggedZoom == null || _lastLoggedZoom != zoom;
     if (shouldLog) {
       _lastLoggedZoom = zoom;
     }
-    final assignees =
-        state.items
-            .map((e) => e.assigneeName)
-            .whereType<String>()
-            .toSet()
-            .toList()
-          ..sort();
-    final features =
-        state.items
-            .map((e) => e.featureName)
-            .whereType<String>()
-            .toSet()
-            .toList()
-          ..sort();
+
+    final itemsIdentity = identityHashCode(items);
+    if (_lastItemsIdentity != itemsIdentity) {
+      _lastItemsIdentity = itemsIdentity;
+      _cachedAssignees = items
+          .map((e) => e.assigneeName)
+          .whereType<String>()
+          .toSet()
+          .toList()
+        ..sort();
+      _cachedFeatures = items
+          .map((e) => e.featureName)
+          .whereType<String>()
+          .toSet()
+          .toList()
+        ..sort();
+    }
 
     // #region agent log H6_toolbar_build
     if (shouldLog && kDebugMode) {
@@ -49,9 +81,9 @@ class TimelineFiltersToolbar extends ConsumerWidget {
         data: <String, Object?>{
           'zoom': zoom.name,
           'ms': ms,
-          'items': state.items.length,
-          'assignees': assignees.length,
-          'features': features.length,
+          'items': items.length,
+          'assignees': _cachedAssignees.length,
+          'features': _cachedFeatures.length,
         },
       );
     }
@@ -79,22 +111,22 @@ class TimelineFiltersToolbar extends ConsumerWidget {
             ),
           ),
         ),
-        _buildZoomSegment(state.zoom, notifier),
-        _buildStatusMenu(context, state, notifier),
+        _buildZoomSegment(zoom, notifier),
+        _buildStatusMenu(context, statusFilter, notifier),
         _buildChipMenu(
           label: 'Assignee',
-          values: assignees,
-          selected: state.assigneeFilter,
+          values: _cachedAssignees,
+          selected: assigneeFilter,
           onApply: notifier.setAssigneeFilter,
         ),
         _buildChipMenu(
           label: 'Feature',
-          values: features,
-          selected: state.featureFilter,
+          values: _cachedFeatures,
+          selected: featureFilter,
           onApply: notifier.setFeatureFilter,
         ),
         FilterChip(
-          selected: state.linkMode,
+          selected: linkMode,
           onSelected: notifier.setLinkMode,
           label: const Text('Link Mode'),
           avatar: const Icon(Icons.link, size: 16),
@@ -125,7 +157,7 @@ class TimelineFiltersToolbar extends ConsumerWidget {
 
   Widget _buildStatusMenu(
     BuildContext context,
-    TeacherTimelineState state,
+    Set<TimelineTaskStatus> statusFilter,
     TeacherTimelineNotifier notifier,
   ) {
     return PopupMenuButton<TimelineTaskStatus>(
@@ -134,13 +166,13 @@ class TimelineFiltersToolbar extends ConsumerWidget {
           .map(
             (s) => CheckedPopupMenuItem<TimelineTaskStatus>(
               value: s,
-              checked: state.statusFilter.contains(s),
+              checked: statusFilter.contains(s),
               child: Text(_statusLabel(s)),
             ),
           )
           .toList(),
       onSelected: (value) {
-        final next = {...state.statusFilter};
+        final next = {...statusFilter};
         if (next.contains(value)) {
           next.remove(value);
         } else {

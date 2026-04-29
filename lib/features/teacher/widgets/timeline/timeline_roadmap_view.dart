@@ -1,11 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/agent_debug_logger.dart';
 import '../../models/timeline_models.dart';
 import '../../providers/teacher_providers.dart';
 import 'timeline_canvas.dart';
@@ -43,14 +41,8 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
     laneCountById: {},
   );
 
-  // Debug/evidence: track zoom changes, expensive recompute timings,
-  // and whether scroll sync causes extra jumps.
-  TimelineZoom? _currentZoomForLogs;
-  TimelineZoom? _syncLogForZoom;
-  int _syncJumpLogCount = 0;
-  DateTime _lastSyncLogAt = DateTime.fromMillisecondsSinceEpoch(0);
+  // Debug: track zoom changes (for _lastLoggedZoom guard in build).
   TimelineZoom? _lastLoggedZoom;
-  bool _didInitialBuildLog = false;
 
   // Zoom swap animation: keep rendering the previous zoom subtree while we
   // morph, then swap the cached subtree at animation end.
@@ -180,36 +172,8 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
       target.position.minScrollExtent,
       target.position.maxScrollExtent,
     );
-    final shouldJump = (target.offset - next).abs() > 0.5;
-    if (shouldJump) {
-      final before = target.offset;
+    if ((target.offset - next).abs() > 0.5) {
       target.jumpTo(next);
-
-      final now = DateTime.now();
-      final zoomMatch =
-          _currentZoomForLogs != null &&
-          _syncLogForZoom != null &&
-          _syncLogForZoom == _currentZoomForLogs;
-      final throttleOk =
-          now.difference(_lastSyncLogAt) > const Duration(milliseconds: 150);
-      if (zoomMatch && _syncJumpLogCount < 3 && throttleOk) {
-        _syncJumpLogCount++;
-        _lastSyncLogAt = now;
-        if (kDebugMode) {
-          AgentDebugLogger.log(
-            hypothesisId: 'H3_scroll_sync',
-            location: 'timeline_roadmap_view.dart:_sync',
-            message: 'jumpTo triggered',
-            data: <String, Object?>{
-              'vertical': vertical,
-              'zoom': _currentZoomForLogs?.name,
-              'sourceOffset': source.offset,
-              'targetOffsetBefore': before,
-              'targetOffsetAfter': next,
-            },
-          );
-        }
-      }
     }
     if (vertical) {
       _syncingVertical = false;
@@ -220,7 +184,6 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
 
   @override
   Widget build(BuildContext context) {
-    final buildStart = Stopwatch()..start();
     _ensureZoomMorphController();
     final zoomController = _zoomMorphController!;
     final zoom = ref.watch(teacherTimelineProvider.select((s) => s.zoom));
@@ -230,23 +193,6 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
       _syncLogForZoom = zoom;
       _syncJumpLogCount = 0;
       _lastLoggedZoom = zoom;
-
-      // #region agent log H8_post_frame
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (kDebugMode) {
-          AgentDebugLogger.log(
-            hypothesisId: 'H8_build_to_post_frame',
-            runId: 'pre-fix',
-            location: 'timeline_roadmap_view.dart:postFrame',
-            message: 'build->postFrame elapsed',
-            data: <String, Object?>{
-              'zoom': zoom.name,
-              'buildMs': buildStart.elapsedMilliseconds,
-            },
-          );
-        }
-      });
-      // #endregion
     }
     final selectedTaskId = ref.watch(
       teacherTimelineProvider.select((s) => s.selectedTaskId),
@@ -269,11 +215,8 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
     final notifier = ref.read(teacherTimelineProvider.notifier);
 
     // Only recompute expensive timeline layout when filters/expansion change.
-    var didRecomputeHeavy = false;
     if (_lastHeavyInputs != heavyInputs) {
-      didRecomputeHeavy = true;
       _timelineChildDirty = true;
-      final heavyStart = Stopwatch()..start();
       final filtered = _applyFilters(
         heavyInputs.items,
         heavyInputs.searchQuery,
@@ -290,24 +233,6 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
       _cachedVisibleDates = _buildVisibleDates(_cachedVisibleRows);
 
       _lastHeavyInputs = heavyInputs;
-
-      heavyStart.stop();
-      if (kDebugMode) {
-        AgentDebugLogger.log(
-          hypothesisId: 'H5_cache_miss',
-          runId: 'pre-fix',
-          location: 'timeline_roadmap_view.dart:heavyRecompute',
-          message: 'heavy derived recomputed',
-          data: <String, Object?>{
-            'zoom': zoom.name,
-            'items': filtered.length,
-            'visibleRows': _cachedVisibleRows.length,
-            'visibleDates': _cachedVisibleDates.length,
-            'heavyMs': heavyStart.elapsedMilliseconds,
-            'expandedCount': heavyInputs.expandedNodeIds.length,
-          },
-        );
-      }
     }
 
     final visibleRows = _cachedVisibleRows;
@@ -342,8 +267,7 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
     final dates = _cachedVisibleDates;
     final laneLayout = _cachedLaneLayout;
 
-    // #region agent log H7_row_layout_ms
-    final rowLayoutStart = Stopwatch()..start();
+    // Row heights: computed without Stopwatch overhead.
     final rowHeights = List<double>.generate(visibleRows.length, (i) {
       final item = visibleRows[i];
       if (item.type != TimelineNodeType.task) return baseRowHeight;
@@ -359,59 +283,7 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
       rowTops.add(runningTop);
       runningTop += h;
     }
-    rowLayoutStart.stop();
-    final rowLayoutMs = rowLayoutStart.elapsedMilliseconds;
-    if (zoomChanged && kDebugMode) {
-      AgentDebugLogger.log(
-        hypothesisId: didRecomputeHeavy
-            ? 'H5_cache_miss_row_layout'
-            : 'H7_row_layout_ms',
-        runId: 'pre-fix',
-        location: 'timeline_roadmap_view.dart:rowLayout',
-        message: 'rowHeights/rowTops computed',
-        data: <String, Object?>{
-          'zoom': zoom.name,
-          'didRecomputeHeavy': didRecomputeHeavy,
-          'visibleRows': visibleRows.length,
-          'rowLayoutMs': rowLayoutMs,
-        },
-      );
-    }
-    // #endregion
 
-    if (zoomChanged && !didRecomputeHeavy && kDebugMode) {
-      AgentDebugLogger.log(
-        hypothesisId: 'H4_morph_repaint',
-        runId: 'pre-fix',
-        location: 'timeline_roadmap_view.dart:zoomCacheHit',
-        message: 'zoom changed (cache hit)',
-        data: <String, Object?>{
-          'zoom': zoom.name,
-          'visibleRows': visibleRows.length,
-          'visibleDates': dates.length,
-          'totalMs': buildStart.elapsedMilliseconds,
-        },
-      );
-    }
-
-    if (!_didInitialBuildLog) {
-      _didInitialBuildLog = true;
-      if (kDebugMode) {
-        AgentDebugLogger.log(
-          hypothesisId: 'H1_first_build',
-          runId: 'pre-fix',
-          location: 'timeline_roadmap_view.dart:firstBuild',
-          message: 'first build evidence',
-          data: <String, Object?>{
-            'zoom': zoom.name,
-            'visibleRows': visibleRows.length,
-            'visibleDates': dates.length,
-            'totalMs': buildStart.elapsedMilliseconds,
-            'recomputedHeavy': didRecomputeHeavy,
-          },
-        );
-      }
-    }
     // #region Timeline child caching (heavy subtree; timeline column morphs only)
     if (_cachedLeftPanel == null ||
         _cachedRightPanel == null ||

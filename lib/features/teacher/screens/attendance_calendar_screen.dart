@@ -33,9 +33,24 @@ class _AttendanceCalendarScreenState
   final Set<String> _filterClasses = {'8-A', '8-B', '9-A'};
   final Set<String> _filterSubjects = {};
 
+  // Pre-index attendance sessions so we don't scan the whole dataset
+  // on every build (week/month/day switching + filter toggles).
+  late final Map<String, List<MockAttendanceSession>> _sessionsByDayKey;
+  late final Map<String, List<MockAttendanceSession>>
+      _historyByClassSubjectKey;
+
+  // Memoized derived results for the current UI state.
+  String? _lastSessionsForKey;
+  List<MockAttendanceSession> _lastSessionsForResult = const [];
+
+  String? _lastRangeKey;
+  int _lastRangeTotal = 0;
+  int _lastRangeMarked = 0;
+
   @override
   void initState() {
     super.initState();
+    _indexAttendanceSessions();
     _selectedDay = DateTime.now();
     final todaySessions = _sessionsFor(_selectedDay!);
     if (todaySessions.isNotEmpty) {
@@ -49,17 +64,58 @@ class _AttendanceCalendarScreenState
     super.dispose();
   }
 
+  static String _ymdKey(DateTime d) {
+    final y = d.year.toString().padLeft(4, '0');
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '$y-$m-$day';
+  }
+
+  String _filterKey() {
+    final cls = _filterClasses.toList()..sort();
+    final sub = _filterSubjects.toList()..sort();
+    return 'cls:${cls.join(',')}|sub:${sub.isEmpty ? '*' : sub.join(',')}';
+  }
+
+  void _indexAttendanceSessions() {
+    _sessionsByDayKey = <String, List<MockAttendanceSession>>{};
+    _historyByClassSubjectKey = <String, List<MockAttendanceSession>>{};
+
+    for (final s in MockData.attendanceSessions) {
+      final dayKey = _ymdKey(s.date);
+      _sessionsByDayKey.putIfAbsent(dayKey, () => <MockAttendanceSession>[]).add(s);
+
+      final historyKey = '${s.classSection}|${s.subject}';
+      _historyByClassSubjectKey
+          .putIfAbsent(historyKey, () => <MockAttendanceSession>[])
+          .add(s);
+    }
+
+    for (final entries in _sessionsByDayKey.entries) {
+      entries.value.sort((a, b) => a.period.compareTo(b.period));
+    }
+    for (final entries in _historyByClassSubjectKey.entries) {
+      entries.value.sort((a, b) => b.date.compareTo(a.date));
+    }
+  }
+
   List<MockAttendanceSession> _sessionsFor(DateTime date) {
-    return MockData.attendanceSessions.where((s) {
-      if (s.date.year != date.year ||
-          s.date.month != date.month ||
-          s.date.day != date.day)
-        return false;
+    final dayKey = _ymdKey(date);
+    final cacheKey = 'day:$dayKey|${_filterKey()}';
+    if (cacheKey == _lastSessionsForKey) return _lastSessionsForResult;
+
+    final daySessions = _sessionsByDayKey[dayKey] ?? const <MockAttendanceSession>[];
+    final result = daySessions.where((s) {
       if (!_filterClasses.contains(s.classSection)) return false;
-      if (_filterSubjects.isNotEmpty && !_filterSubjects.contains(s.subject))
+      if (_filterSubjects.isNotEmpty && !_filterSubjects.contains(s.subject)) {
         return false;
+      }
       return true;
-    }).toList()..sort((a, b) => a.period.compareTo(b.period));
+    }).toList();
+
+    _lastSessionsForKey = cacheKey;
+    _lastSessionsForResult = result;
+    return result;
   }
 
   void _syncSelectionToSessionsForSelectedDay() {
@@ -73,25 +129,37 @@ class _AttendanceCalendarScreenState
     }
   }
 
-  int _totalInRange(DateTime start, DateTime end) {
-    return MockData.attendanceSessions.where((s) {
-      if (s.date.isBefore(start) || s.date.isAfter(end)) return false;
-      if (!_filterClasses.contains(s.classSection)) return false;
-      if (_filterSubjects.isNotEmpty && !_filterSubjects.contains(s.subject))
-        return false;
-      return true;
-    }).length;
-  }
+  (int total, int marked) _countsForRange(DateTime start, DateTime end) {
+    final startDay = DateTime(start.year, start.month, start.day);
+    final endDay = DateTime(end.year, end.month, end.day);
+    final cacheKey =
+        'range:${_ymdKey(startDay)}..${_ymdKey(endDay)}|${_filterKey()}';
+    if (cacheKey == _lastRangeKey) {
+      return (_lastRangeTotal, _lastRangeMarked);
+    }
 
-  int _markedInRange(DateTime start, DateTime end) {
-    return MockData.attendanceSessions.where((s) {
-      if (s.date.isBefore(start) || s.date.isAfter(end)) return false;
-      if (s.status != 'marked') return false;
-      if (!_filterClasses.contains(s.classSection)) return false;
-      if (_filterSubjects.isNotEmpty && !_filterSubjects.contains(s.subject))
-        return false;
-      return true;
-    }).length;
+    var total = 0;
+    var marked = 0;
+
+    var cur = startDay;
+    while (!cur.isAfter(endDay)) {
+      final dayKey = _ymdKey(cur);
+      final daySessions = _sessionsByDayKey[dayKey] ?? const <MockAttendanceSession>[];
+      for (final s in daySessions) {
+        if (!_filterClasses.contains(s.classSection)) continue;
+        if (_filterSubjects.isNotEmpty && !_filterSubjects.contains(s.subject)) {
+          continue;
+        }
+        total++;
+        if (s.status == 'marked') marked++;
+      }
+      cur = cur.add(const Duration(days: 1));
+    }
+
+    _lastRangeKey = cacheKey;
+    _lastRangeTotal = total;
+    _lastRangeMarked = marked;
+    return (total, marked);
   }
 
   bool _isWide(BuildContext c) =>
@@ -105,17 +173,15 @@ class _AttendanceCalendarScreenState
   }
 
   List<MockAttendanceSession> _sessionHistory(MockAttendanceSession session) {
-    final items =
-        MockData.attendanceSessions
-            .where(
-              (s) =>
-                  s.classSection == session.classSection &&
-                  s.subject == session.subject &&
-                  s.date.isBefore(session.date),
-            )
-            .toList()
-          ..sort((a, b) => b.date.compareTo(a.date));
-    return items.take(5).toList();
+    final key = '${session.classSection}|${session.subject}';
+    final items = _historyByClassSubjectKey[key] ?? const <MockAttendanceSession>[];
+    final result = <MockAttendanceSession>[];
+    for (final s in items) {
+      if (!s.date.isBefore(session.date)) continue;
+      result.add(s);
+      if (result.length >= 5) break;
+    }
+    return result;
   }
 
   void _shiftFocusedRange(int direction) {
@@ -180,8 +246,7 @@ class _AttendanceCalendarScreenState
         rangeEnd = rangeStart.add(const Duration(days: 13));
         break;
     }
-    final total = _totalInRange(rangeStart, rangeEnd);
-    final marked = _markedInRange(rangeStart, rangeEnd);
+    final (total, marked) = _countsForRange(rangeStart, rangeEnd);
     final pending = total - marked;
 
     return Scaffold(
@@ -352,10 +417,11 @@ class _AttendanceCalendarScreenState
                   selected: _filterClasses,
                   onToggle: (v) {
                     setState(() {
-                      if (_filterClasses.contains(v))
+                      if (_filterClasses.contains(v)) {
                         _filterClasses.remove(v);
-                      else
+                      } else {
                         _filterClasses.add(v);
+                      }
                     });
                     _syncSelectionToSessionsForSelectedDay();
                   },
@@ -382,8 +448,9 @@ class _AttendanceCalendarScreenState
                         _filterSubjects.remove(v);
                       } else {
                         _filterSubjects.add(v);
-                        if (_filterSubjects.length == all.length)
+                        if (_filterSubjects.length == all.length) {
                           _filterSubjects.clear();
+                        }
                       }
                     });
                     _syncSelectionToSessionsForSelectedDay();
@@ -649,12 +716,10 @@ class _AttendanceCalendarScreenState
 
   Widget _buildCalendarContent(BuildContext context) {
     final viewportHeight = _calendarViewportHeight(context);
-    return RepaintBoundary(
-      child: SizedBox(
-        width: double.infinity,
-        height: viewportHeight,
-        child: const TimelineRoadmapView(),
-      ),
+    return SizedBox(
+      width: double.infinity,
+      height: viewportHeight,
+      child: const TimelineRoadmapView(),
     );
   }
 
@@ -830,8 +895,7 @@ class _AttendanceCalendarScreenState
                   final s = sessions[index];
                   final isActive = selected?.id == s.id;
                   final isMarked = s.status == 'marked';
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
+                  return Container(
                     decoration: BoxDecoration(
                       color: isActive
                           ? AppColors.teal.withValues(alpha: 0.1)
@@ -1276,7 +1340,8 @@ class _WeekViewGridState extends State<_WeekViewGrid> {
     const headerHeight = 48.0;
     const fallbackGridHeight = 420.0;
 
-    return GestureDetector(
+    return RepaintBoundary(
+      child: GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragEnd: isMobile ? _handleHorizontalSwipe : null,
       child: Container(
@@ -1485,142 +1550,73 @@ class _WeekViewGridState extends State<_WeekViewGrid> {
                                       height: gridContentHeight,
                                       child: Stack(
                                         children: [
-                                          Row(
-                                            children: List.generate(daysCount, (
-                                              colIdx,
-                                            ) {
-                                              final date = dayColumns[colIdx];
-                                              final isToday = _isToday(date);
-                                              return Container(
-                                                width: effectiveColWidth,
-                                                decoration: BoxDecoration(
-                                                  color: isToday
-                                                      ? _todayHighlight
-                                                            .withValues(
-                                                              alpha: 0.2,
-                                                            )
-                                                      : Colors.transparent,
-                                                  border: Border(
-                                                    right: BorderSide(
-                                                      color: _gridColor,
+                                          // ── CustomPainter grid background ──
+                                          // Replaces O(rows × cols) Containers
+                                          Positioned.fill(
+                                            child: RepaintBoundary(
+                                              child: CustomPaint(
+                                                painter: _GanttGridPainter(
+                                                  rowCount: trackOrder.length,
+                                                  rowHeight: rowHeight,
+                                                  colCount: daysCount,
+                                                  colWidth: effectiveColWidth,
+                                                  todayColIndex: todayIdx,
+                                                  gridColor: _gridColor,
+                                                  todayColor: _todayHighlight,
+                                                  altRowColor: _rowAltBg,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // ── Session chips (only where data exists) ──
+                                          for (int colIdx = 0; colIdx < daysCount; colIdx++)
+                                            for (int r = 0; r < trackOrder.length; r++)
+                                              () {
+                                                final key = trackOrder[r];
+                                                final session = sessionMap[key]?[colIdx];
+                                                if (session == null) return const SizedBox.shrink();
+                                                return Positioned(
+                                                  left: colIdx * effectiveColWidth + 3,
+                                                  top: r * rowHeight + 3,
+                                                  width: effectiveColWidth - 6,
+                                                  height: rowHeight - 6,
+                                                  child: RepaintBoundary(
+                                                    child: GestureDetector(
+                                                      onTap: () => widget.onSessionTap(session),
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          color: session.status == 'marked'
+                                                              ? _barBlue
+                                                              : _barGreen,
+                                                          borderRadius: BorderRadius.circular(6),
+                                                          boxShadow: const [
+                                                            BoxShadow(
+                                                              color: Color(0x14000000),
+                                                              blurRadius: 2,
+                                                              offset: Offset(0, 1),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        alignment: Alignment.centerLeft,
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 4,
+                                                          vertical: 2,
+                                                        ),
+                                                        child: Text(
+                                                          '${session.subject} P${session.period} ${_formatTimeCompact(session.startTime)}',
+                                                          style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight: FontWeight.w600,
+                                                            fontSize: 9,
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                                child: Column(
-                                                  children: List.generate(trackOrder.length, (
-                                                    r,
-                                                  ) {
-                                                    final key = trackOrder[r];
-                                                    final session =
-                                                        sessionMap[key]?[colIdx];
-                                                    final isAlt = r.isOdd;
-                                                    return GestureDetector(
-                                                      onTap: session != null
-                                                          ? () => widget
-                                                                .onSessionTap(
-                                                                  session,
-                                                                )
-                                                          : null,
-                                                      child: Container(
-                                                        height: rowHeight,
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 4,
-                                                              vertical: 4,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: isAlt
-                                                              ? _rowAltBg
-                                                              : Colors.white,
-                                                          border: Border(
-                                                            bottom: BorderSide(
-                                                              color: _gridColor
-                                                                  .withValues(
-                                                                    alpha: 0.7,
-                                                                  ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        child: session != null
-                                                            ? Center(
-                                                                child: Material(
-                                                                  color: Colors
-                                                                      .transparent,
-                                                                  child: InkWell(
-                                                                    onTap: () =>
-                                                                        widget.onSessionTap(
-                                                                          session,
-                                                                        ),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                          6,
-                                                                        ),
-                                                                    child: Container(
-                                                                      width: double
-                                                                          .infinity,
-                                                                      padding: const EdgeInsets.symmetric(
-                                                                        horizontal:
-                                                                            6,
-                                                                        vertical:
-                                                                            4,
-                                                                      ),
-                                                                      decoration: BoxDecoration(
-                                                                        color:
-                                                                            session.status ==
-                                                                                'marked'
-                                                                            ? _barBlue
-                                                                            : _barGreen,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(
-                                                                              6,
-                                                                            ),
-                                                                        boxShadow: [
-                                                                          BoxShadow(
-                                                                            color: Colors.black.withValues(
-                                                                              alpha: 0.08,
-                                                                            ),
-                                                                            blurRadius:
-                                                                                2,
-                                                                            offset: const Offset(
-                                                                              0,
-                                                                              1,
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      child: FittedBox(
-                                                                        fit: BoxFit
-                                                                            .scaleDown,
-                                                                        alignment:
-                                                                            Alignment.centerLeft,
-                                                                        child: Text(
-                                                                          '${session.subject} P${session.period} ${_formatTimeCompact(session.startTime)}',
-                                                                          style: AppTypography.labelSmall.copyWith(
-                                                                            color:
-                                                                                Colors.white,
-                                                                            fontWeight:
-                                                                                FontWeight.w600,
-                                                                            fontSize:
-                                                                                9,
-                                                                          ),
-                                                                          maxLines:
-                                                                              1,
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              )
-                                                            : const SizedBox.shrink(),
-                                                      ),
-                                                    );
-                                                  }),
-                                                ),
-                                              );
-                                            }),
-                                          ),
+                                                );
+                                              }(),
                                           if (todayIdx >= 0)
                                             Positioned(
                                               left:
@@ -1670,6 +1666,7 @@ class _WeekViewGridState extends State<_WeekViewGrid> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -1714,6 +1711,80 @@ class _TodayMarkerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TodayMarkerPainter old) => old.color != color;
+}
+
+/// Paints the Gantt grid background on a Canvas — avoids building
+/// O(rows × cols) Container widgets on every setState.
+class _GanttGridPainter extends CustomPainter {
+  const _GanttGridPainter({
+    required this.rowCount,
+    required this.rowHeight,
+    required this.colCount,
+    required this.colWidth,
+    required this.todayColIndex,
+    required this.gridColor,
+    required this.todayColor,
+    required this.altRowColor,
+  });
+
+  final int rowCount;
+  final double rowHeight;
+  final int colCount;
+  final double colWidth;
+  final int todayColIndex;
+  final Color gridColor;
+  final Color todayColor;
+  final Color altRowColor;
+
+  static const _white = Color(0xFFFFFFFF);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final altPaint = Paint()..color = altRowColor;
+    final todayPaint = Paint()..color = todayColor.withValues(alpha: 0.2);
+    final gridPaint = Paint()
+      ..color = gridColor
+      ..strokeWidth = 0.5;
+
+    // Row backgrounds
+    for (int r = 0; r < rowCount; r++) {
+      final top = r * rowHeight;
+      if (r.isOdd) {
+        canvas.drawRect(Rect.fromLTWH(0, top, size.width, rowHeight), altPaint);
+      }
+      // Row separator
+      canvas.drawLine(
+        Offset(0, top + rowHeight),
+        Offset(size.width, top + rowHeight),
+        gridPaint,
+      );
+    }
+
+    // Column separators + today highlight
+    for (int c = 0; c < colCount; c++) {
+      final left = c * colWidth;
+      if (c == todayColIndex) {
+        canvas.drawRect(
+          Rect.fromLTWH(left, 0, colWidth, size.height),
+          todayPaint,
+        );
+      }
+      // Column right border
+      canvas.drawLine(
+        Offset(left + colWidth, 0),
+        Offset(left + colWidth, size.height),
+        gridPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GanttGridPainter old) =>
+      rowCount != old.rowCount ||
+      rowHeight != old.rowHeight ||
+      colCount != old.colCount ||
+      colWidth != old.colWidth ||
+      todayColIndex != old.todayColIndex;
 }
 
 // ── Shared widgets ───────────────────────────────────────────────────────────
