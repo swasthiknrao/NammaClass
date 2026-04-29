@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
+import '../../../core/providers/data_sync_provider.dart';
 
 /// Info returned when looking up a person by ID, barcode, or roll number.
 class CanteenPersonInfo {
@@ -142,7 +143,9 @@ String? canonicalPersonId(String? userId) {
 
 /// Mutable canteen state for counter.
 class CanteenStateNotifier extends StateNotifier<CanteenState> {
-  CanteenStateNotifier() : super(CanteenState());
+  CanteenStateNotifier(this._ref) : super(CanteenState());
+
+  final Ref _ref;
 
   void setScannedPerson(CanteenPersonInfo? p) {
     state = CanteenState(scannedPerson: p);
@@ -153,7 +156,7 @@ class CanteenStateNotifier extends StateNotifier<CanteenState> {
     List<MockCanteenOrderItem> items,
     int totalPaise,
   ) {
-    final personName = state.scannedPerson?.personName ?? 'Unknown';
+    final personName = _personNameFor(personId);
     final order = MockCanteenOrder(
       id: 'ord_${DateTime.now().millisecondsSinceEpoch}',
       personId: personId,
@@ -188,6 +191,25 @@ class CanteenStateNotifier extends StateNotifier<CanteenState> {
             )
           : null,
     );
+    _ref.read(dataSyncProvider.notifier).bump();
+  }
+
+  String _personNameFor(String personId) {
+    final fromState = state.scannedPerson?.personName;
+    if (fromState != null && state.scannedPerson?.personId == personId) {
+      return fromState;
+    }
+    final student = MockData.students
+        .where((s) => s.id == personId)
+        .firstOrNull;
+    if (student != null) return student.name;
+    final staff = MockData.staff.where((s) => s.id == personId).firstOrNull;
+    if (staff != null) return staff.name;
+    final wallet = MockData.campusWallets
+        .where((w) => w.personId == personId)
+        .firstOrNull;
+    if (wallet != null) return wallet.personName;
+    return 'Unknown';
   }
 
   void clearScannedPerson() {
@@ -202,7 +224,7 @@ class CanteenState {
 
 final canteenStateProvider =
     StateNotifierProvider<CanteenStateNotifier, CanteenState>(
-      (ref) => CanteenStateNotifier(),
+      (ref) => CanteenStateNotifier(ref),
     );
 
 /// Canteen menu for ordering — shared by students, staff, parents.
@@ -234,3 +256,127 @@ List<MockCanteenOrder> ordersForPerson(String? personId) {
       .toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 }
+
+class StudentMealCombo {
+  const StudentMealCombo({
+    required this.id,
+    required this.personId,
+    required this.name,
+    required this.items,
+    this.autoBillDaily = false,
+    this.lastAutoBilledOn,
+  });
+
+  final String id;
+  final String personId;
+  final String name;
+  final List<MockCanteenOrderItem> items;
+  final bool autoBillDaily;
+  final DateTime? lastAutoBilledOn;
+
+  int get totalPaise =>
+      items.fold(0, (sum, item) => sum + (item.pricePaise * item.qty));
+
+  StudentMealCombo copyWith({
+    String? id,
+    String? personId,
+    String? name,
+    List<MockCanteenOrderItem>? items,
+    bool? autoBillDaily,
+    DateTime? lastAutoBilledOn,
+    bool clearLastAutoBilledOn = false,
+  }) {
+    return StudentMealCombo(
+      id: id ?? this.id,
+      personId: personId ?? this.personId,
+      name: name ?? this.name,
+      items: items ?? this.items,
+      autoBillDaily: autoBillDaily ?? this.autoBillDaily,
+      lastAutoBilledOn: clearLastAutoBilledOn
+          ? null
+          : (lastAutoBilledOn ?? this.lastAutoBilledOn),
+    );
+  }
+}
+
+enum ComboBillResult { success, insufficientBalance, comboNotFound }
+
+class StudentMealComboNotifier extends StateNotifier<List<StudentMealCombo>> {
+  StudentMealComboNotifier(this._ref) : super(const []);
+
+  final Ref _ref;
+
+  List<StudentMealCombo> combosForPerson(String personId) =>
+      state.where((c) => c.personId == personId).toList();
+
+  void saveCombo({
+    required String personId,
+    required String name,
+    required List<MockCanteenOrderItem> items,
+  }) {
+    final combo = StudentMealCombo(
+      id: 'cmb_${DateTime.now().millisecondsSinceEpoch}',
+      personId: personId,
+      name: name,
+      items: items,
+    );
+    state = [combo, ...state];
+  }
+
+  void setAutoBillDaily(String comboId, bool enabled) {
+    state = state
+        .map((c) => c.id == comboId ? c.copyWith(autoBillDaily: enabled) : c)
+        .toList();
+  }
+
+  ComboBillResult billComboNow(String comboId) {
+    final combo = state.where((c) => c.id == comboId).firstOrNull;
+    if (combo == null) return ComboBillResult.comboNotFound;
+    final balance = walletBalanceForUser(combo.personId);
+    final total = combo.totalPaise;
+    if (balance < total) return ComboBillResult.insufficientBalance;
+
+    _ref
+        .read(canteenStateProvider.notifier)
+        .addOrder(combo.personId, combo.items, total);
+    return ComboBillResult.success;
+  }
+
+  ComboBillResult runAutoBillForToday(String personId) {
+    var result = ComboBillResult.comboNotFound;
+    final now = DateTime.now();
+    for (final combo in combosForPerson(
+      personId,
+    ).where((c) => c.autoBillDaily)) {
+      final last = combo.lastAutoBilledOn;
+      final alreadyBilledToday =
+          last != null &&
+          last.year == now.year &&
+          last.month == now.month &&
+          last.day == now.day;
+      if (alreadyBilledToday) continue;
+
+      final billed = billComboNow(combo.id);
+      if (billed == ComboBillResult.success) {
+        state = state
+            .map(
+              (c) => c.id == combo.id ? c.copyWith(lastAutoBilledOn: now) : c,
+            )
+            .toList();
+        result = ComboBillResult.success;
+      } else if (result != ComboBillResult.success) {
+        result = billed;
+      }
+    }
+    return result;
+  }
+
+  void deleteCombo(String comboId) {
+    state = state.where((c) => c.id != comboId).toList();
+  }
+}
+
+final studentMealComboProvider =
+    StateNotifierProvider<StudentMealComboNotifier, List<StudentMealCombo>>(
+      (ref) => StudentMealComboNotifier(ref),
+    );

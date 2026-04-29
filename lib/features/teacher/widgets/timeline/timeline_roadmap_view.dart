@@ -187,11 +187,8 @@ class _TimelineRoadmapViewState extends ConsumerState<TimelineRoadmapView>
     _ensureZoomMorphController();
     final zoomController = _zoomMorphController!;
     final zoom = ref.watch(teacherTimelineProvider.select((s) => s.zoom));
-    _currentZoomForLogs = zoom;
     final zoomChanged = _lastLoggedZoom == null || _lastLoggedZoom != zoom;
     if (zoomChanged) {
-      _syncLogForZoom = zoom;
-      _syncJumpLogCount = 0;
       _lastLoggedZoom = zoom;
     }
     final selectedTaskId = ref.watch(

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
+import '../../../core/providers/data_sync_provider.dart';
 import '../models/timeline_models.dart';
 
 // ── Attendance mark state ──────────────────────────────────────────────────────
@@ -29,9 +30,11 @@ class AttendanceMarkState {
 }
 
 class AttendanceMarkNotifier extends StateNotifier<AttendanceMarkState> {
-  AttendanceMarkNotifier() : super(const AttendanceMarkState()) {
+  AttendanceMarkNotifier(this._ref) : super(const AttendanceMarkState()) {
     _initAll();
   }
+
+  final Ref _ref;
 
   void _initAll() {
     final records = <String, String>{};
@@ -58,12 +61,82 @@ class AttendanceMarkNotifier extends StateNotifier<AttendanceMarkState> {
   Future<void> submit() async {
     state = state.copyWith(isSaving: true);
     await Future.delayed(const Duration(milliseconds: 300));
+    _writeAttendanceToMockData();
+    _ref.read(dataSyncProvider.notifier).bump();
     state = state.copyWith(isSaving: false, saved: true);
+  }
+
+  void _writeAttendanceToMockData() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final statuses = state.records.values;
+    final total = statuses.length;
+    if (total == 0) return;
+
+    final present = statuses.where((v) => v == 'P').length;
+    final absent = statuses.where((v) => v == 'A').length;
+    final leave = statuses.where((v) => v == 'L').length;
+
+    String dayStatus;
+    if (present >= absent && present >= leave) {
+      dayStatus = 'present';
+    } else if (leave > absent) {
+      dayStatus = 'leave';
+    } else {
+      dayStatus = 'absent';
+    }
+
+    final periods = dayStatus == 'present'
+        ? (MockData.timetable[_weekdayName(today.weekday)] ??
+                  const <MockPeriod>[])
+              .map((p) => p.subject)
+              .toList()
+        : <String>[];
+
+    final updated = MockAttendanceDay(
+      date: today,
+      status: dayStatus,
+      periods: periods,
+    );
+
+    MockData.attendance =
+        MockData.attendance
+            .where(
+              (d) =>
+                  !(d.date.year == today.year &&
+                      d.date.month == today.month &&
+                      d.date.day == today.day),
+            )
+            .toList()
+          ..add(updated)
+          ..sort((a, b) => a.date.compareTo(b.date));
+  }
+
+  String _weekdayName(int weekday) {
+    switch (weekday) {
+      case DateTime.monday:
+        return 'Monday';
+      case DateTime.tuesday:
+        return 'Tuesday';
+      case DateTime.wednesday:
+        return 'Wednesday';
+      case DateTime.thursday:
+        return 'Thursday';
+      case DateTime.friday:
+        return 'Friday';
+      case DateTime.saturday:
+        return 'Saturday';
+      case DateTime.sunday:
+        return 'Sunday';
+      default:
+        return 'Monday';
+    }
   }
 }
 
 // ── Teacher providers ──────────────────────────────────────────────────────────
 final teacherStudentsProvider = FutureProvider<List<MockStudent>>((ref) async {
+  ref.watch(dataSyncProvider);
   await Future.delayed(const Duration(milliseconds: 150));
   return MockData.students;
 });
@@ -71,16 +144,18 @@ final teacherStudentsProvider = FutureProvider<List<MockStudent>>((ref) async {
 final teacherTimetableProvider = FutureProvider<Map<String, List<MockPeriod>>>((
   ref,
 ) async {
+  ref.watch(dataSyncProvider);
   await Future.delayed(const Duration(milliseconds: 150));
   return MockData.timetable;
 });
 
 final attendanceMarkProvider =
     StateNotifierProvider<AttendanceMarkNotifier, AttendanceMarkState>(
-      (ref) => AttendanceMarkNotifier(),
+      (ref) => AttendanceMarkNotifier(ref),
     );
 
 final teacherDiaryProvider = FutureProvider<List<MockDiaryEntry>>((ref) async {
+  ref.watch(dataSyncProvider);
   await Future.delayed(const Duration(milliseconds: 150));
   return MockData.diary;
 });

@@ -5,10 +5,10 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/providers/data_sync_provider.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
-import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../providers/canteen_provider.dart';
@@ -27,11 +27,13 @@ class _FoodCanteenScreenState extends ConsumerState<FoodCanteenScreen>
   late TabController _tabController;
   final Map<String, int> _quantities = {};
   final Map<String, int> _comboQuantities = {};
+  bool _autoBillChecked = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _runDailyAutoBilling());
   }
 
   @override
@@ -101,6 +103,7 @@ class _FoodCanteenScreenState extends ConsumerState<FoodCanteenScreen>
         .firstOrNull;
     if (w != null) {
       w.balancePaise += 50000; // mock top-up ₹500
+      ref.read(dataSyncProvider.notifier).bump();
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -144,12 +147,122 @@ class _FoodCanteenScreenState extends ConsumerState<FoodCanteenScreen>
     );
   }
 
+  Future<void> _saveCurrentAsCombo() async {
+    final userId = ref.read(currentUserProvider)?.id;
+    final pid = canonicalPersonId(userId) ?? userId;
+    final items = _buildOrderItems();
+    if (pid == null || items.isEmpty) return;
+
+    final nameCtrl = TextEditingController();
+    final comboName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Save My Combo'),
+        content: TextField(
+          controller: nameCtrl,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Eg: Morning Idly + Tea',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, nameCtrl.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    final cleanName = comboName?.trim();
+    if (cleanName == null || cleanName.isEmpty) return;
+
+    ref
+        .read(studentMealComboProvider.notifier)
+        .saveCombo(personId: pid, name: cleanName, items: items);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Saved "$cleanName" combo.'),
+        backgroundColor: AppColors.success,
+      ),
+    );
+  }
+
+  void _loadCombo(StudentMealCombo combo) {
+    setState(() {
+      _quantities.clear();
+      _comboQuantities.clear();
+      for (final item in combo.items) {
+        if (item.itemId.startsWith('combo')) {
+          _comboQuantities[item.itemId] = item.qty;
+        } else {
+          _quantities[item.itemId] = item.qty;
+        }
+      }
+    });
+  }
+
+  void _billComboNow(StudentMealCombo combo) {
+    final result = ref
+        .read(studentMealComboProvider.notifier)
+        .billComboNow(combo.id);
+    if (result == ComboBillResult.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Billed "${combo.name}" for ${AppFormatters.formatPaise(combo.totalPaise)}',
+          ),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      setState(() {});
+    } else if (result == ComboBillResult.insufficientBalance) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Insufficient wallet balance for this combo.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  void _runDailyAutoBilling() {
+    if (_autoBillChecked) return;
+    _autoBillChecked = true;
+    final userId = ref.read(currentUserProvider)?.id;
+    final pid = canonicalPersonId(userId) ?? userId;
+    if (pid == null) return;
+    final result = ref
+        .read(studentMealComboProvider.notifier)
+        .runAutoBillForToday(pid);
+    if (result == ComboBillResult.success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Daily combo auto-billed for today.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(currentUserProvider)?.id;
+    final personId = canonicalPersonId(userId) ?? userId;
     final walletBalance = _getWalletBalance();
     final menuAsync = ref.watch(canteenMenuProvider);
     final orders = ordersForPerson(userId);
+    final myCombos = personId == null
+        ? const <StudentMealCombo>[]
+        : ref
+              .watch(studentMealComboProvider)
+              .where((c) => c.personId == personId)
+              .toList();
     final subscription = userId != null
         ? MockData.canteenSubscriptions
               .where(
@@ -231,11 +344,21 @@ class _FoodCanteenScreenState extends ConsumerState<FoodCanteenScreen>
               children: [
                 _OrderTab(
                   menuAsync: menuAsync,
+                  myCombos: myCombos,
                   quantities: _quantities,
                   onQuantityChanged: () => setState(() {}),
                   combos: MockData.canteenCombos,
                   comboQuantities: _comboQuantities,
                   onComboQuantityChanged: () => setState(() {}),
+                  onSaveCurrentCombo: _saveCurrentAsCombo,
+                  onLoadCombo: _loadCombo,
+                  onBillComboNow: _billComboNow,
+                  onDeleteCombo: (combo) => ref
+                      .read(studentMealComboProvider.notifier)
+                      .deleteCombo(combo.id),
+                  onAutoBillDailyChanged: (combo, enabled) => ref
+                      .read(studentMealComboProvider.notifier)
+                      .setAutoBillDaily(combo.id, enabled),
                   orderTotal: _getOrderTotal(),
                   walletBalance: walletBalance,
                   onPlaceOrder: _placeOrder,
@@ -284,22 +407,35 @@ extension _FirstOrNull<E> on Iterable<E> {
 class _OrderTab extends StatelessWidget {
   const _OrderTab({
     required this.menuAsync,
+    required this.myCombos,
     required this.quantities,
     required this.onQuantityChanged,
     required this.combos,
     required this.comboQuantities,
     required this.onComboQuantityChanged,
+    required this.onSaveCurrentCombo,
+    required this.onLoadCombo,
+    required this.onBillComboNow,
+    required this.onDeleteCombo,
+    required this.onAutoBillDailyChanged,
     required this.orderTotal,
     required this.walletBalance,
     required this.onPlaceOrder,
   });
 
   final AsyncValue<List<MockCanteenItem>> menuAsync;
+  final List<StudentMealCombo> myCombos;
   final Map<String, int> quantities;
   final VoidCallback onQuantityChanged;
   final List<MockCanteenCombo> combos;
   final Map<String, int> comboQuantities;
   final VoidCallback onComboQuantityChanged;
+  final VoidCallback onSaveCurrentCombo;
+  final ValueChanged<StudentMealCombo> onLoadCombo;
+  final ValueChanged<StudentMealCombo> onBillComboNow;
+  final ValueChanged<StudentMealCombo> onDeleteCombo;
+  final void Function(StudentMealCombo combo, bool enabled)
+  onAutoBillDailyChanged;
   final int orderTotal;
   final int walletBalance;
   final VoidCallback onPlaceOrder;
@@ -316,6 +452,97 @@ class _OrderTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'My Daily Combos',
+                      style: AppTypography.titleSmall,
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: orderTotal > 0 ? onSaveCurrentCombo : null,
+                    icon: const Icon(Icons.bookmark_add_outlined, size: 16),
+                    label: const Text('Save Current'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              if (myCombos.isEmpty)
+                Text(
+                  'Create your daily combo (e.g. Idly + Tea) and bill in one tap.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                )
+              else
+                ...myCombos.map((combo) {
+                  final itemSummary = combo.items
+                      .map((i) => '${i.name} x${i.qty}')
+                      .join(', ');
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                    child: NcCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  combo.name,
+                                  style: AppTypography.labelLarge,
+                                ),
+                              ),
+                              Text(
+                                AppFormatters.formatPaise(combo.totalPaise),
+                                style: AppTypography.labelMedium.copyWith(
+                                  color: AppColors.teal,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            itemSummary,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SwitchListTile.adaptive(
+                                  value: combo.autoBillDaily,
+                                  contentPadding: EdgeInsets.zero,
+                                  dense: true,
+                                  title: const Text('Auto bill daily'),
+                                  onChanged: (v) =>
+                                      onAutoBillDailyChanged(combo, v),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => onLoadCombo(combo),
+                                child: const Text('Load'),
+                              ),
+                              FilledButton.tonal(
+                                onPressed: () => onBillComboNow(combo),
+                                child: const Text('Bill Now'),
+                              ),
+                              IconButton(
+                                tooltip: 'Delete combo',
+                                onPressed: () => onDeleteCombo(combo),
+                                icon: const Icon(Icons.delete_outline),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              const SizedBox(height: AppSpacing.md),
               if (combos.isNotEmpty) ...[
                 Text('Combos', style: AppTypography.titleSmall),
                 const SizedBox(height: AppSpacing.xs),

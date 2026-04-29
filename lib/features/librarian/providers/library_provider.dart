@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
+import '../../../core/providers/data_sync_provider.dart';
 
 /// Info returned when looking up a borrower (student or staff).
 class LibraryBorrowerInfo {
@@ -26,33 +27,47 @@ class LibraryBorrowerInfo {
   static const int maxStaffIssues = 5;
 
   bool get canBorrow =>
-      (type == LibraryBorrowerType.student && currentIssuesCount < maxStudentIssues) ||
-      (type == LibraryBorrowerType.staff && currentIssuesCount < maxStaffIssues);
+      (type == LibraryBorrowerType.student &&
+          currentIssuesCount < maxStudentIssues) ||
+      (type == LibraryBorrowerType.staff &&
+          currentIssuesCount < maxStaffIssues);
 
   bool get hasBlockingFine => hasOverdue && pendingFinePaise > 0;
 }
 
 /// Mutable book issues for librarian — supports add and remove.
 class LibraryBookIssuesNotifier extends StateNotifier<List<MockBookIssue>> {
-  LibraryBookIssuesNotifier() : super(List.from(MockData.bookIssues));
+  LibraryBookIssuesNotifier(this._ref) : super(List.from(MockData.bookIssues));
+
+  final Ref _ref;
 
   void addIssue(MockBookIssue issue) {
     state = [...state, issue];
+    _persistAndNotify();
   }
 
   void removeIssue(String issueId) {
     state = state.where((i) => i.id != issueId).toList();
+    _persistAndNotify();
   }
 
   void replaceAll(List<MockBookIssue> issues) {
     state = List.from(issues);
+    _persistAndNotify();
+  }
+
+  void _persistAndNotify() {
+    MockData.bookIssues
+      ..clear()
+      ..addAll(state);
+    _ref.read(dataSyncProvider.notifier).bump();
   }
 }
 
 final libraryBookIssuesProvider =
     StateNotifierProvider<LibraryBookIssuesNotifier, List<MockBookIssue>>(
-  (ref) => LibraryBookIssuesNotifier(),
-);
+      (ref) => LibraryBookIssuesNotifier(ref),
+    );
 
 /// Lookup borrower by ID, roll number, or employee code.
 /// Returns null if not found.
@@ -65,11 +80,14 @@ LibraryBorrowerInfo? lookupBorrower(String query, List<MockBookIssue> issues) {
     if (s.id.toLowerCase() == q ||
         s.rollNo == query.trim() ||
         s.id.replaceAll('s', '').padLeft(2, '0') == query.trim()) {
-      final borrowerIssues =
-          issues.where((i) => i.borrowerId == s.id || i.studentName == s.name);
+      final borrowerIssues = issues.where(
+        (i) => i.borrowerId == s.id || i.studentName == s.name,
+      );
       final overdueIssues = borrowerIssues.where((i) => i.isOverdue);
-      final pendingFine =
-          overdueIssues.fold<int>(0, (sum, i) => sum + i.finePaise);
+      final pendingFine = overdueIssues.fold<int>(
+        0,
+        (sum, i) => sum + i.finePaise,
+      );
       return LibraryBorrowerInfo(
         id: s.id,
         name: s.name,
@@ -88,13 +106,17 @@ LibraryBorrowerInfo? lookupBorrower(String query, List<MockBookIssue> issues) {
         s.id.replaceAll('st', '').padLeft(2, '0') == query.trim() ||
         s.name.toLowerCase().contains(q)) {
       final borrowerIssues = issues
-          .where((i) =>
-              i.borrowerType == LibraryBorrowerType.staff &&
-              (i.borrowerId == s.id || i.studentName == s.name))
+          .where(
+            (i) =>
+                i.borrowerType == LibraryBorrowerType.staff &&
+                (i.borrowerId == s.id || i.studentName == s.name),
+          )
           .toList();
       final overdueIssues = borrowerIssues.where((i) => i.isOverdue);
-      final pendingFine =
-          overdueIssues.fold<int>(0, (sum, i) => sum + i.finePaise);
+      final pendingFine = overdueIssues.fold<int>(
+        0,
+        (sum, i) => sum + i.finePaise,
+      );
       return LibraryBorrowerInfo(
         id: s.id,
         name: s.name,
@@ -117,7 +139,10 @@ MockBook? lookupBook(String query) {
 
   for (final b in MockData.books) {
     if (b.id.toLowerCase() == q ||
-        b.accessionOrId.toLowerCase().replaceAll('-', '').contains(q.replaceAll('-', '')) ||
+        b.accessionOrId
+            .toLowerCase()
+            .replaceAll('-', '')
+            .contains(q.replaceAll('-', '')) ||
         (b.isbn != null && b.isbn!.toLowerCase().contains(q)) ||
         b.title.toLowerCase().contains(q)) {
       return b;
@@ -128,13 +153,18 @@ MockBook? lookupBook(String query) {
 
 /// Find an active issue by book accession or barcode scan.
 MockBookIssue? lookupIssueByBook(
-    String accessionOrId, List<MockBookIssue> issues) {
+  String accessionOrId,
+  List<MockBookIssue> issues,
+) {
   if (accessionOrId.trim().isEmpty) return null;
   final q = accessionOrId.trim().toLowerCase();
 
   for (final i in issues) {
-    if (i.bookAccession.toLowerCase().replaceAll('-', '').replaceAll(' ', '').contains(
-            q.replaceAll('-', '').replaceAll(' ', ''))) {
+    if (i.bookAccession
+        .toLowerCase()
+        .replaceAll('-', '')
+        .replaceAll(' ', '')
+        .contains(q.replaceAll('-', '').replaceAll(' ', ''))) {
       return i;
     }
   }
@@ -143,10 +173,15 @@ MockBookIssue? lookupIssueByBook(
 
 /// Count of currently issued copies for a book (by accession).
 int issuedCountForBook(String bookAccessionOrId, List<MockBookIssue> issues) {
-  final norm = bookAccessionOrId.toLowerCase().replaceAll('-', '').replaceAll(' ', '');
+  final norm = bookAccessionOrId
+      .toLowerCase()
+      .replaceAll('-', '')
+      .replaceAll(' ', '');
   return issues.where((i) {
-    final issueNorm =
-        i.bookAccession.toLowerCase().replaceAll('-', '').replaceAll(' ', '');
+    final issueNorm = i.bookAccession
+        .toLowerCase()
+        .replaceAll('-', '')
+        .replaceAll(' ', '');
     return issueNorm.contains(norm) || norm.contains(issueNorm);
   }).length;
 }
