@@ -36,8 +36,7 @@ class _AttendanceCalendarScreenState
   // Pre-index attendance sessions so we don't scan the whole dataset
   // on every build (week/month/day switching + filter toggles).
   late final Map<String, List<MockAttendanceSession>> _sessionsByDayKey;
-  late final Map<String, List<MockAttendanceSession>>
-      _historyByClassSubjectKey;
+  late final Map<String, List<MockAttendanceSession>> _historyByClassSubjectKey;
 
   // Memoized derived results for the current UI state.
   String? _lastSessionsForKey;
@@ -83,7 +82,9 @@ class _AttendanceCalendarScreenState
 
     for (final s in MockData.attendanceSessions) {
       final dayKey = _ymdKey(s.date);
-      _sessionsByDayKey.putIfAbsent(dayKey, () => <MockAttendanceSession>[]).add(s);
+      _sessionsByDayKey
+          .putIfAbsent(dayKey, () => <MockAttendanceSession>[])
+          .add(s);
 
       final historyKey = '${s.classSection}|${s.subject}';
       _historyByClassSubjectKey
@@ -104,7 +105,8 @@ class _AttendanceCalendarScreenState
     final cacheKey = 'day:$dayKey|${_filterKey()}';
     if (cacheKey == _lastSessionsForKey) return _lastSessionsForResult;
 
-    final daySessions = _sessionsByDayKey[dayKey] ?? const <MockAttendanceSession>[];
+    final daySessions =
+        _sessionsByDayKey[dayKey] ?? const <MockAttendanceSession>[];
     final result = daySessions.where((s) {
       if (!_filterClasses.contains(s.classSection)) return false;
       if (_filterSubjects.isNotEmpty && !_filterSubjects.contains(s.subject)) {
@@ -144,10 +146,12 @@ class _AttendanceCalendarScreenState
     var cur = startDay;
     while (!cur.isAfter(endDay)) {
       final dayKey = _ymdKey(cur);
-      final daySessions = _sessionsByDayKey[dayKey] ?? const <MockAttendanceSession>[];
+      final daySessions =
+          _sessionsByDayKey[dayKey] ?? const <MockAttendanceSession>[];
       for (final s in daySessions) {
         if (!_filterClasses.contains(s.classSection)) continue;
-        if (_filterSubjects.isNotEmpty && !_filterSubjects.contains(s.subject)) {
+        if (_filterSubjects.isNotEmpty &&
+            !_filterSubjects.contains(s.subject)) {
           continue;
         }
         total++;
@@ -174,7 +178,8 @@ class _AttendanceCalendarScreenState
 
   List<MockAttendanceSession> _sessionHistory(MockAttendanceSession session) {
     final key = '${session.classSection}|${session.subject}';
-    final items = _historyByClassSubjectKey[key] ?? const <MockAttendanceSession>[];
+    final items =
+        _historyByClassSubjectKey[key] ?? const <MockAttendanceSession>[];
     final result = <MockAttendanceSession>[];
     for (final s in items) {
       if (!s.date.isBefore(session.date)) continue;
@@ -1342,331 +1347,374 @@ class _WeekViewGridState extends State<_WeekViewGrid> {
 
     return RepaintBoundary(
       child: GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onHorizontalDragEnd: isMobile ? _handleHorizontalSwipe : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final leftPanelWidth = isMobile
-                  ? (constraints.maxWidth * 0.37).clamp(124.0, 156.0)
-                  : 200.0;
-              final rightViewportWidth = (constraints.maxWidth - leftPanelWidth)
-                  .clamp(120.0, 1400.0);
-              final effectiveColWidth = isMobile
-                  ? (rightViewportWidth / (widget.twoWeeks ? 4.6 : 3.5)).clamp(
-                      74.0,
-                      110.0,
-                    )
-                  : 100.0;
-              final contentWidth = daysCount * effectiveColWidth;
-              final maxBodyHeight = constraints.maxHeight.isFinite
-                  ? (constraints.maxHeight - headerHeight).clamp(120.0, 900.0)
-                  : fallbackGridHeight;
-              final effectiveGridHeight = gridContentHeight.clamp(
-                120.0,
-                maxBodyHeight,
-              );
-              return Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: leftPanelWidth,
-                        height: headerHeight,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: _dayHeaderBg,
-                            border: Border(
-                              right: BorderSide(color: _gridColor),
-                              bottom: BorderSide(color: _gridColor),
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragEnd: isMobile ? _handleHorizontalSwipe : null,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final leftPanelWidth = isMobile
+                    ? (constraints.maxWidth * 0.37).clamp(124.0, 156.0)
+                    : 200.0;
+                final rightViewportWidth =
+                    (constraints.maxWidth - leftPanelWidth).clamp(
+                      120.0,
+                      1400.0,
+                    );
+                final effectiveColWidth = isMobile
+                    ? (rightViewportWidth / (widget.twoWeeks ? 4.6 : 3.5))
+                          .clamp(74.0, 110.0)
+                    : 100.0;
+                final contentWidth = daysCount * effectiveColWidth;
+                final maxBodyHeight = constraints.maxHeight.isFinite
+                    ? (constraints.maxHeight - headerHeight).clamp(120.0, 900.0)
+                    : fallbackGridHeight;
+                final effectiveGridHeight = gridContentHeight.clamp(
+                  120.0,
+                  maxBodyHeight,
+                );
+                return Column(
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: leftPanelWidth,
+                          height: headerHeight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
                             ),
-                          ),
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Class • Subject',
-                            style: AppTypography.labelMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
+                            decoration: const BoxDecoration(
+                              color: _dayHeaderBg,
+                              border: Border(
+                                right: BorderSide(color: _gridColor),
+                                bottom: BorderSide(color: _gridColor),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: _headerHorizontalController,
-                          scrollDirection: Axis.horizontal,
-                          physics: const ClampingScrollPhysics(),
-                          child: SizedBox(
-                            width: contentWidth,
-                            height: headerHeight,
-                            child: Row(
-                              children: dayColumns.map((date) {
-                                final isToday = _isToday(date);
-                                final isSelected =
-                                    widget.selectedDay != null &&
-                                    isSameDay(widget.selectedDay, date);
-                                return GestureDetector(
-                                  onTap: () => widget.onDayTap(date),
-                                  child: Container(
-                                    width: effectiveColWidth,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? AppColors.teal.withValues(
-                                              alpha: 0.16,
-                                            )
-                                          : isToday
-                                          ? _todayHighlight
-                                          : _dayHeaderBg,
-                                      border: Border(
-                                        right: BorderSide(color: _gridColor),
-                                        bottom: BorderSide(color: _gridColor),
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '${_dayName(date.weekday)} ${date.day}',
-                                        style: AppTypography.labelMedium
-                                            .copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: isSelected
-                                                  ? AppColors.teal
-                                                  : isToday
-                                                  ? _todayLineColor
-                                                  : AppColors.textSecondary,
-                                            ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Class • Subject',
+                              style: AppTypography.labelMedium.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: effectiveGridHeight,
-                    child: Scrollbar(
-                      controller: _verticalController,
-                      thumbVisibility: true,
-                      child: SingleChildScrollView(
-                        controller: _verticalController,
-                        scrollDirection: Axis.vertical,
-                        physics: const ClampingScrollPhysics(),
-                        child: SizedBox(
-                          height: gridContentHeight,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(
-                                width: leftPanelWidth,
-                                height: gridContentHeight,
-                                child: Column(
-                                  children: List.generate(trackOrder.length, (
-                                    r,
-                                  ) {
-                                    final key = trackOrder[r];
-                                    final isAlt = r.isOdd;
-                                    return Container(
-                                      height: rowHeight,
+                        Expanded(
+                          child: SingleChildScrollView(
+                            controller: _headerHorizontalController,
+                            scrollDirection: Axis.horizontal,
+                            physics: const ClampingScrollPhysics(),
+                            child: SizedBox(
+                              width: contentWidth,
+                              height: headerHeight,
+                              child: Row(
+                                children: dayColumns.map((date) {
+                                  final isToday = _isToday(date);
+                                  final isSelected =
+                                      widget.selectedDay != null &&
+                                      isSameDay(widget.selectedDay, date);
+                                  return GestureDetector(
+                                    onTap: () => widget.onDayTap(date),
+                                    child: Container(
+                                      width: effectiveColWidth,
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
+                                        vertical: 8,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: isAlt ? _rowAltBg : Colors.white,
+                                        color: isSelected
+                                            ? AppColors.teal.withValues(
+                                                alpha: 0.16,
+                                              )
+                                            : isToday
+                                            ? _todayHighlight
+                                            : _dayHeaderBg,
                                         border: Border(
                                           right: BorderSide(color: _gridColor),
-                                          bottom: BorderSide(
-                                            color: _gridColor.withValues(
-                                              alpha: 0.7,
+                                          bottom: BorderSide(color: _gridColor),
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '${_dayName(date.weekday)} ${date.day}',
+                                          style: AppTypography.labelMedium
+                                              .copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: isSelected
+                                                    ? AppColors.teal
+                                                    : isToday
+                                                    ? _todayLineColor
+                                                    : AppColors.textSecondary,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: effectiveGridHeight,
+                      child: Scrollbar(
+                        controller: _verticalController,
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          controller: _verticalController,
+                          scrollDirection: Axis.vertical,
+                          physics: const ClampingScrollPhysics(),
+                          child: SizedBox(
+                            height: gridContentHeight,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: leftPanelWidth,
+                                  height: gridContentHeight,
+                                  child: Column(
+                                    children: List.generate(trackOrder.length, (
+                                      r,
+                                    ) {
+                                      final key = trackOrder[r];
+                                      final isAlt = r.isOdd;
+                                      return Container(
+                                        height: rowHeight,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isAlt
+                                              ? _rowAltBg
+                                              : Colors.white,
+                                          border: Border(
+                                            right: BorderSide(
+                                              color: _gridColor,
+                                            ),
+                                            bottom: BorderSide(
+                                              color: _gridColor.withValues(
+                                                alpha: 0.7,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      alignment: Alignment.centerLeft,
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 8,
-                                            height: 8,
-                                            decoration: BoxDecoration(
-                                              color: _barColorForTrack(r),
-                                              borderRadius:
-                                                  BorderRadius.circular(2),
+                                        alignment: Alignment.centerLeft,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: BoxDecoration(
+                                                color: _barColorForTrack(r),
+                                                borderRadius:
+                                                    BorderRadius.circular(2),
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              key,
-                                              style: AppTypography.bodySmall
-                                                  .copyWith(
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                              overflow: TextOverflow.ellipsis,
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                key,
+                                                style: AppTypography.bodySmall
+                                                    .copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                child: Scrollbar(
-                                  controller: _bodyHorizontalController,
-                                  thumbVisibility: true,
-                                  child: SingleChildScrollView(
+                                Expanded(
+                                  child: Scrollbar(
                                     controller: _bodyHorizontalController,
-                                    scrollDirection: Axis.horizontal,
-                                    physics: const ClampingScrollPhysics(),
-                                    child: SizedBox(
-                                      width: contentWidth,
-                                      height: gridContentHeight,
-                                      child: Stack(
-                                        children: [
-                                          // ── CustomPainter grid background ──
-                                          // Replaces O(rows × cols) Containers
-                                          Positioned.fill(
-                                            child: RepaintBoundary(
-                                              child: CustomPaint(
-                                                painter: _GanttGridPainter(
-                                                  rowCount: trackOrder.length,
-                                                  rowHeight: rowHeight,
-                                                  colCount: daysCount,
-                                                  colWidth: effectiveColWidth,
-                                                  todayColIndex: todayIdx,
-                                                  gridColor: _gridColor,
-                                                  todayColor: _todayHighlight,
-                                                  altRowColor: _rowAltBg,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          // ── Session chips (only where data exists) ──
-                                          for (int colIdx = 0; colIdx < daysCount; colIdx++)
-                                            for (int r = 0; r < trackOrder.length; r++)
-                                              () {
-                                                final key = trackOrder[r];
-                                                final session = sessionMap[key]?[colIdx];
-                                                if (session == null) return const SizedBox.shrink();
-                                                return Positioned(
-                                                  left: colIdx * effectiveColWidth + 3,
-                                                  top: r * rowHeight + 3,
-                                                  width: effectiveColWidth - 6,
-                                                  height: rowHeight - 6,
-                                                  child: RepaintBoundary(
-                                                    child: GestureDetector(
-                                                      onTap: () => widget.onSessionTap(session),
-                                                      child: Container(
-                                                        decoration: BoxDecoration(
-                                                          color: session.status == 'marked'
-                                                              ? _barBlue
-                                                              : _barGreen,
-                                                          borderRadius: BorderRadius.circular(6),
-                                                          boxShadow: const [
-                                                            BoxShadow(
-                                                              color: Color(0x14000000),
-                                                              blurRadius: 2,
-                                                              offset: Offset(0, 1),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        alignment: Alignment.centerLeft,
-                                                        padding: const EdgeInsets.symmetric(
-                                                          horizontal: 4,
-                                                          vertical: 2,
-                                                        ),
-                                                        child: Text(
-                                                          '${session.subject} P${session.period} ${_formatTimeCompact(session.startTime)}',
-                                                          style: const TextStyle(
-                                                            color: Colors.white,
-                                                            fontWeight: FontWeight.w600,
-                                                            fontSize: 9,
-                                                          ),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                        ),
-                                                      ),
-                                                    ),
+                                    thumbVisibility: true,
+                                    child: SingleChildScrollView(
+                                      controller: _bodyHorizontalController,
+                                      scrollDirection: Axis.horizontal,
+                                      physics: const ClampingScrollPhysics(),
+                                      child: SizedBox(
+                                        width: contentWidth,
+                                        height: gridContentHeight,
+                                        child: Stack(
+                                          children: [
+                                            // ── CustomPainter grid background ──
+                                            // Replaces O(rows × cols) Containers
+                                            Positioned.fill(
+                                              child: RepaintBoundary(
+                                                child: CustomPaint(
+                                                  painter: _GanttGridPainter(
+                                                    rowCount: trackOrder.length,
+                                                    rowHeight: rowHeight,
+                                                    colCount: daysCount,
+                                                    colWidth: effectiveColWidth,
+                                                    todayColIndex: todayIdx,
+                                                    gridColor: _gridColor,
+                                                    todayColor: _todayHighlight,
+                                                    altRowColor: _rowAltBg,
                                                   ),
-                                                );
-                                              }(),
-                                          if (todayIdx >= 0)
-                                            Positioned(
-                                              left:
-                                                  todayIdx * effectiveColWidth +
-                                                  effectiveColWidth / 2 -
-                                                  1,
-                                              top: 0,
-                                              bottom: 0,
-                                              child: IgnorePointer(
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    CustomPaint(
-                                                      size: const Size(12, 8),
-                                                      painter:
-                                                          _TodayMarkerPainter(
-                                                            color:
-                                                                _todayLineColor,
-                                                          ),
-                                                    ),
-                                                    Expanded(
-                                                      child: Container(
-                                                        width: 2,
-                                                        color: _todayLineColor,
-                                                      ),
-                                                    ),
-                                                  ],
                                                 ),
                                               ),
                                             ),
-                                        ],
+                                            // ── Session chips (only where data exists) ──
+                                            for (
+                                              int colIdx = 0;
+                                              colIdx < daysCount;
+                                              colIdx++
+                                            )
+                                              for (
+                                                int r = 0;
+                                                r < trackOrder.length;
+                                                r++
+                                              )
+                                                () {
+                                                  final key = trackOrder[r];
+                                                  final session =
+                                                      sessionMap[key]?[colIdx];
+                                                  if (session == null)
+                                                    return const SizedBox.shrink();
+                                                  return Positioned(
+                                                    left:
+                                                        colIdx *
+                                                            effectiveColWidth +
+                                                        3,
+                                                    top: r * rowHeight + 3,
+                                                    width:
+                                                        effectiveColWidth - 6,
+                                                    height: rowHeight - 6,
+                                                    child: RepaintBoundary(
+                                                      child: GestureDetector(
+                                                        onTap: () =>
+                                                            widget.onSessionTap(
+                                                              session,
+                                                            ),
+                                                        child: Container(
+                                                          decoration: BoxDecoration(
+                                                            color:
+                                                                session.status ==
+                                                                    'marked'
+                                                                ? _barBlue
+                                                                : _barGreen,
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                            boxShadow: const [
+                                                              BoxShadow(
+                                                                color: Color(
+                                                                  0x14000000,
+                                                                ),
+                                                                blurRadius: 2,
+                                                                offset: Offset(
+                                                                  0,
+                                                                  1,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          alignment: Alignment
+                                                              .centerLeft,
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 4,
+                                                                vertical: 2,
+                                                              ),
+                                                          child: Text(
+                                                            '${session.subject} P${session.period} ${_formatTimeCompact(session.startTime)}',
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize: 9,
+                                                                ),
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                }(),
+                                            if (todayIdx >= 0)
+                                              Positioned(
+                                                left:
+                                                    todayIdx *
+                                                        effectiveColWidth +
+                                                    effectiveColWidth / 2 -
+                                                    1,
+                                                top: 0,
+                                                bottom: 0,
+                                                child: IgnorePointer(
+                                                  child: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      CustomPaint(
+                                                        size: const Size(12, 8),
+                                                        painter:
+                                                            _TodayMarkerPainter(
+                                                              color:
+                                                                  _todayLineColor,
+                                                            ),
+                                                      ),
+                                                      Expanded(
+                                                        child: Container(
+                                                          width: 2,
+                                                          color:
+                                                              _todayLineColor,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -1735,8 +1783,6 @@ class _GanttGridPainter extends CustomPainter {
   final Color gridColor;
   final Color todayColor;
   final Color altRowColor;
-
-  static const _white = Color(0xFFFFFFFF);
 
   @override
   void paint(Canvas canvas, Size size) {

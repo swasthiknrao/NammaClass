@@ -1065,7 +1065,7 @@ class _StaffTab extends StatelessWidget {
                                 crossAxisCount: crossCount,
                                 mainAxisSpacing: AppSpacing.sm,
                                 crossAxisSpacing: AppSpacing.sm,
-                                childAspectRatio: 1.1,
+                                childAspectRatio: 1.0,
                               ),
                           itemCount: filtered.length,
                           itemBuilder: (ctx, i) {
@@ -1111,11 +1111,16 @@ class _StaffCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return NcCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          NcAvatar(name: staff.name, radius: 28),
-          const SizedBox(height: AppSpacing.sm),
+          NcAvatar(name: staff.name, radius: 26),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             staff.name,
             style: AppTypography.labelLarge,
@@ -1128,8 +1133,11 @@ class _StaffCard extends StatelessWidget {
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.textSecondary,
             ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.xxs),
           NcChip(
             label: staff.status,
             selected: staff.status == 'active',

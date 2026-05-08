@@ -33,10 +33,20 @@ dependencies:
   url_launcher: ^6.3.1
   flutter_secure_storage: ^9.2.2
 
+  # Networking & local persistence (clean-arch / sync layer)
+  dio: ^5.7.0
+  drift: ^2.22.0
+  drift_flutter: ^0.2.0
+  jwt_decoder: ^2.0.1
+  uuid: ^4.5.1
+  connectivity_plus: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  drift_dev: ^2.22.0
+  build_runner: ^2.4.13
 
 flutter:
   uses-material-design: true

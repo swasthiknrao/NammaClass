@@ -16,23 +16,78 @@ bool IsBareAltVirtualKey(WPARAM vk) {
   return vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU;
 }
 
-int g_altInterceptLogCount = 0;
-constexpr int kAltInterceptLogLimit = 30;
+// HardwareKeyboard can assert when the same physical key is reported as Meta
+// (Win) vs Control across synthesized events (e.g. usbHidUsage 0x1600000000).
+// Dropping bare Win-key messages mirrors the Alt workaround.
+bool IsBareWinVirtualKey(WPARAM vk) {
+  return vk == VK_LWIN || vk == VK_RWIN;
+}
 
-void LogBareAltIntercept(UINT message, WPARAM wparam) {
-  if (g_altInterceptLogCount >= kAltInterceptLogLimit) return;
+int g_modifierInterceptLogCount = 0;
+constexpr int kModifierInterceptLogLimit = 30;
+
+void LogModifierIntercept(const char* tag, UINT message, WPARAM wparam) {
+  if (g_modifierInterceptLogCount >= kModifierInterceptLogLimit) return;
   char buf[256];
   sprintf_s(
       buf,
-      "BareAltIntercept: message=%u wparam=%u swallowed=%d\n",
+      "%s: message=%u wparam=%u swallowed=%d\n",
+      tag,
       static_cast<unsigned>(message),
       static_cast<unsigned>(wparam),
-      g_altInterceptLogCount + 1);
+      g_modifierInterceptLogCount + 1);
   OutputDebugStringA(buf);
-  g_altInterceptLogCount++;
+  g_modifierInterceptLogCount++;
+}
+
+// True if we should consume the message so the Flutter engine never sees it.
+bool ShouldConsumeKnownBadModifierKey(UINT message, WPARAM wparam,
+                                      const char** out_tag) {
+  if (message == WM_SYSKEYDOWN || message == WM_SYSKEYUP) {
+    if (IsBareAltVirtualKey(wparam)) {
+      *out_tag = "BareAltIntercept";
+      return true;
+    }
+  }
+  if (message == WM_KEYDOWN || message == WM_KEYUP) {
+    // Left/right/generic Alt on the non-system path (e.g. keyCode 164 / 0xA4).
+    if (IsBareAltVirtualKey(wparam)) {
+      *out_tag = "BareAltIntercept";
+      return true;
+    }
+    if (IsBareWinVirtualKey(wparam)) {
+      *out_tag = "BareWinIntercept";
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace
+
+namespace {
+FlutterWindow* g_view_keyboard_workaround_owner = nullptr;
+}  // namespace
+
+LRESULT CALLBACK FlutterWindow::ViewKeyboardWorkaroundWndProc(
+    HWND hwnd,
+    UINT message,
+    WPARAM wparam,
+    LPARAM lparam) noexcept {
+  const char* tag = nullptr;
+  if (g_view_keyboard_workaround_owner &&
+      ShouldConsumeKnownBadModifierKey(message, wparam, &tag)) {
+    LogModifierIntercept(tag, message, wparam);
+    return 0;
+  }
+  if (g_view_keyboard_workaround_owner &&
+      g_view_keyboard_workaround_owner->flutter_view_prev_proc_) {
+    return CallWindowProc(
+        g_view_keyboard_workaround_owner->flutter_view_prev_proc_, hwnd, message,
+        wparam, lparam);
+  }
+  return DefWindowProc(hwnd, message, wparam, lparam);
+}
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -56,6 +111,7 @@ bool FlutterWindow::OnCreate() {
   }
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
+  SubclassFlutterViewForKeyboardWorkaround();
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
@@ -70,6 +126,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  UnsubclassFlutterViewForKeyboardWorkaround();
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -77,24 +134,40 @@ void FlutterWindow::OnDestroy() {
   Win32Window::OnDestroy();
 }
 
+void FlutterWindow::SubclassFlutterViewForKeyboardWorkaround() {
+  HWND view = flutter_controller_->view()->GetNativeWindow();
+  if (!view || flutter_view_hwnd_) {
+    return;
+  }
+  flutter_view_hwnd_ = view;
+  g_view_keyboard_workaround_owner = this;
+  flutter_view_prev_proc_ = reinterpret_cast<WNDPROC>(SetWindowLongPtr(
+      view, GWLP_WNDPROC,
+      reinterpret_cast<LONG_PTR>(ViewKeyboardWorkaroundWndProc)));
+}
+
+void FlutterWindow::UnsubclassFlutterViewForKeyboardWorkaround() {
+  if (flutter_view_hwnd_ && flutter_view_prev_proc_) {
+    SetWindowLongPtr(flutter_view_hwnd_, GWLP_WNDPROC,
+                     reinterpret_cast<LONG_PTR>(flutter_view_prev_proc_));
+  }
+  if (g_view_keyboard_workaround_owner == this) {
+    g_view_keyboard_workaround_owner = nullptr;
+  }
+  flutter_view_prev_proc_ = nullptr;
+  flutter_view_hwnd_ = nullptr;
+}
+
 LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
-  // Must run before HandleTopLevelWindowProc so the engine never sees the
-  // half-baked Alt key packet that triggers raw_keyboard.dart assertions.
-  if (message == WM_SYSKEYDOWN || message == WM_SYSKEYUP) {
-    if (IsBareAltVirtualKey(wparam)) {
-      LogBareAltIntercept(message, wparam);
-      return 0;
-    }
-  }
-  if (message == WM_KEYDOWN || message == WM_KEYUP) {
-    // Left/right Alt sometimes arrive on the non-system key path (0xA4 / 0xA5).
-    if (wparam == VK_LMENU || wparam == VK_RMENU) {
-      LogBareAltIntercept(message, wparam);
-      return 0;
-    }
+  // Top-level window rarely receives WM_KEY* (focus is on the Flutter view),
+  // but filter here too for completeness.
+  const char* tag = nullptr;
+  if (ShouldConsumeKnownBadModifierKey(message, wparam, &tag)) {
+    LogModifierIntercept(tag, message, wparam);
+    return 0;
   }
 
   // Give Flutter, including plugins, an opportunity to handle window messages.

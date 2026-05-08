@@ -158,7 +158,6 @@ class _OutpassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isApproved = op.status == 'approved';
-    final isRejected = op.status == 'rejected';
 
     return NcCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),

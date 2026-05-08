@@ -38,10 +38,41 @@ class SecureStorage {
     return _storage.read(key: StorageKeys.userId);
   }
 
+  Future<void> writeTenantId(String value) async {
+    await _storage.write(key: StorageKeys.tenantId, value: value);
+  }
+
+  Future<String?> readTenantId() async {
+    return _storage.read(key: StorageKeys.tenantId);
+  }
+
+  Future<void> writeBranchId(String value) async {
+    await _storage.write(key: StorageKeys.branchId, value: value);
+  }
+
+  Future<String?> readBranchId() async {
+    return _storage.read(key: StorageKeys.branchId);
+  }
+
+  Future<void> removeBranchId() async {
+    await _storage.delete(key: StorageKeys.branchId);
+  }
+
+  Future<void> writePermissionsJson(String value) async {
+    await _storage.write(key: StorageKeys.permissionsJson, value: value);
+  }
+
+  Future<String?> readPermissionsJson() async {
+    return _storage.read(key: StorageKeys.permissionsJson);
+  }
+
   /// Clear all auth-related keys. Call on logout.
   Future<void> clearAuth() async {
     await _storage.delete(key: StorageKeys.authToken);
     await _storage.delete(key: StorageKeys.refreshToken);
     await _storage.delete(key: StorageKeys.userId);
+    await _storage.delete(key: StorageKeys.tenantId);
+    await _storage.delete(key: StorageKeys.branchId);
+    await _storage.delete(key: StorageKeys.permissionsJson);
   }
 }

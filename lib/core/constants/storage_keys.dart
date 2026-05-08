@@ -6,4 +6,7 @@ class StorageKeys {
   static const String authToken = 'auth_token';
   static const String refreshToken = 'refresh_token';
   static const String userId = 'user_id';
+  static const String tenantId = 'tenant_id';
+  static const String branchId = 'branch_id';
+  static const String permissionsJson = 'permissions_json';
 }

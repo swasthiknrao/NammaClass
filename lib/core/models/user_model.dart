@@ -28,6 +28,9 @@ class UserModel {
     this.email,
     this.avatarUrl,
     this.schoolId,
+    this.tenantId,
+    this.branchId,
+    this.permissions = const [],
     this.classSection,
     this.employeeId,
     this.studentId,
@@ -40,6 +43,11 @@ class UserModel {
   final String? email;
   final String? avatarUrl;
   final String? schoolId;
+
+  /// Multi-tenant id from JWT / API (may match [schoolId]).
+  final String? tenantId;
+  final String? branchId;
+  final List<String> permissions;
   final String? classSection;
   final String? employeeId;
   final String? studentId;
@@ -85,6 +93,9 @@ class UserModel {
     String? email,
     String? avatarUrl,
     String? schoolId,
+    String? tenantId,
+    String? branchId,
+    List<String>? permissions,
     String? classSection,
     String? employeeId,
     String? studentId,
@@ -97,6 +108,9 @@ class UserModel {
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       schoolId: schoolId ?? this.schoolId,
+      tenantId: tenantId ?? this.tenantId,
+      branchId: branchId ?? this.branchId,
+      permissions: permissions ?? this.permissions,
       classSection: classSection ?? this.classSection,
       employeeId: employeeId ?? this.employeeId,
       studentId: studentId ?? this.studentId,

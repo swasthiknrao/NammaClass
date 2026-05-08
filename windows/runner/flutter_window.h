@@ -23,11 +23,24 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  void SubclassFlutterViewForKeyboardWorkaround();
+  void UnsubclassFlutterViewForKeyboardWorkaround();
+
+  static LRESULT CALLBACK ViewKeyboardWorkaroundWndProc(HWND hwnd,
+                                                        UINT message,
+                                                        WPARAM wparam,
+                                                        LPARAM lparam) noexcept;
+
   // The project to run.
   flutter::DartProject project_;
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
+
+  // Keyboard focus is on the Flutter view child, so WM_KEY* must be filtered
+  // there — not only on the top-level HWND. See flutter_window.cpp.
+  HWND flutter_view_hwnd_ = nullptr;
+  WNDPROC flutter_view_prev_proc_ = nullptr;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

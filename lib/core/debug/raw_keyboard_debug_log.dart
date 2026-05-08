@@ -57,7 +57,9 @@ class RawKeyboardDebugInstrumentation {
       final msg = details.exceptionAsString();
       if (msg.contains('keysPressed') ||
           msg.contains('RawKey') ||
-          msg.contains('RawKeyboard')) {
+          msg.contains('RawKeyboard') ||
+          msg.contains('HardwareKeyboard') ||
+          msg.contains('_pressedKeys')) {
         _ndjson(
           hypothesisId: 'H4',
           location: 'FlutterError.onError',

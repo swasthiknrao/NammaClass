@@ -268,6 +268,26 @@ class MockCanteenItem {
   final bool isVeg;
   final List<String> allergens;
   final bool available;
+
+  MockCanteenItem copyWith({
+    String? id,
+    String? name,
+    String? category,
+    int? pricePaise,
+    bool? isVeg,
+    List<String>? allergens,
+    bool? available,
+  }) {
+    return MockCanteenItem(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      pricePaise: pricePaise ?? this.pricePaise,
+      isVeg: isVeg ?? this.isVeg,
+      allergens: allergens ?? this.allergens,
+      available: available ?? this.available,
+    );
+  }
 }
 
 /// Combo offer — bundle of items at discounted price
@@ -289,6 +309,27 @@ class MockCanteenCombo {
   final String? description;
   final bool isVeg;
   final bool available;
+
+  MockCanteenCombo copyWith({
+    String? id,
+    String? name,
+    List<String>? itemIds,
+    int? pricePaise,
+    String? description,
+    bool? isVeg,
+    bool? available,
+    bool clearDescription = false,
+  }) {
+    return MockCanteenCombo(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      itemIds: itemIds ?? this.itemIds,
+      pricePaise: pricePaise ?? this.pricePaise,
+      description: clearDescription ? null : (description ?? this.description),
+      isVeg: isVeg ?? this.isVeg,
+      available: available ?? this.available,
+    );
+  }
 }
 
 /// Subscription plan — veg/non-veg monthly
@@ -2198,8 +2239,8 @@ class MockData {
     ),
   ];
 
-  // ── Canteen Menu ──────────────────────────────────────────────────────────────
-  static const List<MockCanteenItem> canteenMenu = [
+  // ── Canteen Menu (mutable — counter staff can add/edit from canteen counter) ─
+  static final List<MockCanteenItem> canteenMenu = [
     MockCanteenItem(
       id: 'c01',
       name: 'Idli Sambar (2 pcs)',

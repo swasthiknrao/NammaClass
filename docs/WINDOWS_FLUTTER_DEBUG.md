@@ -18,6 +18,21 @@ RawKeyDownEvent ... LogicalKeyboardKey ... "Alt Left" ... modifiers: 0
 
 **Trade-off:** Flutter code that relies on `RawKeyboard` seeing **Alt pressed alone** (no second key) will not get those events on Windows.
 
+## `HardwareKeyboard` assertion (Meta / Win vs Control)
+
+You may see:
+
+```text
+_pressedKeys[event.physicalKey] == event.logicalKey
+... LogicalKeyboardKey ... "Control Left" ... recorded logical key ... "Meta Left"
+```
+
+**Cause:** On some Windows setups the embedder reports inconsistent logical keys for the same physical key (often the **left Win** key, `usbHidUsage` like `0x1600000000`), which breaks Flutter’s `HardwareKeyboard` state machine.
+
+**Runner workaround (this repo):** [`windows/runner/flutter_window.cpp`](../windows/runner/flutter_window.cpp) also consumes **bare** `VK_LWIN` / `VK_RWIN` on `WM_KEYDOWN` / `WM_KEYUP` before `HandleTopLevelWindowProc`, same idea as Alt.
+
+**Trade-off:** While the Flutter window has focus, **Win alone** and **Win+…** shortcuts may not reach the app (OS shortcuts such as Win+E are often handled by the shell regardless). Prefer upgrading Flutter and reporting upstream if you need full Win-key handling inside the app.
+
 **Also try:**
 
 1. **Upgrade Flutter** (`flutter upgrade` on stable) and retest.

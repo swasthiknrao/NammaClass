@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/user_model.dart';
+import '../../../core/providers/secure_storage_provider.dart';
 import '../../../core/services/audit_log.dart';
 import '../../../core/services/secure_storage.dart';
 
@@ -60,8 +61,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: loading);
   }
 }
-
-final secureStorageProvider = Provider<SecureStorage>((ref) => SecureStorage());
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   (ref) => AuthNotifier(secureStorage: ref.read(secureStorageProvider)),

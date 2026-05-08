@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/launch_utils.dart';
-import '../providers/warden_provider.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/shell_layout_scope.dart';
-import '../providers/warden_provider.dart';
 
-class WardenVisitorsScreen extends ConsumerStatefulWidget {
+class WardenVisitorsScreen extends StatefulWidget {
   const WardenVisitorsScreen({super.key});
 
   @override
-  ConsumerState<WardenVisitorsScreen> createState() =>
-      _WardenVisitorsScreenState();
+  State<WardenVisitorsScreen> createState() => _WardenVisitorsScreenState();
 }
 
-class _WardenVisitorsScreenState extends ConsumerState<WardenVisitorsScreen> {
+class _WardenVisitorsScreenState extends State<WardenVisitorsScreen> {
   final List<MockVisitor> _visitors = MockData.visitors;
 
   Duration _visitDuration(MockVisitor v) {
