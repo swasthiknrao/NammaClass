@@ -6,16 +6,32 @@ import 'app_spacing.dart';
 import 'app_typography.dart';
 
 /// Complete NammaClass ThemeData — BRD Section 1.4.
+///
+/// Use [AppTheme.buildLight] / [AppTheme.buildDark] for per-tenant dynamic
+/// colors. The static [light] / [dark] getters use the default brand palette
+/// and are kept for backward compatibility wherever the tenant is not yet
+/// loaded.
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get light {
+  // ── Backward-compatible static getters ────────────────────────────────────
+
+  static ThemeData get light =>
+      buildLight(primary: AppColors.primary, accent: AppColors.accent);
+
+  static ThemeData get dark =>
+      buildDark(primary: AppColors.primary, accent: AppColors.accent);
+
+  // ── Dynamic factories ──────────────────────────────────────────────────────
+
+  /// Builds a light [ThemeData] overriding [primary] and [accent] per tenant.
+  static ThemeData buildLight({required Color primary, required Color accent}) {
     final base = ThemeData.light(useMaterial3: true);
     return base.copyWith(
       scaffoldBackgroundColor: Colors.transparent,
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        secondary: AppColors.accent,
+      colorScheme: ColorScheme.light(
+        primary: primary,
+        secondary: accent,
         surface: AppColors.card,
         error: AppColors.error,
         onPrimary: Colors.white,
@@ -28,9 +44,9 @@ class AppTheme {
       textTheme: AppTypography.textTheme,
       primaryTextTheme: AppTypography.textTheme,
 
-      // AppBar — primaryColor bg, white Poppins title, elevation 0
+      // AppBar — tenant primary bg, white Poppins title, elevation 0
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.primary,
+        backgroundColor: primary,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
@@ -53,10 +69,10 @@ class AppTheme {
         clipBehavior: Clip.antiAlias,
       ),
 
-      // ElevatedButton — 48dp, AppRadius.sm, primaryColor
+      // ElevatedButton — 48dp, AppRadius.sm, tenant primary
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 0,
           minimumSize: const Size(64, 48),
@@ -70,9 +86,9 @@ class AppTheme {
       // OutlinedButton
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: primary,
           minimumSize: const Size(64, 48),
-          side: const BorderSide(color: AppColors.primary, width: 1.5),
+          side: BorderSide(color: primary, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
@@ -83,12 +99,12 @@ class AppTheme {
       // TextButton
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: primary,
           textStyle: AppTypography.labelLarge,
         ),
       ),
 
-      // InputDecoration — dividerColor border, primaryColor focused
+      // InputDecoration — dividerColor border, tenant primary focused
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.card,
@@ -106,7 +122,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -126,16 +142,16 @@ class AppTheme {
         prefixIconColor: AppColors.textSecondary,
       ),
 
-      // NavigationBar — 64dp, white, pill indicator
+      // NavigationBar — 64dp, white, pill indicator in tenant primary
       navigationBarTheme: NavigationBarThemeData(
         height: 64,
         backgroundColor: AppColors.card,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+        indicatorColor: primary.withValues(alpha: 0.12),
         indicatorShape: const StadiumBorder(),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return AppTypography.labelSmall.copyWith(
-              color: AppColors.primary,
+              color: primary,
               fontWeight: FontWeight.w600,
             );
           }
@@ -145,7 +161,7 @@ class AppTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.primary, size: 24);
+            return IconThemeData(color: primary, size: 24);
           }
           return const IconThemeData(color: AppColors.textSecondary, size: 24);
         }),
@@ -156,9 +172,9 @@ class AppTheme {
 
       // TabBar
       tabBarTheme: TabBarThemeData(
-        indicatorColor: AppColors.primary,
+        indicatorColor: primary,
         indicatorSize: TabBarIndicatorSize.tab,
-        labelColor: AppColors.primary,
+        labelColor: primary,
         unselectedLabelColor: AppColors.textSecondary,
         labelStyle: AppTypography.labelLarge.copyWith(
           fontWeight: FontWeight.w600,
@@ -170,7 +186,7 @@ class AppTheme {
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.background,
-        selectedColor: AppColors.primary.withValues(alpha: 0.15),
+        selectedColor: primary.withValues(alpha: 0.15),
         side: const BorderSide(color: AppColors.divider),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -189,9 +205,9 @@ class AppTheme {
         space: 1,
       ),
 
-      // FloatingActionButton
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.accent,
+      // FloatingActionButton — tenant accent
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accent,
         foregroundColor: Colors.white,
         elevation: AppElevation.high,
       ),
@@ -248,12 +264,12 @@ class AppTheme {
       // Switch
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.primary;
+          if (states.contains(WidgetState.selected)) return primary;
           return AppColors.divider;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary.withValues(alpha: 0.3);
+            return primary.withValues(alpha: 0.3);
           }
           return AppColors.divider;
         }),
@@ -262,7 +278,7 @@ class AppTheme {
       // Checkbox
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.primary;
+          if (states.contains(WidgetState.selected)) return primary;
           return Colors.transparent;
         }),
         checkColor: WidgetStateProperty.all(Colors.white),
@@ -273,21 +289,22 @@ class AppTheme {
       ),
 
       // ProgressIndicator
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: primary,
         circularTrackColor: AppColors.background,
         linearTrackColor: AppColors.background,
       ),
     );
   }
 
-  static ThemeData get dark {
+  /// Builds a dark [ThemeData] overriding [primary] and [accent] per tenant.
+  static ThemeData buildDark({required Color primary, required Color accent}) {
     final base = ThemeData.dark(useMaterial3: true);
     return base.copyWith(
       scaffoldBackgroundColor: Colors.transparent,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        secondary: AppColors.accent,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: accent,
         surface: AppColors.cardDark,
         error: AppColors.error,
         onPrimary: Colors.white,
@@ -300,7 +317,7 @@ class AppTheme {
       textTheme: AppTypography.textTheme,
       primaryTextTheme: AppTypography.textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.primary,
+        backgroundColor: primary,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
@@ -320,6 +337,35 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          minimumSize: const Size(64, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          textStyle: AppTypography.labelLarge,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primary,
+          minimumSize: const Size(64, 48),
+          side: BorderSide(color: primary, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          textStyle: AppTypography.labelLarge,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primary,
+          textStyle: AppTypography.labelLarge,
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.cardDark,
@@ -337,7 +383,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         labelStyle: AppTypography.bodySmall.copyWith(
           color: AppColors.textSecondaryDark,
@@ -349,10 +395,38 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         height: 64,
         backgroundColor: AppColors.cardDark,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.3),
+        indicatorColor: primary.withValues(alpha: 0.3),
         indicatorShape: const StadiumBorder(),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         elevation: 8,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
+        elevation: AppElevation.high,
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary;
+          return AppColors.dividerDark;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primary.withValues(alpha: 0.3);
+          }
+          return AppColors.dividerDark;
+        }),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primary;
+          return Colors.transparent;
+        }),
+        checkColor: WidgetStateProperty.all(Colors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xs),
+        ),
+        side: const BorderSide(color: AppColors.dividerDark, width: 1.5),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.cardDark,
@@ -371,8 +445,8 @@ class AppTheme {
         elevation: AppElevation.high,
         modalElevation: AppElevation.high,
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: primary,
         circularTrackColor: AppColors.backgroundDark,
         linearTrackColor: AppColors.backgroundDark,
       ),

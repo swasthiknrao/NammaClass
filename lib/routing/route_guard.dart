@@ -1,4 +1,6 @@
 import '../core/models/user_model.dart';
+import '../domain/entities/nc_feature.dart';
+import '../domain/entities/tenant_profile.dart';
 import '../features/auth/providers/auth_provider.dart';
 import 'app_routes.dart';
 
@@ -35,8 +37,40 @@ const _sharedAuthPaths = {
   '/profile',
 };
 
+/// Feature-gated route → required [NcFeature] pairs.
+/// If the tenant hasn't subscribed to the feature, the path is redirected
+/// to the role's home screen.
+const _featureGatedRoutes = <String, NcFeature>{
+  AppRoutes.parentBus: NcFeature.transport,
+  AppRoutes.parentCanteen: NcFeature.canteen,
+  AppRoutes.studentLibrary: NcFeature.library,
+  AppRoutes.studentCanteen: NcFeature.canteen,
+  AppRoutes.staffPayslips: NcFeature.hrPayroll,
+  AppRoutes.staffCanteen: NcFeature.canteen,
+  AppRoutes.hostel: NcFeature.hostel,
+  AppRoutes.driverRoute: NcFeature.transport,
+  AppRoutes.driverStudents: NcFeature.transport,
+  AppRoutes.librarianCounter: NcFeature.library,
+  AppRoutes.librarianCatalog: NcFeature.library,
+  AppRoutes.librarianReservations: NcFeature.library,
+  AppRoutes.webLibrary: NcFeature.library,
+  AppRoutes.webLibraryReports: NcFeature.library,
+  AppRoutes.webTransport: NcFeature.transport,
+  AppRoutes.webTransportRoutes: NcFeature.transport,
+  AppRoutes.webTransportLive: NcFeature.transport,
+  AppRoutes.webHostel: NcFeature.hostel,
+  AppRoutes.webPayroll: NcFeature.hrPayroll,
+  AppRoutes.webInventoryAssets: NcFeature.inventory,
+  AppRoutes.webInventoryStock: NcFeature.inventory,
+  AppRoutes.webAiTools: NcFeature.aiInsights,
+  AppRoutes.webAnalytics: NcFeature.aiInsights,
+};
+
 /// Role-based route guard. Returns redirect path or null to allow navigation.
-String? routeGuard(String path, AuthState authState) {
+///
+/// [tenant] is optional — when null, feature gating is skipped (e.g. during
+/// splash before the tenant profile has loaded).
+String? routeGuard(String path, AuthState authState, [TenantProfile? tenant]) {
   final isAuth = authState.isAuthenticated;
   final role = authState.role;
 
@@ -56,7 +90,10 @@ String? routeGuard(String path, AuthState authState) {
   }
 
   // Allow shared paths for all authenticated users
-  if (_sharedAuthPaths.any((p) => path.startsWith(p))) return null;
+  if (_sharedAuthPaths.any((p) => path.startsWith(p))) {
+    // Still check feature gating for shared feature paths
+    return _checkFeatureGate(path, role, tenant);
+  }
 
   // Enforce role-scoped access for prefixed paths
   for (final entry in _rolePrefixMap.entries) {
@@ -65,10 +102,25 @@ String? routeGuard(String path, AuthState authState) {
         // Role not authorised for this path section — bounce to their home
         return _roleHome(role);
       }
-      return null;
+      // Role passes — still check feature subscription
+      return _checkFeatureGate(path, role, tenant);
     }
   }
 
+  return null;
+}
+
+/// Returns a redirect if [path] requires a feature the tenant hasn't subscribed
+/// to. Returns null to allow navigation when the feature is subscribed or
+/// when [tenant] is null (loading state).
+String? _checkFeatureGate(String path, UserRole? role, TenantProfile? tenant) {
+  if (tenant == null) return null;
+
+  for (final entry in _featureGatedRoutes.entries) {
+    if (path.startsWith(entry.key) && !tenant.hasFeature(entry.value)) {
+      return _roleHome(role);
+    }
+  }
   return null;
 }
 

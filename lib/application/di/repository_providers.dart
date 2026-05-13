@@ -7,10 +7,26 @@ import '../../data/repositories/attendance_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/fees_repository_impl.dart';
 import '../../data/repositories/student_repository_impl.dart';
+import '../../data/repositories/canteen_repository_impl.dart';
+import '../../data/repositories/chat_repository_impl.dart';
+import '../../data/repositories/diary_repository_impl.dart';
+import '../../data/repositories/library_repository_impl.dart';
+import '../../data/repositories/notices_repository_impl.dart';
+import '../../data/repositories/staff_repository_impl.dart';
+import '../../data/repositories/tenant_repository_impl.dart';
+import '../../data/repositories/transport_repository_impl.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/repositories/canteen_repository.dart';
+import '../../domain/repositories/chat_repository.dart';
+import '../../domain/repositories/diary_repository.dart';
 import '../../domain/repositories/fees_repository.dart';
+import '../../domain/repositories/library_repository.dart';
+import '../../domain/repositories/notices_repository.dart';
+import '../../domain/repositories/staff_repository.dart';
 import '../../domain/repositories/student_repository.dart';
+import '../../domain/repositories/tenant_repository.dart';
+import '../../domain/repositories/transport_repository.dart';
 import '../../domain/usecases/attendance/mark_class_attendance_usecase.dart';
 import '../../domain/usecases/auth/login_demo_usecase.dart';
 import '../../domain/usecases/auth/logout_usecase.dart';
@@ -79,4 +95,36 @@ final getFeesUseCaseProvider = Provider<GetFeesUseCase>(
 final syncQueueServiceProvider = Provider<SyncQueueService>(
   (ref) =>
       SyncQueueService(ref.watch(appDatabaseProvider), ref.watch(dioProvider)),
+);
+
+final tenantRepositoryProvider = Provider<TenantRepository>(
+  (ref) => TenantRepositoryImpl(ref.watch(dioProvider)),
+);
+
+final noticesRepositoryProvider = Provider<NoticesRepository>(
+  (ref) => NoticesRepositoryImpl(ref.watch(dioProvider)),
+);
+
+final diaryRepositoryProvider = Provider<DiaryRepository>(
+  (ref) => DiaryRepositoryImpl(ref.watch(dioProvider)),
+);
+
+final chatRepositoryProvider = Provider<ChatRepository>(
+  (ref) => ChatRepositoryImpl(ref.watch(dioProvider)),
+);
+
+final transportRepositoryProvider = Provider<TransportRepository>(
+  (ref) => TransportRepositoryImpl(ref.watch(dioProvider)),
+);
+
+final libraryRepositoryProvider = Provider<LibraryRepository>(
+  (ref) => LibraryRepositoryImpl(ref.watch(dioProvider)),
+);
+
+final canteenRepositoryProvider = Provider<CanteenRepository>(
+  (ref) => CanteenRepositoryImpl(ref.watch(dioProvider)),
+);
+
+final staffRepositoryProvider = Provider<StaffRepository>(
+  (ref) => StaffRepositoryImpl(ref.watch(dioProvider)),
 );

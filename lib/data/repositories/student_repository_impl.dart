@@ -5,7 +5,7 @@ import '../../core/models/result.dart';
 import '../../domain/constants/demo_tenant.dart';
 import '../../domain/entities/student_entity.dart';
 import '../../domain/repositories/student_repository.dart';
-import '../mock/mock_data.dart';
+import '../../core/mock/mock_data.dart';
 
 class StudentRepositoryImpl implements StudentRepository {
   StudentRepositoryImpl(this._dio);

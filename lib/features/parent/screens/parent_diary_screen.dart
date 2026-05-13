@@ -46,7 +46,7 @@ class ParentDiaryScreen extends ConsumerWidget {
 
 class _DesktopDiaryLayout extends StatelessWidget {
   const _DesktopDiaryLayout({required this.child, required this.entries});
-  final MockStudent child;
+  final MockStudent? child;
   final List<MockDiaryEntry> entries;
 
   @override
@@ -109,7 +109,7 @@ class _DesktopDiaryLayout extends StatelessWidget {
 
 class _DiaryHeroBanner extends StatelessWidget {
   const _DiaryHeroBanner({required this.child});
-  final MockStudent child;
+  final MockStudent? child;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +164,7 @@ class _DiaryHeroBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${child.name} • ${child.classSection}',
+                  '${child?.name ?? 'No student linked'} • ${child?.classSection ?? '—'}',
                   style: AppTypography.headlineSmall.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,

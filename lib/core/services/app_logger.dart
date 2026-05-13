@@ -29,6 +29,17 @@ class AppLogger {
     }
   }
 
+  void warn(String message, [Object? error]) {
+    if (kDebugMode) {
+      // ignore: avoid_print
+      print('[NammaClass WARN] $message');
+      if (error != null) {
+        // ignore: avoid_print
+        print(error);
+      }
+    }
+  }
+
   void error(String message, [Object? error, StackTrace? stack]) {
     if (kDebugMode) {
       // ignore: avoid_print

@@ -1,0 +1,12 @@
+{
+  "tenant_id": "tenant_demo_001",
+  "institution_name": "My Institution",
+  "logo_url": "",
+  "app_icon_url": "",
+  "primary_hex": "1B4F72",
+  "accent_hex": "E67E22",
+  "features": [],
+  "timezone": "Asia/Kolkata",
+  "currency": "INR",
+  "languages": ["en"]
+}

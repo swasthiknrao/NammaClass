@@ -37,7 +37,11 @@ class LibraryBorrowerInfo {
 
 /// Mutable book issues for librarian — supports add and remove.
 class LibraryBookIssuesNotifier extends StateNotifier<List<MockBookIssue>> {
-  LibraryBookIssuesNotifier(this._ref) : super(List.from(MockData.bookIssues));
+  LibraryBookIssuesNotifier(this._ref) : super(List.from(MockData.bookIssues)) {
+    _ref.listen<int>(dataSyncProvider, (_, __) {
+      state = List.from(MockData.bookIssues);
+    });
+  }
 
   final Ref _ref;
 

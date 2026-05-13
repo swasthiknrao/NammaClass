@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
+import '../../../core/providers/data_sync_provider.dart';
 import '../../../core/utils/launch_utils.dart';
 import '../../../core/utils/screen_size.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,11 +11,19 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/shell_layout_scope.dart';
 
-class BusTrackingScreen extends StatelessWidget {
+String _busTxt(Map<String, dynamic> bus, String key, {String fallback = '—'}) {
+  final v = bus[key];
+  if (v == null) return fallback;
+  final s = v.toString();
+  return s.isEmpty ? fallback : s;
+}
+
+class BusTrackingScreen extends ConsumerWidget {
   const BusTrackingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(dataSyncProvider);
     final bus = MockData.busInfo;
     final isDesktop = ScreenSize.isDesktop(context);
 
@@ -126,7 +136,7 @@ class _RouteEtaCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      bus['route'] as String,
+                      _busTxt(bus, 'route'),
                       style: AppTypography.titleMedium.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -134,7 +144,7 @@ class _RouteEtaCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      bus['busNumber'] as String,
+                      _busTxt(bus, 'busNumber'),
                       style: AppTypography.bodySmall.copyWith(
                         color: Colors.white70,
                       ),
@@ -150,7 +160,7 @@ class _RouteEtaCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'Next: ${bus['nextStop']}',
+                            'Next: ${_busTxt(bus, 'nextStop')}',
                             style: AppTypography.labelMedium.copyWith(
                               color: Colors.white.withValues(alpha: 0.95),
                             ),
@@ -166,7 +176,7 @@ class _RouteEtaCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${bus['etaMinutes']}',
+                    _busTxt(bus, 'etaMinutes', fallback: '—'),
                     style: AppTypography.headlineLarge.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -202,7 +212,10 @@ class _DriverCard extends StatelessWidget {
             radius: 28,
             backgroundColor: AppColors.teal.withValues(alpha: 0.15),
             child: Text(
-              (bus['driverName'] as String).substring(0, 1),
+              () {
+                final n = _busTxt(bus, 'driverName');
+                return (n.isEmpty || n == '—') ? '?' : n.substring(0, 1);
+              }(),
               style: AppTypography.headlineSmall.copyWith(
                 color: AppColors.teal,
                 fontWeight: FontWeight.w700,
@@ -215,7 +228,7 @@ class _DriverCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  bus['driverName'] as String,
+                  _busTxt(bus, 'driverName'),
                   style: AppTypography.labelLarge.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -234,7 +247,7 @@ class _DriverCard extends StatelessWidget {
             child: InkWell(
               onTap: () => launchTel(
                 context,
-                phone: bus['driverPhone'] as String? ?? '9876543210',
+                phone: (bus['driverPhone'] ?? '—').toString(),
                 fallbackSnackBar: 'Cannot launch dialer',
               ),
               borderRadius: BorderRadius.circular(12),

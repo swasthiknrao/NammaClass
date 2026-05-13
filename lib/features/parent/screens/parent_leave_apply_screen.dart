@@ -75,7 +75,19 @@ class _ParentLeaveApplyScreenState
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final childName = ref.read(parentChildProvider).name;
+    final child = ref.read(parentChildProvider);
+    if (child == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No student linked to your account. Ask admin to add student records.',
+          ),
+        ),
+      );
+      return;
+    }
+    final childName = child.name;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

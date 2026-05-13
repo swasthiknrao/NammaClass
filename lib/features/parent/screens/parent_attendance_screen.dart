@@ -176,7 +176,7 @@ class _DesktopAttendanceLayout extends StatelessWidget {
     required this.onDaySelected,
     required this.statusColor,
   });
-  final MockStudent child;
+  final MockStudent? child;
   final int present;
   final int absent;
   final int leave;
@@ -205,8 +205,8 @@ class _DesktopAttendanceLayout extends StatelessWidget {
               Expanded(
                 flex: 3,
                 child: _AttendanceHeroBanner(
-                  childName: child.name,
-                  classSection: child.classSection,
+                  childName: child?.name ?? '—',
+                  classSection: child?.classSection ?? '—',
                   monthYear: '$monthName ${now.year}',
                 ),
               ),
@@ -960,7 +960,7 @@ class _AttendanceCalendar extends StatelessWidget {
         }
 
         return SizedBox(
-          height: 400,
+          height: 472,
           child: Container(
             padding: EdgeInsets.all(padding),
             decoration: BoxDecoration(

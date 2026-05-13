@@ -1,4 +1,4 @@
-import '../mock/mock_data.dart';
+import '../../core/mock/mock_data.dart';
 import '../../domain/entities/fee_installment_entity.dart';
 
 MockFeeInstallment mockFeeFromEntity(FeeInstallmentEntity e) {

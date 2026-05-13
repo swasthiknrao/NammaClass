@@ -6,8 +6,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/config/env_config.dart';
 import '../../core/models/result.dart';
+import '../../core/providers/app_root_container.dart';
 import '../../core/storage/app_database.dart';
-import '../mock/mock_data.dart';
+import '../../core/mock/mock_data.dart';
 import '../../domain/constants/demo_tenant.dart';
 import '../../domain/entities/attendance_entities.dart';
 import '../../domain/repositories/attendance_repository.dart';
@@ -87,6 +88,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
             .toList()
           ..add(updated)
           ..sort((a, b) => a.date.compareTo(b.date));
+
+    bumpGlobalDataSync();
 
     final recordPayload = <Map<String, dynamic>>[];
     for (final e in recordsByStudentId.entries) {

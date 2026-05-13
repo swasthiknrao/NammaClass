@@ -11,7 +11,10 @@ import '../core/utils/screen_size.dart';
 import '../core/widgets/nc_avatar.dart';
 import '../core/widgets/notification_icon_button.dart';
 import '../core/widgets/shell_layout_scope.dart';
+import '../domain/entities/nc_feature.dart';
+import '../domain/entities/tenant_profile.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/tenant/providers/tenant_provider.dart';
 import '../routing/app_routes.dart';
 
 class MainShell extends ConsumerStatefulWidget {
@@ -29,7 +32,8 @@ class _MainShellState extends ConsumerState<MainShell> {
   Widget build(BuildContext context) {
     final role = ref.watch(userRoleProvider);
     final user = ref.watch(currentUserProvider);
-    final destinations = _destinationsFor(role);
+    final tenant = ref.watch(tenantProfileProvider);
+    final destinations = _destinationsFor(role, tenant);
     final currentPath = GoRouterState.of(context).uri.path;
     final selectedIndex = _selectedIndex(currentPath, destinations);
     final isDesktop = ScreenSize.isDesktop(context);
@@ -123,7 +127,13 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  List<_NavDest> _destinationsFor(UserRole? role) {
+  // ── Feature-gated navigation destinations ─────────────────────────────────
+  //
+  // Each role has a fixed set of core tabs.  Optional tabs are only included
+  // when the tenant has subscribed to the matching [NcFeature].
+  // NavigationBar supports 3–5 destinations; tabs are trimmed to 5 maximum.
+
+  List<_NavDest> _destinationsFor(UserRole? role, TenantProfile tenant) {
     switch (role) {
       case UserRole.parent:
         return [
@@ -151,13 +161,22 @@ class _MainShellState extends ConsumerState<MainShell> {
             Icons.book_outlined,
             Icons.book,
           ),
-          _NavDest(
-            AppRoutes.parentProfile,
-            'Profile',
-            Icons.person_outline,
-            Icons.person,
-          ),
-        ];
+          // Bus tab: only when transport feature is subscribed
+          if (tenant.hasFeature(NcFeature.transport))
+            _NavDest(
+              AppRoutes.parentBus,
+              'Bus',
+              Icons.directions_bus_outlined,
+              Icons.directions_bus,
+            )
+          else
+            _NavDest(
+              AppRoutes.parentProfile,
+              'Profile',
+              Icons.person_outline,
+              Icons.person,
+            ),
+        ].take(5).toList();
       case UserRole.teacher:
         return [
           _NavDest(
@@ -205,25 +224,29 @@ class _MainShellState extends ConsumerState<MainShell> {
             Icons.school_outlined,
             Icons.school,
           ),
-          _NavDest(
-            AppRoutes.studentLibrary,
-            'Library',
-            Icons.local_library_outlined,
-            Icons.local_library,
-          ),
-          _NavDest(
-            AppRoutes.studentCanteen,
-            'Food',
-            Icons.restaurant_outlined,
-            Icons.restaurant,
-          ),
+          // Library tab: only when library feature is subscribed
+          if (tenant.hasFeature(NcFeature.library))
+            _NavDest(
+              AppRoutes.studentLibrary,
+              'Library',
+              Icons.local_library_outlined,
+              Icons.local_library,
+            ),
+          // Food tab: only when canteen feature is subscribed
+          if (tenant.hasFeature(NcFeature.canteen))
+            _NavDest(
+              AppRoutes.studentCanteen,
+              'Food',
+              Icons.restaurant_outlined,
+              Icons.restaurant,
+            ),
           _NavDest(
             AppRoutes.studentProfile,
             'Profile',
             Icons.person_outline,
             Icons.person,
           ),
-        ];
+        ].take(5).toList();
       case UserRole.staff:
         return [
           _NavDest(
@@ -244,25 +267,29 @@ class _MainShellState extends ConsumerState<MainShell> {
             Icons.event_note_outlined,
             Icons.event_note,
           ),
-          _NavDest(
-            AppRoutes.staffPayslips,
-            'Payslips',
-            Icons.receipt_long_outlined,
-            Icons.receipt_long,
-          ),
-          _NavDest(
-            AppRoutes.staffCanteen,
-            'Food',
-            Icons.restaurant_outlined,
-            Icons.restaurant,
-          ),
+          // Payslips: only when hr_payroll feature is subscribed
+          if (tenant.hasFeature(NcFeature.hrPayroll))
+            _NavDest(
+              AppRoutes.staffPayslips,
+              'Payslips',
+              Icons.receipt_long_outlined,
+              Icons.receipt_long,
+            ),
+          // Food: only when canteen feature is subscribed
+          if (tenant.hasFeature(NcFeature.canteen))
+            _NavDest(
+              AppRoutes.staffCanteen,
+              'Food',
+              Icons.restaurant_outlined,
+              Icons.restaurant,
+            ),
           _NavDest(
             AppRoutes.staffProfile,
             'Profile',
             Icons.person_outline,
             Icons.person,
           ),
-        ];
+        ].take(5).toList();
       case UserRole.driver:
         return [
           _NavDest(

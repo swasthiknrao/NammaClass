@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 
 import '../../core/config/env_config.dart';
 import '../../core/models/result.dart';
-import '../mock/mock_data.dart';
+import '../../core/mock/mock_data.dart';
 import '../../domain/entities/fee_installment_entity.dart';
 import '../../domain/repositories/fees_repository.dart';
 

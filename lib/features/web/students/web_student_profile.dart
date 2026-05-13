@@ -14,10 +14,20 @@ class WebStudentProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final student = MockData.students.firstWhere(
-      (s) => s.id == studentId,
-      orElse: () => MockData.students.first,
-    );
+    final idx = MockData.students.indexWhere((s) => s.id == studentId);
+    if (idx < 0) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Center(
+          child: Text(
+            'Student not found (id: $studentId). Add students from Admin.',
+            style: AppTypography.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    final student = MockData.students[idx];
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),

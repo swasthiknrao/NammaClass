@@ -1,0 +1,419 @@
+{
+  "@@locale": "en",
+
+  "appName": "NammaClass",
+  "@appName": { "description": "Application name" },
+
+  "appTagline": "Smart School. Happy Campus.",
+  "@appTagline": { "description": "App tagline shown on splash screen" },
+
+  "loading": "Loading…",
+  "@loading": { "description": "Generic loading state text" },
+
+  "retry": "Retry",
+  "@retry": { "description": "Retry button label" },
+
+  "cancel": "Cancel",
+  "@cancel": { "description": "Cancel action" },
+
+  "save": "Save",
+  "@save": { "description": "Save action" },
+
+  "submit": "Submit",
+  "@submit": { "description": "Submit form action" },
+
+  "delete": "Delete",
+  "@delete": { "description": "Delete action" },
+
+  "confirm": "Confirm",
+  "@confirm": { "description": "Confirm action" },
+
+  "close": "Close",
+  "@close": { "description": "Close dialog / sheet" },
+
+  "search": "Search",
+  "@search": { "description": "Search field hint" },
+
+  "noInternetConnection": "No internet connection",
+  "@noInternetConnection": { "description": "Offline banner message" },
+
+  "offlineBannerBody": "Showing cached data. Some actions may not be available.",
+  "@offlineBannerBody": { "description": "Offline banner description" },
+
+  "somethingWentWrong": "Something went wrong",
+  "@somethingWentWrong": { "description": "Generic error message" },
+
+  "noDataFound": "No data found",
+  "@noDataFound": { "description": "Empty state when no records exist" },
+
+  "pullToRefresh": "Pull to refresh",
+  "@pullToRefresh": { "description": "Pull-to-refresh hint" },
+
+  "seeAll": "See all",
+  "@seeAll": { "description": "Link to full list" },
+
+  "viewDetails": "View details",
+  "@viewDetails": { "description": "Link to detail screen" },
+
+  "featureNotSubscribed": "This feature is not available in your plan.",
+  "@featureNotSubscribed": { "description": "Shown when tenant hasn't subscribed to a feature" },
+
+  "loginTitle": "Welcome Back",
+  "@loginTitle": { "description": "Login screen headline" },
+
+  "loginSubtitle": "Sign in with your registered mobile number",
+  "@loginSubtitle": { "description": "Login screen subtitle" },
+
+  "mobileNumberLabel": "Mobile Number",
+  "@mobileNumberLabel": { "description": "Mobile number input label" },
+
+  "sendOtp": "Send OTP",
+  "@sendOtp": { "description": "Send OTP button" },
+
+  "otpTitle": "Verify OTP",
+  "@otpTitle": { "description": "OTP screen headline" },
+
+  "otpSubtitle": "Enter the 6-digit code sent to {phone}",
+  "@otpSubtitle": {
+    "description": "OTP screen subtitle with phone number",
+    "placeholders": {
+      "phone": { "type": "String" }
+    }
+  },
+
+  "verifyOtp": "Verify",
+  "@verifyOtp": { "description": "Verify OTP button" },
+
+  "resendOtp": "Resend OTP",
+  "@resendOtp": { "description": "Resend OTP link" },
+
+  "resendIn": "Resend in {seconds}s",
+  "@resendIn": {
+    "description": "Countdown before OTP can be resent",
+    "placeholders": {
+      "seconds": { "type": "int" }
+    }
+  },
+
+  "navHome": "Home",
+  "@navHome": { "description": "Bottom nav: Home tab" },
+
+  "navAttendance": "Attendance",
+  "@navAttendance": { "description": "Bottom nav: Attendance tab" },
+
+  "navFees": "Fees",
+  "@navFees": { "description": "Bottom nav: Fees tab" },
+
+  "navDiary": "Diary",
+  "@navDiary": { "description": "Bottom nav: Diary tab" },
+
+  "navBus": "Bus",
+  "@navBus": { "description": "Bottom nav: Bus tab" },
+
+  "navProfile": "Profile",
+  "@navProfile": { "description": "Bottom nav: Profile tab" },
+
+  "navLibrary": "Library",
+  "@navLibrary": { "description": "Bottom nav: Library tab" },
+
+  "navFood": "Food",
+  "@navFood": { "description": "Bottom nav: Food / Canteen tab" },
+
+  "navAcademics": "Academics",
+  "@navAcademics": { "description": "Bottom nav: Academics tab" },
+
+  "navStudents": "Students",
+  "@navStudents": { "description": "Bottom nav: Students tab" },
+
+  "navLeaves": "Leaves",
+  "@navLeaves": { "description": "Bottom nav: Leaves tab" },
+
+  "navPayslips": "Payslips",
+  "@navPayslips": { "description": "Bottom nav: Payslips tab" },
+
+  "goodMorning": "Good morning, {name}!",
+  "@goodMorning": {
+    "description": "Personalised greeting",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "attendanceTitle": "Attendance",
+  "@attendanceTitle": { "description": "Attendance screen title" },
+
+  "present": "Present",
+  "@present": { "description": "Attendance status: present" },
+
+  "absent": "Absent",
+  "@absent": { "description": "Attendance status: absent" },
+
+  "late": "Late",
+  "@late": { "description": "Attendance status: late" },
+
+  "leave": "Leave",
+  "@leave": { "description": "Attendance status: on leave" },
+
+  "holiday": "Holiday",
+  "@holiday": { "description": "Attendance status: holiday" },
+
+  "attendancePercent": "{percent}% attendance",
+  "@attendancePercent": {
+    "description": "Attendance percentage label",
+    "placeholders": {
+      "percent": { "type": "String" }
+    }
+  },
+
+  "feesTitle": "Fees",
+  "@feesTitle": { "description": "Fees screen title" },
+
+  "feePending": "Pending",
+  "@feePending": { "description": "Fee status: pending" },
+
+  "feePaid": "Paid",
+  "@feePaid": { "description": "Fee status: paid" },
+
+  "feeOverdue": "Overdue",
+  "@feeOverdue": { "description": "Fee status: overdue" },
+
+  "payNow": "Pay Now",
+  "@payNow": { "description": "Pay fee button" },
+
+  "totalDue": "Total due",
+  "@totalDue": { "description": "Total fee due label" },
+
+  "dueDate": "Due {date}",
+  "@dueDate": {
+    "description": "Fee due date label",
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+
+  "diaryTitle": "Diary",
+  "@diaryTitle": { "description": "Diary screen title" },
+
+  "classwork": "Classwork",
+  "@classwork": { "description": "Diary classwork label" },
+
+  "homework": "Homework",
+  "@homework": { "description": "Diary homework label" },
+
+  "dueBy": "Due by {date}",
+  "@dueBy": {
+    "description": "Homework due date",
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+
+  "markComplete": "Mark complete",
+  "@markComplete": { "description": "Mark homework as complete" },
+
+  "noticesTitle": "Notices",
+  "@noticesTitle": { "description": "Notices screen title" },
+
+  "noNotices": "No notices yet",
+  "@noNotices": { "description": "Empty state for notices" },
+
+  "markAllRead": "Mark all as read",
+  "@markAllRead": { "description": "Mark all notices read action" },
+
+  "chatTitle": "Messages",
+  "@chatTitle": { "description": "Chat list screen title" },
+
+  "typeMessage": "Type a message…",
+  "@typeMessage": { "description": "Chat input placeholder" },
+
+  "send": "Send",
+  "@send": { "description": "Send message button" },
+
+  "busTitle": "Bus Tracking",
+  "@busTitle": { "description": "Bus tracking screen title" },
+
+  "busLive": "Live",
+  "@busLive": { "description": "Live bus indicator" },
+
+  "eta": "ETA {minutes} min",
+  "@eta": {
+    "description": "Estimated time of arrival",
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+
+  "libraryTitle": "Library",
+  "@libraryTitle": { "description": "Library screen title" },
+
+  "searchBooks": "Search books…",
+  "@searchBooks": { "description": "Library search placeholder" },
+
+  "available": "Available",
+  "@available": { "description": "Book available status" },
+
+  "checkedOut": "Checked out",
+  "@checkedOut": { "description": "Book checked out status" },
+
+  "overdue": "Overdue",
+  "@overdue": { "description": "Book or fee overdue status" },
+
+  "dueIn": "Due in {days}d",
+  "@dueIn": {
+    "description": "Days until due",
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+
+  "canteenTitle": "Canteen",
+  "@canteenTitle": { "description": "Canteen screen title" },
+
+  "orderNow": "Order Now",
+  "@orderNow": { "description": "Place order button" },
+
+  "addToCart": "Add to cart",
+  "@addToCart": { "description": "Add item to cart" },
+
+  "walletBalance": "Wallet: ₹{amount}",
+  "@walletBalance": {
+    "description": "Wallet balance display",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+
+  "orderPlaced": "Order placed!",
+  "@orderPlaced": { "description": "Order confirmation message" },
+
+  "orderPreparing": "Preparing",
+  "@orderPreparing": { "description": "Order status: preparing" },
+
+  "orderReady": "Ready to collect",
+  "@orderReady": { "description": "Order status: ready" },
+
+  "orderCollected": "Collected",
+  "@orderCollected": { "description": "Order status: collected" },
+
+  "profileTitle": "Profile",
+  "@profileTitle": { "description": "Profile screen title" },
+
+  "logout": "Log out",
+  "@logout": { "description": "Logout action" },
+
+  "logoutConfirmTitle": "Log out?",
+  "@logoutConfirmTitle": { "description": "Logout confirmation dialog title" },
+
+  "logoutConfirmBody": "You will be signed out of NammaClass.",
+  "@logoutConfirmBody": { "description": "Logout confirmation dialog body" },
+
+  "leaveApplyTitle": "Apply for Leave",
+  "@leaveApplyTitle": { "description": "Leave application screen title" },
+
+  "leaveReason": "Reason",
+  "@leaveReason": { "description": "Leave reason label" },
+
+  "leaveFrom": "From",
+  "@leaveFrom": { "description": "Leave start date label" },
+
+  "leaveTo": "To",
+  "@leaveTo": { "description": "Leave end date label" },
+
+  "leaveStatusTitle": "Leave Status",
+  "@leaveStatusTitle": { "description": "Leave status screen title" },
+
+  "leaveApproved": "Approved",
+  "@leaveApproved": { "description": "Leave status: approved" },
+
+  "leavePending": "Pending",
+  "@leavePending": { "description": "Leave status: pending" },
+
+  "leaveRejected": "Rejected",
+  "@leaveRejected": { "description": "Leave status: rejected" },
+
+  "complaintTitle": "Complaints",
+  "@complaintTitle": { "description": "Complaints screen title" },
+
+  "newComplaint": "New Complaint",
+  "@newComplaint": { "description": "New complaint button" },
+
+  "complaintSubject": "Subject",
+  "@complaintSubject": { "description": "Complaint subject label" },
+
+  "complaintDescription": "Description",
+  "@complaintDescription": { "description": "Complaint description label" },
+
+  "adminDashboard": "Dashboard",
+  "@adminDashboard": { "description": "Admin dashboard screen title" },
+
+  "totalStudents": "Students",
+  "@totalStudents": { "description": "KPI: total students" },
+
+  "totalStaff": "Staff",
+  "@totalStaff": { "description": "KPI: total staff" },
+
+  "pendingApprovals": "Pending approvals",
+  "@pendingApprovals": { "description": "KPI: pending approvals" },
+
+  "broadcastTitle": "Broadcast",
+  "@broadcastTitle": { "description": "Broadcast / notices compose screen title" },
+
+  "peopleTitle": "People",
+  "@peopleTitle": { "description": "People management screen title" },
+
+  "approvalsTitle": "Approvals",
+  "@approvalsTitle": { "description": "Approvals screen title" },
+
+  "approve": "Approve",
+  "@approve": { "description": "Approve action" },
+
+  "reject": "Reject",
+  "@reject": { "description": "Reject action" },
+
+  "payslipsTitle": "Payslips",
+  "@payslipsTitle": { "description": "Payslips screen title" },
+
+  "downloadPayslip": "Download",
+  "@downloadPayslip": { "description": "Download payslip PDF" },
+
+  "grossSalary": "Gross",
+  "@grossSalary": { "description": "Payslip gross salary label" },
+
+  "deductions": "Deductions",
+  "@deductions": { "description": "Payslip deductions label" },
+
+  "netSalary": "Net",
+  "@netSalary": { "description": "Payslip net salary label" },
+
+  "hostelTitle": "Hostel",
+  "@hostelTitle": { "description": "Hostel screen title" },
+
+  "rollCallTitle": "Roll Call",
+  "@rollCallTitle": { "description": "Warden roll call screen title" },
+
+  "visitorsTitle": "Visitors",
+  "@visitorsTitle": { "description": "Warden visitors screen title" },
+
+  "outpassTitle": "Outpass",
+  "@outpassTitle": { "description": "Warden outpass screen title" },
+
+  "driverRouteTitle": "My Route",
+  "@driverRouteTitle": { "description": "Driver route screen title" },
+
+  "settingsTitle": "Settings",
+  "@settingsTitle": { "description": "Settings screen title" },
+
+  "darkMode": "Dark mode",
+  "@darkMode": { "description": "Dark mode toggle label" },
+
+  "language": "Language",
+  "@language": { "description": "Language setting label" },
+
+  "version": "Version {version}",
+  "@version": {
+    "description": "App version display",
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  }
+}

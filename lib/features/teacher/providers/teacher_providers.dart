@@ -150,9 +150,10 @@ final teacherTimetableProvider = FutureProvider<Map<String, List<MockPeriod>>>((
 });
 
 final attendanceMarkProvider =
-    StateNotifierProvider<AttendanceMarkNotifier, AttendanceMarkState>(
-      (ref) => AttendanceMarkNotifier(ref),
-    );
+    StateNotifierProvider<AttendanceMarkNotifier, AttendanceMarkState>((ref) {
+      ref.watch(dataSyncProvider);
+      return AttendanceMarkNotifier(ref);
+    });
 
 final teacherDiaryProvider = FutureProvider<List<MockDiaryEntry>>((ref) async {
   ref.watch(dataSyncProvider);
@@ -381,6 +382,7 @@ class TeacherTimelineNotifier extends StateNotifier<TeacherTimelineState> {
 }
 
 final teacherTimelineProvider =
-    StateNotifierProvider<TeacherTimelineNotifier, TeacherTimelineState>(
-      (ref) => TeacherTimelineNotifier(),
-    );
+    StateNotifierProvider<TeacherTimelineNotifier, TeacherTimelineState>((ref) {
+      ref.watch(dataSyncProvider);
+      return TeacherTimelineNotifier();
+    });

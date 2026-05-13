@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/providers/auth_provider.dart';
+import '../features/tenant/providers/tenant_provider.dart';
 import 'app_routes.dart';
 import 'auth_routes.dart';
 import 'canteen_shell_routes.dart';
@@ -27,13 +28,17 @@ final _canteenShellKey = GlobalKey<NavigatorState>(debugLabel: 'canteenShell');
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
+  // Watch the resolved tenant profile — drives feature-gate redirects.
+  final tenant = ref.watch(tenantProfileProvider);
+
   return GoRouter(
     navigatorKey: _rootKey,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
     redirect: (context, state) {
       final path = state.uri.path;
-      var result = routeGuard(path, authState);
+      // Pass tenant so the guard can enforce feature-subscription rules.
+      var result = routeGuard(path, authState, tenant);
       if (result != null &&
           (result == AppRoutes.webDashboard ||
               result == AppRoutes.webMarksEntry ||

@@ -143,23 +143,27 @@ class ParentHomeScreen extends ConsumerWidget {
                             size: 18,
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            child.name,
-                            style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.primary,
+                          Expanded(
+                            child: Text(
+                              child != null
+                                  ? '${child.name} • ${child.classSection}'
+                                  : 'No student linked — ask admin to add your child.',
+                              style: child != null
+                                  ? AppTypography.labelLarge.copyWith(
+                                      color: AppColors.primary,
+                                    )
+                                  : AppTypography.bodySmall.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
                             ),
                           ),
-                          Text(
-                            ' • ${child.classSection}',
-                            style: AppTypography.bodySmall,
-                          ),
-                          const Spacer(),
-                          NcStatusChip(
-                            type: child.attendancePercent >= 0.85
-                                ? NcChipType.present
-                                : NcChipType.absent,
-                            label: child.attendancePercent.asPercent,
-                          ),
+                          if (child != null)
+                            NcStatusChip(
+                              type: child.attendancePercent >= 0.85
+                                  ? NcChipType.present
+                                  : NcChipType.absent,
+                              label: child.attendancePercent.asPercent,
+                            ),
                         ],
                       ),
                     ),
@@ -322,13 +326,15 @@ class ParentHomeScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    MockData.busInfo['route'] as String,
+                                    (MockData.busInfo['route'] ?? '—')
+                                        .toString(),
                                     style: AppTypography.labelLarge.copyWith(
                                       color: Colors.white,
                                     ),
                                   ),
                                   Text(
-                                    MockData.busInfo['busNumber'] as String,
+                                    (MockData.busInfo['busNumber'] ?? '—')
+                                        .toString(),
                                     style: AppTypography.bodySmall.copyWith(
                                       color: Colors.white70,
                                     ),
@@ -339,7 +345,7 @@ class ParentHomeScreen extends ConsumerWidget {
                             Column(
                               children: [
                                 Text(
-                                  '${MockData.busInfo['etaMinutes']} min',
+                                  '${MockData.busInfo['etaMinutes'] ?? '—'} min',
                                   style: AppTypography.headlineMedium.copyWith(
                                     color: Colors.white,
                                   ),
@@ -433,7 +439,7 @@ class _ParentHomeDesktopLayout extends StatelessWidget {
     required this.weekdays,
   });
 
-  final MockStudent child;
+  final MockStudent? child;
   final AsyncValue<List<MockFeeInstallment>> feesAsync;
   final AsyncValue<List<MockNotice>> noticesAsync;
   final AsyncValue<Map<String, List<MockPeriod>>> timetableAsync;
@@ -501,11 +507,28 @@ class _ParentHomeDesktopLayout extends StatelessWidget {
 
 class _DesktopHeroCard extends StatelessWidget {
   const _DesktopHeroCard({required this.child});
-  final MockStudent child;
+  final MockStudent? child;
 
   @override
   Widget build(BuildContext context) {
-    final isPresent = child.attendancePercent >= 0.85;
+    if (child == null) {
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: AppColors.card,
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Text(
+          'No student record linked to your account yet.',
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+    final c = child!;
+    final isPresent = c.attendancePercent >= 0.85;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -538,7 +561,7 @@ class _DesktopHeroCard extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-              child.name.substring(0, 1).toUpperCase(),
+              c.name.substring(0, 1).toUpperCase(),
               style: AppTypography.headlineMedium.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -551,14 +574,14 @@ class _DesktopHeroCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  child.name,
+                  c.name,
                   style: AppTypography.headlineSmall.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 Text(
-                  '${child.classSection} • ${AppConstants.schoolName}',
+                  '${c.classSection} • ${AppConstants.schoolName}',
                   style: AppTypography.bodyMedium.copyWith(
                     color: Colors.white.withValues(alpha: 0.85),
                   ),
@@ -587,7 +610,7 @@ class _DesktopHeroCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  child.attendancePercent.asPercent,
+                  c.attendancePercent.asPercent,
                   style: AppTypography.titleMedium.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -939,7 +962,7 @@ class _DesktopBusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      MockData.busInfo['route'] as String,
+                      (MockData.busInfo['route'] ?? '—').toString(),
                       style: AppTypography.titleMedium.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -947,7 +970,7 @@ class _DesktopBusCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      MockData.busInfo['busNumber'] as String,
+                      (MockData.busInfo['busNumber'] ?? '—').toString(),
                       style: AppTypography.bodySmall.copyWith(
                         color: Colors.white70,
                       ),
@@ -959,7 +982,7 @@ class _DesktopBusCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${MockData.busInfo['etaMinutes']} min',
+                    '${MockData.busInfo['etaMinutes'] ?? '—'} min',
                     style: AppTypography.headlineMedium.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,

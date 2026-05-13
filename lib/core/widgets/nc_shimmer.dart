@@ -4,6 +4,61 @@ import 'package:shimmer/shimmer.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
+/// Unified shimmer bone — the primary building block used by [NcBoneRenderer].
+///
+/// Covers both rectangular and circular bones via the [isCircle] flag,
+/// matching the master prompt §24.1 `NcShimmer` specification exactly.
+///
+/// ```dart
+/// // Rectangle
+/// NcShimmer(width: 200, height: 14, radius: AppRadius.xs)
+///
+/// // Circle (avatar)
+/// NcShimmer(width: 48, height: 48, isCircle: true)
+/// ```
+class NcShimmer extends StatelessWidget {
+  const NcShimmer({
+    super.key,
+    required this.width,
+    required this.height,
+    this.radius = AppRadius.sm,
+    this.isCircle = false,
+  });
+
+  final double width;
+  final double height;
+
+  /// Corner radius. Ignored when [isCircle] is true.
+  final double radius;
+
+  /// When true renders a circle; [radius] is derived from [width].
+  final bool isCircle;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? const Color(0xFF2A2A2A) : AppColors.shimmerBase;
+    final highlightColor = isDark
+        ? const Color(0xFF3A3A3A)
+        : AppColors.shimmerHighlight;
+
+    return Shimmer.fromColors(
+      baseColor: baseColor,
+      highlightColor: highlightColor,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: baseColor,
+          borderRadius: isCircle
+              ? BorderRadius.circular(width / 2)
+              : BorderRadius.circular(radius),
+        ),
+      ),
+    );
+  }
+}
+
 /// Shimmer box (rectangle placeholder).
 class NcShimmerBox extends StatelessWidget {
   const NcShimmerBox({

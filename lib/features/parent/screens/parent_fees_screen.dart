@@ -197,7 +197,7 @@ class _DesktopFeesLayout extends StatelessWidget {
     required this.hasOverdue,
     required this.onPayAll,
   });
-  final MockStudent child;
+  final MockStudent? child;
   final List<MockFeeInstallment> fees;
   final int totalPaise;
   final int paidPaise;
@@ -220,8 +220,8 @@ class _DesktopFeesLayout extends StatelessWidget {
               Expanded(
                 flex: 3,
                 child: _FeesHeroBanner(
-                  childName: child.name,
-                  classSection: child.classSection,
+                  childName: child?.name ?? '—',
+                  classSection: child?.classSection ?? '—',
                 ),
               ),
               const SizedBox(width: AppSpacing.md),

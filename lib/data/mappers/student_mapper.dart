@@ -1,4 +1,4 @@
-import '../mock/mock_data.dart';
+import '../../core/mock/mock_data.dart';
 import '../../domain/entities/student_entity.dart';
 
 MockStudent mockStudentFromEntity(StudentEntity e) {
