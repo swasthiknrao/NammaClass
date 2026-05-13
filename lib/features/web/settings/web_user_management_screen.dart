@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/tenant_policy_loader.dart';
 import '../../../core/models/user_model.dart';
-import '../../../core/tenant/role_module_requirements.dart';
+import '../../../core/tenant/school_role_invite_policy.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../tenant/providers/tenant_provider.dart';
 
 class WebUserManagementScreen extends ConsumerStatefulWidget {
@@ -39,6 +40,9 @@ class _WebUserManagementScreenState
   @override
   Widget build(BuildContext context) {
     final demo = TenantPolicyLoader.webUserManagementDemo;
+    final tenant = ref.watch(tenantProfileProvider);
+    final actor = ref.watch(currentUserProvider);
+    final myInviteRoles = rolesInvitableByActor(actor?.role, tenant);
 
     return Column(
       children: [
@@ -65,6 +69,65 @@ class _WebUserManagementScreenState
             ),
           ),
         Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: Text(
+              'Who can invite whom',
+              style: AppTypography.titleSmall.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              actor == null
+                  ? 'Sign in to see your invitation scope.'
+                  : 'Signed in as ${actor.roleLabel}.',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: schoolInviteAccessMapLines()
+                        .map(
+                          (line) => Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.xs,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '• ',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    line,
+                                    style: AppTypography.bodySmall.copyWith(
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.md,
@@ -76,10 +139,17 @@ class _WebUserManagementScreenState
                 'User & Role Management',
                 style: AppTypography.headlineMedium,
               ),
-              FilledButton.icon(
-                onPressed: () => _showInviteDialog(context),
-                icon: const Icon(Icons.person_add),
-                label: const Text('Invite User'),
+              Tooltip(
+                message: myInviteRoles.isEmpty
+                    ? 'Your role cannot send invitations from this screen'
+                    : 'Email an onboarding link (48h)',
+                child: FilledButton.icon(
+                  onPressed: myInviteRoles.isEmpty
+                      ? null
+                      : () => _showInviteDialog(context, myInviteRoles),
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('Invite User'),
+                ),
               ),
             ],
           ),
@@ -110,11 +180,14 @@ class _WebUserManagementScreenState
     );
   }
 
-  void _showInviteDialog(BuildContext context) {
-    final roles = assignableRolesForInvite(ref.read(tenantProfileProvider));
+  void _showInviteDialog(BuildContext context, List<UserRole> roles) {
     if (roles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No roles available for this tenant.')),
+        const SnackBar(
+          content: Text(
+            'No invitation roles for your account or this tenant subscription.',
+          ),
+        ),
       );
       return;
     }
@@ -177,6 +250,17 @@ class _WebUserManagementScreenState
                       }
                     },
                   ),
+                  if (inviteRole == UserRole.student) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Tip: for roster intake with auto-generated parent login, '
+                      'use Students → Add Student.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'User will receive a setup link via email. Expires in 48 hours.',

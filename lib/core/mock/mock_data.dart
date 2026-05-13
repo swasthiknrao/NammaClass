@@ -249,6 +249,31 @@ class MockStaffMember {
   final DateTime? joinDate;
   final String status;
   final int salaryCTC;
+
+  MockStaffMember copyWith({
+    String? id,
+    String? name,
+    String? role,
+    String? department,
+    String? phone,
+    String? email,
+    DateTime? joinDate,
+    String? status,
+    int? salaryCTC,
+    bool clearEmail = false,
+  }) {
+    return MockStaffMember(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      department: department ?? this.department,
+      phone: phone ?? this.phone,
+      email: clearEmail ? null : (email ?? this.email),
+      joinDate: joinDate ?? this.joinDate,
+      status: status ?? this.status,
+      salaryCTC: salaryCTC ?? this.salaryCTC,
+    );
+  }
 }
 
 // ── Canteen model ──────────────────────────────────────────────────────────────

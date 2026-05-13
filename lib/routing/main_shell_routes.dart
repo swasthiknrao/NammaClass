@@ -3,9 +3,17 @@ import 'package:go_router/go_router.dart';
 
 import 'page_transitions.dart';
 import '../features/admin/screens/admin_dash_screen.dart';
+import '../features/admin/screens/admin_unavailability_approvals_screen.dart';
 import '../features/admin/screens/approvals_screen.dart';
 import '../features/admin/screens/broadcast_screen.dart';
+import '../features/admin/screens/admin_add_user_screen.dart';
 import '../features/admin/screens/people_screen.dart';
+import '../features/admin/faculty/screens/admin_faculty_add_screen.dart';
+import '../features/admin/faculty/screens/admin_faculty_detail_screen.dart';
+import '../features/admin/faculty/screens/admin_faculty_list_screen.dart';
+import '../features/admin/timetable/screens/admin_timetable_management_screen.dart';
+import '../features/admin/timetable/screens/admin_timetable_settings_screen.dart';
+import '../features/admin/timetable/screens/admin_timetable_view_screen.dart';
 import '../features/web/staff/add_staff_screen.dart';
 import '../features/parent/screens/bus_tracking_screen.dart';
 import '../features/parent/screens/canteen_screen.dart';
@@ -35,6 +43,8 @@ import '../features/teacher/screens/my_students_screen.dart';
 import '../features/teacher/screens/teacher_home_screen.dart';
 import '../features/teacher/screens/teacher_leave_apply_screen.dart';
 import '../features/teacher/screens/teacher_leave_approvals_screen.dart';
+import '../features/teacher/timetable/screens/teacher_my_timetable_screen.dart';
+import '../features/teacher/unavailability/screens/teacher_unavailability_screen.dart';
 import '../features/hod/screens/hod_home_screen.dart';
 import '../features/main_shell.dart';
 import 'app_routes.dart';
@@ -152,6 +162,16 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
             fadeSlideTransition(c, s, TeacherLeaveApprovalsScreen()),
       ),
       GoRoute(
+        path: AppRoutes.teacherTimetable,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const TeacherMyTimetableScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.teacherUnavailability,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const TeacherUnavailabilityScreen()),
+      ),
+      GoRoute(
         path: AppRoutes.studentHome,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, StudentHomeScreen()),
       ),
@@ -193,8 +213,54 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
             fadeSlideTransition(c, s, const AddStaffScreen()),
       ),
       GoRoute(
+        path: AppRoutes.adminAddUser,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AdminAddUserScreen()),
+      ),
+      GoRoute(
         path: AppRoutes.adminProfile,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.adminTimetableView,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AdminTimetableViewScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.adminTimetableEdit,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AdminTimetableManagementScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.adminTimetableSettings,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AdminTimetableSettingsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.adminFaculty,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AdminFacultyListScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.adminFacultyAdd,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AdminFacultyAddScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.adminFacultyDetail,
+        pageBuilder: (c, s) => fadeSlideTransition(
+          c,
+          s,
+          AdminFacultyDetailScreen(facultyId: s.pathParameters['id'] ?? ''),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminUnavailabilityApprovals,
+        pageBuilder: (c, s) => fadeSlideTransition(
+          c,
+          s,
+          const AdminUnavailabilityApprovalsScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.hodHome,

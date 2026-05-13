@@ -260,97 +260,137 @@ class _PeopleScreenState extends ConsumerState<PeopleScreen>
               ],
             ),
       backgroundColor: Colors.transparent,
-      body: isWide
-          ? Row(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: _StudentsTab(
-                    studentsAsync: studentsAsync,
-                    searchController: _studentSearchController,
-                    selectedClassSection: _selectedClassSection,
-                    selectedFeeStatus: _selectedFeeStatus,
-                    studentSort: _studentSort,
-                    showFilters: _showStudentFilters,
-                    onToggleFilters: () => setState(
-                      () => _showStudentFilters = !_showStudentFilters,
-                    ),
-                    onClassSectionChanged: (v) =>
-                        setState(() => _selectedClassSection = v),
-                    onFeeStatusChanged: (v) =>
-                        setState(() => _selectedFeeStatus = v),
-                    onSortChanged: (v) => setState(() => _studentSort = v),
-                    filterAndSort: _filterAndSortStudents,
-                    isWide: true,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Material(
+            color: AppColors.card,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.sm,
+              ),
+              child: Wrap(
+                alignment: isWide ? WrapAlignment.end : WrapAlignment.center,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => context.push(AppRoutes.adminAddUser),
+                    icon: const Icon(Icons.person_add_alt_1_outlined),
+                    label: const Text('Add user'),
                   ),
-                ),
-                Container(width: 1, color: AppColors.divider),
-                Expanded(
-                  flex: 1,
-                  child: _StaffTab(
-                    staffAsync: staffAsync,
-                    searchController: _staffSearchController,
-                    selectedDepartment: _selectedDepartment,
-                    selectedRole: _selectedRole,
-                    selectedStatus: _selectedStaffStatus,
-                    staffSort: _staffSort,
-                    showFilters: _showStaffFilters,
-                    onToggleFilters: () =>
-                        setState(() => _showStaffFilters = !_showStaffFilters),
-                    onDepartmentChanged: (v) =>
-                        setState(() => _selectedDepartment = v),
-                    onRoleChanged: (v) => setState(() => _selectedRole = v),
-                    onStatusChanged: (v) =>
-                        setState(() => _selectedStaffStatus = v),
-                    onSortChanged: (v) => setState(() => _staffSort = v),
-                    filterAndSort: _filterAndSortStaff,
-                    isWide: true,
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(AppRoutes.adminAddStaff),
+                    icon: const Icon(Icons.person_add_outlined),
+                    label: const Text('Add staff record'),
                   ),
-                ),
-              ],
-            )
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _StudentsTab(
-                  studentsAsync: studentsAsync,
-                  searchController: _studentSearchController,
-                  selectedClassSection: _selectedClassSection,
-                  selectedFeeStatus: _selectedFeeStatus,
-                  studentSort: _studentSort,
-                  showFilters: _showStudentFilters,
-                  onToggleFilters: () => setState(
-                    () => _showStudentFilters = !_showStudentFilters,
-                  ),
-                  onClassSectionChanged: (v) =>
-                      setState(() => _selectedClassSection = v),
-                  onFeeStatusChanged: (v) =>
-                      setState(() => _selectedFeeStatus = v),
-                  onSortChanged: (v) => setState(() => _studentSort = v),
-                  filterAndSort: _filterAndSortStudents,
-                  isWide: false,
-                ),
-                _StaffTab(
-                  staffAsync: staffAsync,
-                  searchController: _staffSearchController,
-                  selectedDepartment: _selectedDepartment,
-                  selectedRole: _selectedRole,
-                  selectedStatus: _selectedStaffStatus,
-                  staffSort: _staffSort,
-                  showFilters: _showStaffFilters,
-                  onToggleFilters: () =>
-                      setState(() => _showStaffFilters = !_showStaffFilters),
-                  onDepartmentChanged: (v) =>
-                      setState(() => _selectedDepartment = v),
-                  onRoleChanged: (v) => setState(() => _selectedRole = v),
-                  onStatusChanged: (v) =>
-                      setState(() => _selectedStaffStatus = v),
-                  onSortChanged: (v) => setState(() => _staffSort = v),
-                  filterAndSort: _filterAndSortStaff,
-                  isWide: false,
-                ),
-              ],
+                ],
+              ),
             ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: isWide
+                ? Row(
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: _StudentsTab(
+                          studentsAsync: studentsAsync,
+                          searchController: _studentSearchController,
+                          selectedClassSection: _selectedClassSection,
+                          selectedFeeStatus: _selectedFeeStatus,
+                          studentSort: _studentSort,
+                          showFilters: _showStudentFilters,
+                          onToggleFilters: () => setState(
+                            () => _showStudentFilters = !_showStudentFilters,
+                          ),
+                          onClassSectionChanged: (v) =>
+                              setState(() => _selectedClassSection = v),
+                          onFeeStatusChanged: (v) =>
+                              setState(() => _selectedFeeStatus = v),
+                          onSortChanged: (v) =>
+                              setState(() => _studentSort = v),
+                          filterAndSort: _filterAndSortStudents,
+                          isWide: true,
+                        ),
+                      ),
+                      Container(width: 1, color: AppColors.divider),
+                      Expanded(
+                        flex: 1,
+                        child: _StaffTab(
+                          staffAsync: staffAsync,
+                          searchController: _staffSearchController,
+                          selectedDepartment: _selectedDepartment,
+                          selectedRole: _selectedRole,
+                          selectedStatus: _selectedStaffStatus,
+                          staffSort: _staffSort,
+                          showFilters: _showStaffFilters,
+                          onToggleFilters: () => setState(
+                            () => _showStaffFilters = !_showStaffFilters,
+                          ),
+                          onDepartmentChanged: (v) =>
+                              setState(() => _selectedDepartment = v),
+                          onRoleChanged: (v) =>
+                              setState(() => _selectedRole = v),
+                          onStatusChanged: (v) =>
+                              setState(() => _selectedStaffStatus = v),
+                          onSortChanged: (v) => setState(() => _staffSort = v),
+                          filterAndSort: _filterAndSortStaff,
+                          isWide: true,
+                        ),
+                      ),
+                    ],
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _StudentsTab(
+                        studentsAsync: studentsAsync,
+                        searchController: _studentSearchController,
+                        selectedClassSection: _selectedClassSection,
+                        selectedFeeStatus: _selectedFeeStatus,
+                        studentSort: _studentSort,
+                        showFilters: _showStudentFilters,
+                        onToggleFilters: () => setState(
+                          () => _showStudentFilters = !_showStudentFilters,
+                        ),
+                        onClassSectionChanged: (v) =>
+                            setState(() => _selectedClassSection = v),
+                        onFeeStatusChanged: (v) =>
+                            setState(() => _selectedFeeStatus = v),
+                        onSortChanged: (v) => setState(() => _studentSort = v),
+                        filterAndSort: _filterAndSortStudents,
+                        isWide: false,
+                      ),
+                      _StaffTab(
+                        staffAsync: staffAsync,
+                        searchController: _staffSearchController,
+                        selectedDepartment: _selectedDepartment,
+                        selectedRole: _selectedRole,
+                        selectedStatus: _selectedStaffStatus,
+                        staffSort: _staffSort,
+                        showFilters: _showStaffFilters,
+                        onToggleFilters: () => setState(
+                          () => _showStaffFilters = !_showStaffFilters,
+                        ),
+                        onDepartmentChanged: (v) =>
+                            setState(() => _selectedDepartment = v),
+                        onRoleChanged: (v) => setState(() => _selectedRole = v),
+                        onStatusChanged: (v) =>
+                            setState(() => _selectedStaffStatus = v),
+                        onSortChanged: (v) => setState(() => _staffSort = v),
+                        filterAndSort: _filterAndSortStaff,
+                        isWide: false,
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -48,7 +48,21 @@ class AppRoutes {
   static const String adminBroadcast = '/admin/broadcast';
   static const String adminPeople = '/admin/people';
   static const String adminAddStaff = '/admin/staff/add';
+  static const String adminAddUser = '/admin/users/add';
   static const String adminProfile = '/admin/profile';
+  static const String adminTimetableView = '/admin/timetable';
+  static const String adminTimetableEdit = '/admin/timetable/edit';
+  static const String adminTimetableSettings = '/admin/timetable/settings';
+  static const String adminFaculty = '/admin/faculty';
+  static const String adminFacultyAdd = '/admin/faculty/add';
+  static const String adminFacultyDetail = '/admin/faculty/:id';
+  static const String adminUnavailabilityApprovals = '/admin/unavailability';
+
+  static String adminFacultyDetailPath(String id) => '/admin/faculty/$id';
+
+  // ── Teacher (timetable / cover) ───────────────────────────────────────────
+  static const String teacherTimetable = '/teacher/timetable';
+  static const String teacherUnavailability = '/teacher/unavailability';
 
   // ── Shared ────────────────────────────────────────────────────────────────
   static const String notifications = '/notifications';

@@ -624,6 +624,12 @@ class _WebShellState extends ConsumerState<WebShell> {
           Icons.dashboard_outlined,
         ),
         _MenuItem(AppRoutes.webStudents, 'Students', Icons.people_outline),
+        _MenuItem(AppRoutes.webStaff, 'Faculty & staff', Icons.groups_outlined),
+        _MenuItem(
+          AppRoutes.webUserManagement,
+          'Access & invites',
+          Icons.manage_accounts_outlined,
+        ),
         _MenuItem(
           AppRoutes.webTimetable,
           'Timetable',

@@ -27,8 +27,32 @@ class MockDataBundle {
   final Map<String, int> leaveBalance;
   final String hodDepartment;
 
+  MockDataBundle copyWith({
+    List<MockStudent>? students,
+    List<MockFeeInstallment>? fees,
+    List<MockNotice>? notices,
+    List<MockChatThread>? chatThreads,
+    List<MockMessage>? messages,
+    Map<String, dynamic>? dashboardKpis,
+    Map<String, dynamic>? busInfo,
+    Map<String, int>? leaveBalance,
+    String? hodDepartment,
+  }) {
+    return MockDataBundle(
+      students: students ?? this.students,
+      fees: fees ?? this.fees,
+      notices: notices ?? this.notices,
+      chatThreads: chatThreads ?? this.chatThreads,
+      messages: messages ?? this.messages,
+      dashboardKpis: dashboardKpis ?? this.dashboardKpis,
+      busInfo: busInfo ?? this.busInfo,
+      leaveBalance: leaveBalance ?? this.leaveBalance,
+      hodDepartment: hodDepartment ?? this.hodDepartment,
+    );
+  }
+
   factory MockDataBundle.empty() => MockDataBundle(
-    students: const [],
+    students: [],
     fees: const [],
     notices: const [],
     chatThreads: const [],
@@ -986,6 +1010,12 @@ class MockData {
   static MockDataBundle _bundle = MockDataBundle.empty();
 
   static List<MockStudent> get students => _bundle.students;
+
+  /// Append a student to the in-memory bundle (local-first demo / roster UX).
+  static void appendStudent(MockStudent student) {
+    _bundle = _bundle.copyWith(students: [..._bundle.students, student]);
+  }
+
   static List<MockFeeInstallment> get fees => _bundle.fees;
   static List<MockNotice> get notices => _bundle.notices;
   static List<MockChatThread> get chatThreads => _bundle.chatThreads;

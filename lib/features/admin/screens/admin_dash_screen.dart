@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -12,7 +13,9 @@ import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../domain/entities/unavailability_request_entry.dart';
 import '../../../routing/app_routes.dart';
+import '../../teacher/unavailability/providers/unavailability_notifier.dart';
 import '../providers/admin_providers.dart';
 
 class AdminDashScreen extends ConsumerWidget {
@@ -67,119 +70,386 @@ class AdminDashScreen extends ConsumerWidget {
             const Padding(padding: EdgeInsets.all(16), child: NcShimmerList()),
         error: (e, _) =>
             const NcAsyncError(message: 'Unable to load dashboard'),
-        data: (kpis) => SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // KPI grid: 4 cols desktop, 2 tablet, scroll mobile
-              LayoutBuilder(
-                builder: (ctx, constraints) {
-                  if (isDesktop) {
-                    return GridView.count(
-                      crossAxisCount: 4,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: AppSpacing.sm,
-                      crossAxisSpacing: AppSpacing.sm,
-                      childAspectRatio: 1.8,
-                      children: [
-                        _KpiCard(
-                          'Students',
-                          '${kpis['totalStudents']}',
-                          Icons.people,
-                          AppColors.primary,
-                        ),
-                        _KpiCard(
-                          'Present',
-                          '${kpis['presentToday']}',
-                          Icons.check_circle,
-                          AppColors.success,
-                        ),
-                        _KpiCard(
-                          'Absent',
-                          '${kpis['absentToday']}',
-                          Icons.cancel,
-                          AppColors.error,
-                        ),
-                        _KpiCard(
-                          'Staff',
-                          '${kpis['totalStaff']}',
-                          Icons.badge,
-                          AppColors.teal,
-                        ),
-                      ],
+        data: (kpis) => Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFF2F6FA),
+                AppColors.background,
+              ],
+            ),
+          ),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              isDesktop ? AppSpacing.lg : AppSpacing.md,
+              AppSpacing.md,
+              isDesktop ? AppSpacing.lg : AppSpacing.md,
+              AppSpacing.xl,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _DashboardHero(
+                  userFirstName: user?.name.split(' ').first,
+                ),
+                LayoutBuilder(
+                  builder: (ctx, constraints) {
+                    if (isDesktop) {
+                      return GridView.count(
+                        crossAxisCount: 4,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: AppSpacing.md,
+                        crossAxisSpacing: AppSpacing.md,
+                        childAspectRatio: 2.35,
+                        children: [
+                          _KpiCard(
+                            'Students',
+                            '${kpis['totalStudents']}',
+                            Icons.people_rounded,
+                            AppColors.primary,
+                            compact: false,
+                          ),
+                          _KpiCard(
+                            'Present',
+                            '${kpis['presentToday']}',
+                            Icons.check_circle_rounded,
+                            AppColors.success,
+                            compact: false,
+                          ),
+                          _KpiCard(
+                            'Absent',
+                            '${kpis['absentToday']}',
+                            Icons.cancel_rounded,
+                            AppColors.error,
+                            compact: false,
+                          ),
+                          _KpiCard(
+                            'Staff',
+                            '${kpis['totalStaff']}',
+                            Icons.badge_rounded,
+                            AppColors.teal,
+                            compact: false,
+                          ),
+                        ],
+                      );
+                    }
+                    if (isTablet) {
+                      return GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: AppSpacing.md,
+                        crossAxisSpacing: AppSpacing.md,
+                        childAspectRatio: 2.25,
+                        children: [
+                          _KpiCard(
+                            'Students',
+                            '${kpis['totalStudents']}',
+                            Icons.people_rounded,
+                            AppColors.primary,
+                            compact: false,
+                          ),
+                          _KpiCard(
+                            'Present',
+                            '${kpis['presentToday']}',
+                            Icons.check_circle_rounded,
+                            AppColors.success,
+                            compact: false,
+                          ),
+                          _KpiCard(
+                            'Absent',
+                            '${kpis['absentToday']}',
+                            Icons.cancel_rounded,
+                            AppColors.error,
+                            compact: false,
+                          ),
+                          _KpiCard(
+                            'Staff',
+                            '${kpis['totalStaff']}',
+                            Icons.badge_rounded,
+                            AppColors.teal,
+                            compact: false,
+                          ),
+                        ],
+                      );
+                    }
+                    return SizedBox(
+                      height: 118,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.only(bottom: 4),
+                        children: [
+                          _KpiCard(
+                            'Students',
+                            '${kpis['totalStudents']}',
+                            Icons.people_rounded,
+                            AppColors.primary,
+                            compact: true,
+                          ),
+                          _KpiCard(
+                            'Present',
+                            '${kpis['presentToday']}',
+                            Icons.check_circle_rounded,
+                            AppColors.success,
+                            compact: true,
+                          ),
+                          _KpiCard(
+                            'Absent',
+                            '${kpis['absentToday']}',
+                            Icons.cancel_rounded,
+                            AppColors.error,
+                            compact: true,
+                          ),
+                          _KpiCard(
+                            'Staff',
+                            '${kpis['totalStaff']}',
+                            Icons.badge_rounded,
+                            AppColors.teal,
+                            compact: true,
+                          ),
+                        ],
+                      ),
                     );
-                  }
-                  if (isTablet) {
-                    return GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: AppSpacing.sm,
-                      crossAxisSpacing: AppSpacing.sm,
-                      childAspectRatio: 2.2,
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+              NcCard(
+                elevation: AppElevation.low,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        _KpiCard(
-                          'Students',
-                          '${kpis['totalStudents']}',
-                          Icons.people,
-                          AppColors.primary,
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primary,
+                                AppColors.primary.withValues(alpha: 0.82),
+                              ],
+                            ),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.md),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.35,
+                                ),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.person_add_alt_1_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
                         ),
-                        _KpiCard(
-                          'Present',
-                          '${kpis['presentToday']}',
-                          Icons.check_circle,
-                          AppColors.success,
-                        ),
-                        _KpiCard(
-                          'Absent',
-                          '${kpis['absentToday']}',
-                          Icons.cancel,
-                          AppColors.error,
-                        ),
-                        _KpiCard(
-                          'Staff',
-                          '${kpis['totalStaff']}',
-                          Icons.badge,
-                          AppColors.teal,
-                        ),
-                      ],
-                    );
-                  }
-                  return SizedBox(
-                    height: 100,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _KpiCard(
-                          'Students',
-                          '${kpis['totalStudents']}',
-                          Icons.people,
-                          AppColors.primary,
-                        ),
-                        _KpiCard(
-                          'Present',
-                          '${kpis['presentToday']}',
-                          Icons.check_circle,
-                          AppColors.success,
-                        ),
-                        _KpiCard(
-                          'Absent',
-                          '${kpis['absentToday']}',
-                          Icons.cancel,
-                          AppColors.error,
-                        ),
-                        _KpiCard(
-                          'Staff',
-                          '${kpis['totalStaff']}',
-                          Icons.badge,
-                          AppColors.teal,
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            'Add users',
+                            style: AppTypography.titleSmall.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  );
-                },
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Create accounts yourself: enter name, phone, email, and role. '
+                      'You get a temporary PIN to share. For students, use the web roster '
+                      'so a parent login is created automatically.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: () => context.push(AppRoutes.adminAddUser),
+                          icon: const Icon(Icons.badge_outlined),
+                          label: const Text('Add user'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.md),
+                            ),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => context.go(AppRoutes.webStudents),
+                          icon: const Icon(Icons.school_outlined),
+                          label: const Text('Students (web)'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.md),
+                            ),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => context.push(AppRoutes.adminPeople),
+                          icon: const Icon(Icons.people_outline),
+                          label: const Text('People list'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.md),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              NcCard(
+                elevation: AppElevation.low,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.teal,
+                                AppColors.teal.withValues(alpha: 0.8),
+                              ],
+                            ),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.md),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.teal.withValues(alpha: 0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.grid_view_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            'Timetable & faculty',
+                            style: AppTypography.titleSmall.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'View and edit class grids, period bells, faculty roster, and cover requests.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Builder(
+                      builder: (ctx) {
+                        final pending = ref
+                            .watch(unavailabilityNotifierProvider)
+                            .where(
+                              (e) => e.status == UnavailabilityStatus.pending,
+                            )
+                            .length;
+                        final cross = ScreenSize.isDesktop(ctx)
+                            ? 4
+                            : (ScreenSize.isTablet(ctx) ? 2 : 2);
+                        return GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: cross,
+                          crossAxisSpacing: AppSpacing.md,
+                          mainAxisSpacing: AppSpacing.md,
+                          childAspectRatio:
+                              ScreenSize.isDesktop(ctx) ? 1.12 : 1.08,
+                          children: [
+                            _AdminHubTile(
+                              icon: Icons.visibility_outlined,
+                              label: 'View',
+                              hint: 'Read-only grids',
+                              color: AppColors.primary,
+                              onTap: () =>
+                                  context.go(AppRoutes.adminTimetableView),
+                            ),
+                            _AdminHubTile(
+                              icon: Icons.view_day_outlined,
+                              label: 'Day builder',
+                              hint: 'Edit by day',
+                              color: AppColors.teal,
+                              onTap: () =>
+                                  context.go(AppRoutes.adminTimetableEdit),
+                            ),
+                            _AdminHubTile(
+                              icon: Icons.schedule_outlined,
+                              label: 'Periods',
+                              hint: 'Bells & days',
+                              color: AppColors.warning,
+                              onTap: () =>
+                                  context.go(AppRoutes.adminTimetableSettings),
+                            ),
+                            _AdminHubTile(
+                              icon: Icons.groups_outlined,
+                              label: 'Faculty',
+                              hint: 'Roster & roles',
+                              color: AppColors.deepPurple,
+                              onTap: () => context.go(AppRoutes.adminFaculty),
+                            ),
+                            _AdminHubTile(
+                              icon: Icons.event_busy_outlined,
+                              label: pending > 0 ? 'Cover ($pending)' : 'Cover',
+                              hint: 'Leave approvals',
+                              color: AppColors.error,
+                              onTap: () => context.go(
+                                AppRoutes.adminUnavailabilityApprovals,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -431,6 +701,134 @@ class AdminDashScreen extends ConsumerWidget {
                     const NcAsyncError(message: 'Unable to load activity'),
               ),
               const SizedBox(height: 100),
+            ],
+          ),
+        ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardHero extends StatelessWidget {
+  const _DashboardHero({this.userFirstName});
+
+  final String? userFirstName;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateLine = DateFormat('EEEE · MMM d, y').format(DateTime.now());
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md + 2,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            Color.lerp(AppColors.primary, AppColors.teal, 0.35)!,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.28),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  userFirstName != null && userFirstName!.isNotEmpty
+                      ? 'Welcome back, ${userFirstName!}'
+                      : 'Admin overview',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  dateLine,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Icon(
+              Icons.dashboard_customize_outlined,
+              color: Colors.white.withValues(alpha: 0.95),
+              size: 28,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminHubTile extends StatelessWidget {
+  const _AdminHubTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 26),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.labelSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ],
           ),
         ),

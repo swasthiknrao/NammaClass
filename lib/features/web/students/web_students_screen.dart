@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/mock/mock_data.dart';
+import '../../../core/providers/data_sync_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/screen_size.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -26,7 +29,10 @@ class WebStudentsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _FilterBar(isMobile: isMobile),
+          _FilterBar(
+            isMobile: isMobile,
+            onAddStudent: () => _AddStudentFlow.show(context, ref),
+          ),
           const SizedBox(height: AppSpacing.md),
           Expanded(
             child: studentsAsync.when(
@@ -44,8 +50,9 @@ class WebStudentsScreen extends ConsumerWidget {
 }
 
 class _FilterBar extends StatelessWidget {
-  const _FilterBar({required this.isMobile});
+  const _FilterBar({required this.isMobile, required this.onAddStudent});
   final bool isMobile;
+  final VoidCallback onAddStudent;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +90,7 @@ class _FilterBar extends StatelessWidget {
           NcPrimaryButton(
             label: 'Add Student',
             icon: Icons.add,
-            onPressed: () {},
+            onPressed: onAddStudent,
           ),
         ],
       );
@@ -117,7 +124,7 @@ class _FilterBar extends StatelessWidget {
         NcPrimaryButton(
           label: 'Add Student',
           icon: Icons.add,
-          onPressed: () {},
+          onPressed: onAddStudent,
         ),
       ],
     );
@@ -132,7 +139,8 @@ class _MobileStudentList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       itemCount: students.length + 1,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+      separatorBuilder: (context, index) =>
+          const SizedBox(height: AppSpacing.sm),
       itemBuilder: (ctx, i) {
         if (i == students.length) {
           return Padding(
@@ -424,6 +432,238 @@ class _DesktopStudentTable extends StatelessWidget {
                 TextButton(onPressed: () {}, child: const Text('Next →')),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Add learner + mint guardian portal credentials (local-first demo).
+class _AddStudentFlow {
+  static void show(BuildContext outerContext, WidgetRef ref) {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController();
+    final classCtrl = TextEditingController(text: '10-A');
+    final rollCtrl = TextEditingController();
+    final parentNameCtrl = TextEditingController();
+
+    showDialog<void>(
+      context: outerContext,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          title: const Text('Add student'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'A parent / guardian portal account is created automatically. '
+                    'You will see login details after saving.',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Student full name',
+                      border: OutlineInputBorder(),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (v) =>
+                        v == null || v.trim().isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextFormField(
+                    controller: classCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Class / section',
+                      hintText: 'e.g. 10-A',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) =>
+                        v == null || v.trim().isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextFormField(
+                    controller: rollCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Roll number',
+                      hintText: 'Leave blank for auto',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.text,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextFormField(
+                    controller: parentNameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Guardian display name (optional)',
+                      hintText: 'Defaults to “Parent of …”',
+                      border: OutlineInputBorder(),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
+                final name = nameCtrl.text.trim();
+                final classSection = classCtrl.text.trim();
+                var roll = rollCtrl.text.trim();
+                if (roll.isEmpty) {
+                  roll = '${1000 + DateTime.now().millisecond % 9000}';
+                }
+                final parentName = parentNameCtrl.text.trim().isEmpty
+                    ? 'Parent of $name'
+                    : parentNameCtrl.text.trim();
+                final h = Object.hash(name, roll, classSection);
+                final pin = '${100000 + h.abs() % 900000}';
+                final slug = name.toLowerCase().replaceAll(
+                  RegExp(r'[^a-z0-9]+'),
+                  '',
+                );
+                final baseSlug = slug.isEmpty ? 'student' : slug;
+                final login = 'par_${baseSlug}_$roll';
+                final email = '$login@parents.nammaclass.in';
+                final phone =
+                    '9876${(h.abs() % 1000000).toString().padLeft(6, '0')}';
+
+                MockData.appendStudent(
+                  MockStudent(
+                    id: 'stu_${DateTime.now().millisecondsSinceEpoch}',
+                    name: name,
+                    rollNo: roll,
+                    classSection: classSection,
+                    attendancePercent: 0.92,
+                    parentName: parentName,
+                    parentPhone: phone,
+                    feeStatus: 'pending',
+                  ),
+                );
+                ref.read(dataSyncProvider.notifier).bump();
+                Navigator.pop(dialogCtx);
+
+                Future.microtask(() {
+                  if (!outerContext.mounted) return;
+                  showDialog<void>(
+                    context: outerContext,
+                    builder: (c2) => AlertDialog(
+                      title: const Text('Parent portal credentials'),
+                      content: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Share once with the guardian. They should change '
+                              'the PIN on first login.',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            _ParentCredLine(
+                              label: 'Login ID',
+                              value: login,
+                              mono: true,
+                            ),
+                            _ParentCredLine(
+                              label: 'Email',
+                              value: email,
+                              mono: false,
+                            ),
+                            _ParentCredLine(
+                              label: 'Temporary PIN',
+                              value: pin,
+                              mono: true,
+                            ),
+                            _ParentCredLine(
+                              label: 'Linked phone',
+                              value: phone,
+                              mono: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        FilledButton(
+                          onPressed: () => Navigator.pop(c2),
+                          child: const Text('Done'),
+                        ),
+                      ],
+                    ),
+                  );
+                });
+              },
+              child: const Text('Save & show parent login'),
+            ),
+          ],
+        );
+      },
+    ).whenComplete(() {
+      nameCtrl.dispose();
+      classCtrl.dispose();
+      rollCtrl.dispose();
+      parentNameCtrl.dispose();
+    });
+  }
+}
+
+class _ParentCredLine extends StatelessWidget {
+  const _ParentCredLine({
+    required this.label,
+    required this.value,
+    this.mono = false,
+  });
+  final String label;
+  final String value;
+  final bool mono;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(label, style: AppTypography.labelMedium),
+          ),
+          Expanded(
+            child: SelectableText(
+              value,
+              style: AppTypography.bodyMedium.copyWith(
+                fontFamily: mono ? 'JetBrainsMono' : null,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy, size: 20),
+            tooltip: 'Copy',
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: value));
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('$label copied')));
+            },
           ),
         ],
       ),

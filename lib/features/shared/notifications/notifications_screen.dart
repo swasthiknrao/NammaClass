@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -83,54 +84,58 @@ class NotificationsScreen extends ConsumerWidget {
                     padding: const EdgeInsets.only(right: AppSpacing.md),
                     child: const Icon(Icons.delete, color: Colors.white),
                   ),
-                  child: ListTile(
-                    onTap: () => _markOrDismiss(ref, n.id, notices),
-                    tileColor: n.isRead
-                        ? AppColors.card
-                        : AppColors.primary.withValues(alpha: 0.04),
-                    leading: CircleAvatar(
-                      backgroundColor: _categoryColor(
-                        n.category,
-                      ).withValues(alpha: 0.15),
-                      child: Icon(
-                        _categoryIcon(n.category),
-                        color: _categoryColor(n.category),
-                        size: 20,
-                      ),
-                    ),
-                    title: Text(
-                      n.title,
-                      style: AppTypography.labelLarge.copyWith(
-                        fontWeight: n.isRead
-                            ? FontWeight.w400
-                            : FontWeight.w700,
-                      ),
-                    ),
-                    subtitle: Row(
-                      children: [
-                        if (!n.isRead)
-                          Container(
-                            width: 6,
-                            height: 6,
-                            margin: const EdgeInsets.only(right: 4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.accent,
-                              shape: BoxShape.circle,
+                  child:
+                      ListTile(
+                            onTap: () => _markOrDismiss(ref, n.id, notices),
+                            tileColor: n.isRead
+                                ? AppColors.card
+                                : AppColors.primary.withValues(alpha: 0.04),
+                            leading: CircleAvatar(
+                              backgroundColor: _categoryColor(
+                                n.category,
+                              ).withValues(alpha: 0.15),
+                              child: Icon(
+                                _categoryIcon(n.category),
+                                color: _categoryColor(n.category),
+                                size: 20,
+                              ),
                             ),
-                          ),
-                        Text(
-                          AppFormatters.timeAgo(n.date),
-                          style: AppTypography.bodySmall,
-                        ),
-                      ],
-                    ),
-                    trailing: Text(
-                      n.category,
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
+                            title: Text(
+                              n.title,
+                              style: AppTypography.labelLarge.copyWith(
+                                fontWeight: n.isRead
+                                    ? FontWeight.w400
+                                    : FontWeight.w700,
+                              ),
+                            ),
+                            subtitle: Row(
+                              children: [
+                                if (!n.isRead)
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    margin: const EdgeInsets.only(right: 4),
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.accent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                Text(
+                                  AppFormatters.timeAgo(n.date),
+                                  style: AppTypography.bodySmall,
+                                ),
+                              ],
+                            ),
+                            trailing: Text(
+                              n.category,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(duration: 280.ms, delay: (24 * i).ms)
+                          .slideX(begin: 0.03, curve: Curves.easeOutCubic),
                 );
               },
             ),

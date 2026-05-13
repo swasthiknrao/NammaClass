@@ -552,6 +552,16 @@ class _QuickActionsCard extends StatelessWidget {
             label: 'My Students',
             onTap: () => context.go(AppRoutes.teacherStudents),
           ),
+          _QuickActionTile(
+            icon: Icons.calendar_month_rounded,
+            label: 'Week timetable',
+            onTap: () => context.go(AppRoutes.teacherTimetable),
+          ),
+          _QuickActionTile(
+            icon: Icons.event_busy_rounded,
+            label: 'Mark unavailable',
+            onTap: () => context.go(AppRoutes.teacherUnavailability),
+          ),
         ],
       ),
     );
@@ -715,6 +725,30 @@ class _MobileTeacherHome extends StatelessWidget {
                       '3',
                       Icons.assignment_late_rounded,
                       AppColors.warning,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.go(AppRoutes.teacherTimetable),
+                        icon: const Icon(
+                          Icons.calendar_month_outlined,
+                          size: 18,
+                        ),
+                        label: const Text('Timetable'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            context.go(AppRoutes.teacherUnavailability),
+                        icon: const Icon(Icons.event_busy_outlined, size: 18),
+                        label: const Text('Unavailable'),
+                      ),
                     ),
                   ],
                 ),

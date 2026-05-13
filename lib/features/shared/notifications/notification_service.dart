@@ -40,6 +40,11 @@ class NotificationService extends StateNotifier<List<MockNotice>> {
         ),
     ];
   }
+
+  /// Prepends a notice (e.g. admin broadcast demo).
+  void prependNotice(MockNotice notice) {
+    state = [notice, ...state];
+  }
 }
 
 final notificationServiceProvider =
