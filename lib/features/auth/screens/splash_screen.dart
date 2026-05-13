@@ -95,7 +95,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       case UserRole.accountant:
         return AppRoutes.webAccountantDashboard;
       case UserRole.hod:
-        return AppRoutes.webDashboard;
+        return AppRoutes.webHodHome;
+      case UserRole.superAdmin:
+        return AppRoutes.webPlatformDashboard;
     }
   }
 

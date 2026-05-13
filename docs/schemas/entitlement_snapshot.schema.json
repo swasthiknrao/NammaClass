@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nammaclass.local/schemas/entitlement_snapshot.schema.json",
+  "title": "EntitlementSnapshot",
+  "description": "Versioned billing-backed entitlements for a tenant. Server is source of truth; clients cache immutably per snapshot_version.",
+  "type": "object",
+  "required": ["schema_version", "snapshot_version", "tenant_id", "modules"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "snapshot_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic per tenant; invalidate client cache when bumped"
+    },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "plan_tier": {
+      "type": "string",
+      "enum": ["basic", "standard", "premium", "enterprise", "ai_ultra"]
+    },
+    "effective_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "modules": {
+      "type": "object",
+      "description": "Module id → entitlement details. Keys align with NcFeature / product SKUs.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["enabled"],
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "sku": { "type": "string" },
+          "flags": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "api_requests_per_minute": { "type": "integer", "minimum": 1 },
+        "storage_gb_included": { "type": "number", "minimum": 0 },
+        "sms_segments_per_month": { "type": "integer", "minimum": 0 },
+        "whatsapp_conversation_units_per_month": { "type": "integer", "minimum": 0 },
+        "ai_tokens_per_month": { "type": "integer", "minimum": 0 },
+        "max_active_students": { "type": "integer", "minimum": 1 },
+        "max_staff_seats": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "integration_allowlist": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional connector ids enabled for this tenant"
+    },
+    "allowed_role_keys": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Roles institution admins may assign (matches UserRole.name / API). Server SHOULD prune against enabled modules; empty = client derives from modules + role_module_requirements policy."
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,13 @@
+{
+  "failed_login_alert": {
+    "show": false,
+    "message": ""
+  },
+  "roles_tab": {
+    "permission_columns": [],
+    "module_rows": []
+  },
+  "users": [],
+  "roles": [],
+  "audit_log": []
+}

@@ -1,5 +1,16 @@
 {
-  "dashboard_kpis": {},
+  "dashboard_kpis": {
+    "totalStudents": 820,
+    "presentToday": 756,
+    "absentToday": 64,
+    "totalStaff": 48,
+    "feesCollectedPercent": 78,
+    "feesCollectedPaise": 184500000,
+    "feesPendingPaise": 52100000,
+    "attendancePercent": 92,
+    "newAdmissions": 34,
+    "pendingApprovals": 5
+  },
   "bus_info": {},
   "leave_balance": {},
   "hod_department": "",

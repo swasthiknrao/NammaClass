@@ -9,4 +9,6 @@ class StorageKeys {
   static const String tenantId = 'tenant_id';
   static const String branchId = 'branch_id';
   static const String permissionsJson = 'permissions_json';
+  static const String themePresetId = 'theme_preset_id';
+  static const String themeFontScale = 'theme_font_scale';
 }

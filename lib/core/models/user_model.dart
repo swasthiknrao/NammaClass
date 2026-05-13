@@ -16,6 +16,9 @@ enum UserRole {
   canteenStaff,
   // Mission brief roles
   hod,
+
+  /// Platform operator: tenants, billing, feature flags (web console).
+  superAdmin,
 }
 
 /// Core user model used across all roles.
@@ -54,7 +57,10 @@ class UserModel {
 
   String get displayName => name;
 
-  String get roleLabel {
+  String get roleLabel => roleDisplayLabel(role);
+
+  /// UI / API-stable label for invite dropdowns and profile surfaces.
+  static String roleDisplayLabel(UserRole role) {
     switch (role) {
       case UserRole.parent:
         return 'Parent';
@@ -82,6 +88,8 @@ class UserModel {
         return 'Canteen Staff';
       case UserRole.hod:
         return 'HOD';
+      case UserRole.superAdmin:
+        return 'Super Admin';
     }
   }
 
@@ -249,5 +257,21 @@ class UserModel {
     schoolId: 'SCH_001',
     employeeId: 'HOD_001',
     classSection: '8-A',
+  );
+
+  static const superAdmin = UserModel(
+    id: 'usr_platform_super_001',
+    name: 'NammaClass Platform',
+    role: UserRole.superAdmin,
+    phone: '9000000000',
+    email: 'superadmin@nammaclass.app',
+    schoolId: 'PLATFORM',
+    tenantId: 'PLATFORM',
+    permissions: [
+      'platform:tenants',
+      'platform:billing',
+      'platform:modules',
+      'platform:audit',
+    ],
   );
 }

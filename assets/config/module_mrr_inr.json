@@ -1,0 +1,24 @@
+{
+  "currency": "INR",
+  "unit_note": "Indicative monthly ₹ per 1,000 student MAU band (mid of planning range). Used only to estimate MRR Sum from enabled modules — not an invoice.",
+  "rates": {
+    "transport": 27500,
+    "hostel": 31500,
+    "library": 14000,
+    "canteen": 10500,
+    "biometric": 13000,
+    "face_recognition": 18000,
+    "lms_integration": 17500,
+    "whatsapp_bot": 8500,
+    "ai_insights": 37500,
+    "online_payment": 20000,
+    "event_ticketing": 7000,
+    "inventory": 12500,
+    "hr_payroll": 37500,
+    "multi_campus": 15000,
+    "parent_chat": 12000,
+    "complaints": 5500,
+    "polls": 6000,
+    "alumni": 8500
+  }
+}

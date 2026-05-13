@@ -1,0 +1,301 @@
+{
+  "modules": [
+    {
+      "module_key": "transport",
+      "category": "Campus operations",
+      "sort_order": 10,
+      "title": "Transport tracking",
+      "question": "Does this college run buses or vans?",
+      "subtitle": "Driver routes, live GPS, parent tracking, student boarding, SOS, and fleet management.",
+      "suggested_roles": ["driver"],
+      "sub_features": [
+        {
+          "id": "parent_live_tracking",
+          "title": "Parent live tracking",
+          "question": "Should parents see the bus live on a map with ETA and next stop?"
+        },
+        {
+          "id": "driver_route_app",
+          "title": "Driver route app",
+          "question": "Do drivers need a route map, stop checklist, and trip start/end controls?"
+        },
+        {
+          "id": "student_boarding",
+          "title": "Student boarding log",
+          "question": "Should drivers mark which students boarded at each stop?"
+        },
+        {
+          "id": "fleet_management",
+          "title": "Fleet and driver management",
+          "question": "Does admin need to manage vehicles, routes, insurance dates, and driver records?"
+        },
+        {
+          "id": "live_ops_dashboard",
+          "title": "Live operations dashboard",
+          "question": "Should the transport team see all buses live, with delay and SOS alerts?"
+        },
+        {
+          "id": "sos_emergency",
+          "title": "SOS emergency alerts",
+          "question": "Do you need one-tap SOS from drivers and parents directly to emergency services?"
+        }
+      ]
+    },
+    {
+      "module_key": "hostel",
+      "category": "Campus operations",
+      "sort_order": 20,
+      "title": "Hostel management",
+      "question": "Do they manage hostel rooms or roll-call?",
+      "subtitle": "Room info, mess menu, warden roll call, visitor log, and student outpass management.",
+      "suggested_roles": ["warden"],
+      "sub_features": [
+        {
+          "id": "room_info",
+          "title": "Room info for students",
+          "question": "Should students see their room, block, bed, amenities, and warden contact?"
+        },
+        {
+          "id": "mess_menu",
+          "title": "Mess menu",
+          "question": "Should students see the daily mess / cafeteria menu from their app?"
+        },
+        {
+          "id": "warden_rollcall",
+          "title": "Warden roll call",
+          "question": "Do wardens need a digital daily roll call with room grouping and reason logging?"
+        },
+        {
+          "id": "visitor_log",
+          "title": "Visitor log",
+          "question": "Should wardens log visitors, record check-in/check-out, and maintain visit history?"
+        },
+        {
+          "id": "outpass",
+          "title": "Outpass approvals",
+          "question": "Do students apply for outpass and wardens approve or reject from the app?"
+        },
+        {
+          "id": "maintenance_requests",
+          "title": "Maintenance requests",
+          "question": "Should students raise maintenance or room-change requests from their hostel screen?"
+        }
+      ]
+    },
+    {
+      "module_key": "inventory",
+      "category": "Campus operations",
+      "sort_order": 30,
+      "title": "Inventory and assets",
+      "question": "Do they track assets, stock, or purchases?",
+      "subtitle": "Fixed asset registry, stock levels, reorder alerts, purchase orders, and vendor management.",
+      "suggested_roles": ["admin"],
+      "sub_features": [
+        {
+          "id": "asset_registry",
+          "title": "Fixed asset registry",
+          "question": "Should admin maintain a searchable fixed asset registry with condition and QR tracking?"
+        },
+        {
+          "id": "asset_depreciation",
+          "title": "Depreciation reports",
+          "question": "Do they need depreciation tracking and printable asset reports?"
+        },
+        {
+          "id": "stock_levels",
+          "title": "Stock and reorder alerts",
+          "question": "Should the system highlight low-stock items and flag reorder needs?"
+        },
+        {
+          "id": "purchase_orders",
+          "title": "Purchase orders",
+          "question": "Do they create purchase orders and track fulfilment status?"
+        },
+        {
+          "id": "vendor_management",
+          "title": "Vendor management",
+          "question": "Should admin manage a vendor directory with ratings and purchase history?"
+        }
+      ]
+    },
+    {
+      "module_key": "library",
+      "category": "Student services",
+      "sort_order": 40,
+      "title": "Library circulation",
+      "question": "Do they need a library catalog and issue counter?",
+      "subtitle": "Student search, issue and return counter, reservations, fine collection, and web reports.",
+      "suggested_roles": ["librarian"],
+      "sub_features": [
+        {
+          "id": "student_library",
+          "title": "Student library app",
+          "question": "Should students browse, search, and borrow library books from their app?"
+        },
+        {
+          "id": "catalog",
+          "title": "Book catalog",
+          "question": "Should librarians maintain a searchable catalog with format and availability filters?"
+        },
+        {
+          "id": "issue_return",
+          "title": "Issue, return, and renew counter",
+          "question": "Do librarians need a counter screen to issue books, collect returns, and renew loans?"
+        },
+        {
+          "id": "fine_collection",
+          "title": "Fine collection",
+          "question": "Should the counter warn about overdue fines and allow librarians to collect them?"
+        },
+        {
+          "id": "reservations",
+          "title": "Reservations",
+          "question": "Should students reserve books and librarians manage and fulfil reservation requests?"
+        },
+        {
+          "id": "reports",
+          "title": "Library reports and analytics",
+          "question": "Should admin see issued/overdue/fines KPIs, top borrowed books, and overdue lists?"
+        }
+      ]
+    },
+    {
+      "module_key": "canteen",
+      "category": "Student services",
+      "sort_order": 50,
+      "title": "Canteen ordering",
+      "question": "Will students, parents, or staff use the canteen module?",
+      "subtitle": "Campus wallet, à la carte ordering, combos, subscriptions, counter POS, and manager dashboard.",
+      "suggested_roles": ["canteenStaff"],
+      "sub_features": [
+        {
+          "id": "student_food",
+          "title": "Student food ordering",
+          "question": "Should students browse the menu, add to cart, and pay from their campus wallet?"
+        },
+        {
+          "id": "parent_canteen",
+          "title": "Parent canteen view",
+          "question": "Should parents see and pay for canteen orders on behalf of their child?"
+        },
+        {
+          "id": "staff_food",
+          "title": "Staff food ordering",
+          "question": "Should staff be able to order food through the canteen module?"
+        },
+        {
+          "id": "campus_wallet",
+          "title": "Campus wallet and top-up",
+          "question": "Do students and parents need a digital campus wallet with top-up for canteen payments?"
+        },
+        {
+          "id": "combo_meals",
+          "title": "Combos and meal deals",
+          "question": "Should students be able to order preset combos and save their own custom combos?"
+        },
+        {
+          "id": "subscription_plans",
+          "title": "Subscription meal plans",
+          "question": "Do you offer weekly or monthly meal subscriptions that auto-bill daily?"
+        },
+        {
+          "id": "counter",
+          "title": "Counter POS",
+          "question": "Does the canteen team need a POS counter to serve walk-in and wallet-paying customers?"
+        },
+        {
+          "id": "menu_manage",
+          "title": "Menu and combo management",
+          "question": "Should canteen staff add and edit menu items, set prices, and build combos?"
+        },
+        {
+          "id": "manager_dashboard",
+          "title": "Manager dashboard",
+          "question": "Should the canteen manager see today's orders, revenue, and subscription payments?"
+        },
+        {
+          "id": "allergen_veg",
+          "title": "Allergen and veg / non-veg flags",
+          "question": "Should menu items show allergen information and veg / non-veg indicators?"
+        }
+      ]
+    },
+    {
+      "module_key": "hr_payroll",
+      "category": "Staff and finance",
+      "sort_order": 60,
+      "title": "HR payroll",
+      "question": "Do they need payslips or payroll processing?",
+      "subtitle": "Staff payslips, earnings and deductions breakdown, web payroll processing, and bank export.",
+      "suggested_roles": ["staff", "accountant"],
+      "sub_features": [
+        {
+          "id": "staff_payslips",
+          "title": "Staff payslip access",
+          "question": "Should staff view their monthly payslips with earnings and deductions from the app?"
+        },
+        {
+          "id": "payslip_detail",
+          "title": "Detailed payslip breakdown",
+          "question": "Do payslips need a full breakdown: Basic, HRA, DA, Allowances, PF, ESI, and TDS?"
+        },
+        {
+          "id": "payroll_processing",
+          "title": "Web payroll processing",
+          "question": "Should HR/admin process payroll month-by-month from the web dashboard?"
+        },
+        {
+          "id": "bank_export",
+          "title": "Bank file export",
+          "question": "Do they need to export a bank transfer file for bulk salary credit?"
+        }
+      ]
+    },
+    {
+      "module_key": "ai_insights",
+      "category": "Intelligence",
+      "sort_order": 70,
+      "title": "AI insights and analytics",
+      "question": "Should leadership get analytics and AI-powered dashboards?",
+      "subtitle": "Attendance trends, fee insights, AI notice drafting, fee defaulter prediction, and custom report builder.",
+      "suggested_roles": ["principal", "hod", "admin"],
+      "sub_features": [
+        {
+          "id": "attendance_analytics",
+          "title": "Attendance trend charts",
+          "question": "Should leadership see monthly attendance trends and pattern insights?"
+        },
+        {
+          "id": "fee_analytics",
+          "title": "Fee collection analytics",
+          "question": "Should admin track fee collection rates, outstanding amounts, and defaulters?"
+        },
+        {
+          "id": "ai_notice_drafter",
+          "title": "AI notice drafter",
+          "question": "Should staff be able to draft school notices using an AI prompt?"
+        },
+        {
+          "id": "ai_defaulter_prediction",
+          "title": "Fee defaulter prediction",
+          "question": "Should the system predict which students are at risk of missing fee payments?"
+        },
+        {
+          "id": "ai_report_card_generator",
+          "title": "AI report card text generator",
+          "question": "Should teachers generate personalised report card remarks using AI?"
+        },
+        {
+          "id": "timetable_optimizer",
+          "title": "AI timetable optimiser",
+          "question": "Should admin get AI suggestions to reduce clashes and optimise the timetable?"
+        },
+        {
+          "id": "custom_report_builder",
+          "title": "Custom report builder",
+          "question": "Should admin build custom reports from any data source (library, transport, fees, etc.)?"
+        }
+      ]
+    }
+  ]
+}

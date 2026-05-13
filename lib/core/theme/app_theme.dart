@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../domain/entities/theme_tokens.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
+import 'layout_theme.dart';
 
 /// Complete NammaClass ThemeData — BRD Section 1.4.
 ///
@@ -11,8 +14,49 @@ import 'app_typography.dart';
 /// colors. The static [light] / [dark] getters use the default brand palette
 /// and are kept for backward compatibility wherever the tenant is not yet
 /// loaded.
+class _TenantChrome {
+  const _TenantChrome({
+    required this.cardShape,
+    required this.cardElevation,
+    required this.navHeight,
+  });
+
+  final ShapeBorder cardShape;
+  final double cardElevation;
+  final double navHeight;
+}
+
 class AppTheme {
   AppTheme._();
+
+  static _TenantChrome _tenantChrome(ThemeTokens? tokens, bool isDark) {
+    final baseScale = (tokens?.radiusScale ?? 1.0).clamp(0.8, 1.4);
+    var radiusMd = AppRadius.md * baseScale;
+    var elev = AppElevation.low;
+    var useOutline = false;
+    final navHeight = tokens?.density == 'compact' ? 56.0 : 64.0;
+    switch (tokens?.presetId) {
+      case 'neo_minimal':
+        elev = 0;
+        useOutline = true;
+      case 'corporate_premium':
+        elev = AppElevation.mid;
+      case 'modern_university':
+        radiusMd = AppRadius.lg * baseScale * 1.05;
+      default:
+        break;
+    }
+    final borderColor = isDark ? AppColors.dividerDark : AppColors.divider;
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(radiusMd),
+      side: useOutline ? BorderSide(color: borderColor) : BorderSide.none,
+    );
+    return _TenantChrome(
+      cardShape: shape,
+      cardElevation: elev,
+      navHeight: navHeight,
+    );
+  }
 
   // ── Backward-compatible static getters ────────────────────────────────────
 
@@ -25,18 +69,37 @@ class AppTheme {
   // ── Dynamic factories ──────────────────────────────────────────────────────
 
   /// Builds a light [ThemeData] overriding [primary] and [accent] per tenant.
-  static ThemeData buildLight({required Color primary, required Color accent}) {
+  static ThemeData buildLight({
+    required Color primary,
+    required Color accent,
+    ThemeTokens? tokens,
+  }) {
+    final chrome = _tenantChrome(tokens, false);
+    final layout = LayoutTheme.forPreset(tokens?.presetId ?? '');
+    final appBarTitleFont = tokens?.fontFamilyPrimary != null
+        ? GoogleFonts.getFont(tokens!.fontFamilyPrimary!).fontFamily
+        : null;
     final base = ThemeData.light(useMaterial3: true);
+    final isOutlined = layout.cardStyle == CardStyle.outlined;
+    final cardBorderColor = isOutlined
+        ? primary.withValues(alpha: 0.22)
+        : AppColors.divider;
     return base.copyWith(
+      extensions: [layout],
+      splashFactory: tokens?.motionLevel == 'reduced'
+          ? NoSplash.splashFactory
+          : InkRipple.splashFactory,
       scaffoldBackgroundColor: Colors.transparent,
-      colorScheme: ColorScheme.light(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primary,
+        brightness: Brightness.light,
         primary: primary,
-        secondary: accent,
-        surface: AppColors.card,
-        error: AppColors.error,
         onPrimary: Colors.white,
+        secondary: accent,
         onSecondary: Colors.white,
+        surface: AppColors.card,
         onSurface: AppColors.textPrimary,
+        error: AppColors.error,
         onError: Colors.white,
         surfaceContainerHighest: AppColors.background,
         outline: AppColors.divider,
@@ -53,19 +116,26 @@ class AppTheme {
         systemOverlayStyle: SystemUiOverlayStyle.light,
         titleTextStyle: AppTypography.headlineMedium.copyWith(
           color: Colors.white,
+          fontFamily: appBarTitleFont,
         ),
         iconTheme: const IconThemeData(color: Colors.white, size: 22),
         actionsIconTheme: const IconThemeData(color: Colors.white, size: 22),
       ),
 
-      // Card — AppRadius.md, AppElevation.low
+      // Card — layout theme drives elevation, radius, outline
       cardTheme: CardThemeData(
         color: AppColors.card,
-        elevation: AppElevation.low,
+        elevation: layout.cardElevation,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(layout.cardCornerRadius),
+          side: isOutlined
+              ? BorderSide(color: cardBorderColor, width: 1.2)
+              : BorderSide.none,
         ),
+        shadowColor: layout.cardStyle == CardStyle.shadow
+            ? primary.withValues(alpha: 0.18)
+            : Colors.black.withValues(alpha: 0.08),
         clipBehavior: Clip.antiAlias,
       ),
 
@@ -142,9 +212,9 @@ class AppTheme {
         prefixIconColor: AppColors.textSecondary,
       ),
 
-      // NavigationBar — 64dp, white, pill indicator in tenant primary
+      // NavigationBar — density + tenant chrome
       navigationBarTheme: NavigationBarThemeData(
-        height: 64,
+        height: chrome.navHeight,
         backgroundColor: AppColors.card,
         indicatorColor: primary.withValues(alpha: 0.12),
         indicatorShape: const StadiumBorder(),
@@ -212,17 +282,17 @@ class AppTheme {
         elevation: AppElevation.high,
       ),
 
-      // ListTile
+      // ListTile — density from layout theme
       listTileTheme: ListTileThemeData(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: layout.listTilePaddingH,
+          vertical: layout.listTilePaddingV,
         ),
         titleTextStyle: AppTypography.bodyLarge,
         subtitleTextStyle: AppTypography.bodySmall,
         iconColor: AppColors.textSecondary,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(layout.cardCornerRadius * 0.6),
         ),
       ),
 
@@ -298,18 +368,34 @@ class AppTheme {
   }
 
   /// Builds a dark [ThemeData] overriding [primary] and [accent] per tenant.
-  static ThemeData buildDark({required Color primary, required Color accent}) {
+  static ThemeData buildDark({
+    required Color primary,
+    required Color accent,
+    ThemeTokens? tokens,
+  }) {
+    final chrome = _tenantChrome(tokens, true);
+    final layout = LayoutTheme.forPreset(tokens?.presetId ?? '');
+    final appBarTitleFont = tokens?.fontFamilyPrimary != null
+        ? GoogleFonts.getFont(tokens!.fontFamilyPrimary!).fontFamily
+        : null;
     final base = ThemeData.dark(useMaterial3: true);
+    final isOutlined = layout.cardStyle == CardStyle.outlined;
     return base.copyWith(
+      extensions: [layout],
+      splashFactory: tokens?.motionLevel == 'reduced'
+          ? NoSplash.splashFactory
+          : InkRipple.splashFactory,
       scaffoldBackgroundColor: Colors.transparent,
-      colorScheme: ColorScheme.dark(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primary,
+        brightness: Brightness.dark,
         primary: primary,
-        secondary: accent,
-        surface: AppColors.cardDark,
-        error: AppColors.error,
         onPrimary: Colors.white,
+        secondary: accent,
         onSecondary: Colors.white,
+        surface: AppColors.cardDark,
         onSurface: AppColors.textPrimaryDark,
+        error: AppColors.error,
         onError: Colors.white,
         surfaceContainerHighest: AppColors.backgroundDark,
         outline: AppColors.dividerDark,
@@ -324,17 +410,24 @@ class AppTheme {
         systemOverlayStyle: SystemUiOverlayStyle.light,
         titleTextStyle: AppTypography.headlineMedium.copyWith(
           color: Colors.white,
+          fontFamily: appBarTitleFont,
         ),
         iconTheme: const IconThemeData(color: Colors.white, size: 22),
         actionsIconTheme: const IconThemeData(color: Colors.white, size: 22),
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardDark,
-        elevation: AppElevation.low,
+        elevation: layout.cardElevation,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(layout.cardCornerRadius),
+          side: isOutlined
+              ? BorderSide(color: primary.withValues(alpha: 0.25), width: 1.2)
+              : BorderSide.none,
         ),
+        shadowColor: layout.cardStyle == CardStyle.shadow
+            ? primary.withValues(alpha: 0.25)
+            : Colors.black.withValues(alpha: 0.3),
         clipBehavior: Clip.antiAlias,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -393,7 +486,7 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 64,
+        height: chrome.navHeight,
         backgroundColor: AppColors.cardDark,
         indicatorColor: primary.withValues(alpha: 0.3),
         indicatorShape: const StadiumBorder(),

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nammaclass.local/schemas/role_pack.schema.json",
+  "title": "RolePack",
+  "description": "Reusable template: default roles, permissions, and module dependencies for tenant provisioning.",
+  "type": "object",
+  "required": ["schema_version", "pack_id", "display_name", "entries"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "pack_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "examples": ["k12_basic", "higher_ed_standard", "coaching_residential"]
+    },
+    "display_name": { "type": "string" },
+    "description": { "type": "string" },
+    "required_modules": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "NcFeature / module keys that must be on before applying pack"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["role_key"],
+        "properties": {
+          "role_key": {
+            "type": "string",
+            "description": "Stable role id, e.g. teacher, parent, librarian"
+          },
+          "permissions": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "resource.action strings"
+          },
+          "home_widgets": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "route_prefixes_allow": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -22,6 +22,10 @@ import '../features/web/inventory/web_inventory_assets_screen.dart';
 import '../features/web/inventory/web_inventory_stock_screen.dart';
 import '../features/web/library/web_library_reports_screen.dart';
 import '../features/web/library/web_library_screen.dart';
+import '../features/web/platform/platform_add_college_screen.dart';
+import '../features/web/platform/platform_college_detail_screen.dart';
+import '../features/web/platform/platform_colleges_list_screen.dart';
+import '../features/web/platform/super_admin_dashboard_screen.dart';
 import '../features/web/settings/web_integrations_screen.dart';
 import '../features/web/settings/web_security_log_screen.dart';
 import '../features/web/settings/web_settings_screen.dart';
@@ -49,6 +53,31 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
     navigatorKey: navigatorKey,
     builder: (context, state, child) => WebShell(child: child),
     routes: [
+      GoRoute(
+        path: AppRoutes.webPlatformDashboard,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const SuperAdminDashboardScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webPlatformColleges,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const PlatformCollegesListScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webPlatformAddCollege,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const PlatformAddCollegeScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webPlatformCollegeDetail,
+        pageBuilder: (c, s) => fadeSlideTransition(
+          c,
+          s,
+          PlatformCollegeDetailScreen(
+            tenantId: Uri.decodeComponent(s.pathParameters['id'] ?? ''),
+          ),
+        ),
+      ),
       GoRoute(
         path: AppRoutes.webHodHome,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, const HodHomeScreen()),

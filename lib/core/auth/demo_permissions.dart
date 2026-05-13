@@ -31,6 +31,16 @@ List<String> demoPermissionsForRole(UserRole role) {
       return ['support:read', 'support:write', 'students:read', 'web:access'];
     case UserRole.hod:
       return ['students:read', 'staff:read', 'attendance:read', 'web:access'];
+    case UserRole.superAdmin:
+      return [
+        'platform:tenants',
+        'platform:billing',
+        'platform:modules',
+        'platform:audit',
+        'students:read',
+        'students:write',
+        'web:access',
+      ];
     case UserRole.parent:
       return ['students:read', 'fees:read', 'messages:read'];
     case UserRole.student:
@@ -47,6 +57,10 @@ List<String> demoPermissionsForRole(UserRole role) {
 }
 
 UserRole? userRoleFromName(String name) {
+  final key = name.trim().toLowerCase();
+  if (key == 'super admin' || key == 'super_admin') {
+    return UserRole.superAdmin;
+  }
   for (final r in UserRole.values) {
     if (r.name == name) return r;
   }

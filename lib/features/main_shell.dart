@@ -7,6 +7,7 @@ import '../core/models/user_model.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/theme/app_typography.dart';
+import '../core/theme/layout_theme.dart';
 import '../core/utils/screen_size.dart';
 import '../core/widgets/nc_avatar.dart';
 import '../core/widgets/notification_icon_button.dart';
@@ -76,7 +77,13 @@ class _MainShellState extends ConsumerState<MainShell> {
       );
     }
 
-    // Mobile: creative floating bottom nav
+    // Mobile: layout-aware bottom navigation
+    final layout =
+        Theme.of(context).extension<LayoutTheme>() ?? LayoutTheme.floatingPill;
+    final accentColor = _accentForRole(role);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
+
     final navDestinations = destinations
         .map(
           (d) => NavigationDestination(
@@ -87,42 +94,18 @@ class _MainShellState extends ConsumerState<MainShell> {
         )
         .toList();
 
-    final accentColor = _accentForRole(role);
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: widget.child,
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.cardDark
-                  : AppColors.card,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 20,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: NavigationBar(
-              height: 64,
-              selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
-              onDestinationSelected: (index) {
-                context.go(destinations[index].route);
-              },
-              destinations: navDestinations,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              indicatorColor: accentColor.withValues(alpha: 0.2),
-            ),
-          ),
-        ),
+      bottomNavigationBar: _LayoutAwareBottomNav(
+        destinations: destinations,
+        navDestinations: navDestinations,
+        selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+        layout: layout,
+        accentColor: accentColor,
+        primary: primary,
+        isDark: isDark,
+        onTap: (i) => context.go(destinations[i].route),
       ),
     );
   }
@@ -420,6 +403,39 @@ class _MainShellState extends ConsumerState<MainShell> {
             Icons.person,
           ),
         ];
+      case UserRole.superAdmin:
+        return [
+          _NavDest(
+            AppRoutes.webPlatformDashboard,
+            'Platform',
+            Icons.dashboard_outlined,
+            Icons.dashboard,
+          ),
+          _NavDest(
+            AppRoutes.webPlatformColleges,
+            'Colleges',
+            Icons.apartment_outlined,
+            Icons.apartment,
+          ),
+          _NavDest(
+            AppRoutes.webUserManagement,
+            'Users',
+            Icons.manage_accounts_outlined,
+            Icons.manage_accounts,
+          ),
+          _NavDest(
+            AppRoutes.webSettings,
+            'Settings',
+            Icons.settings_outlined,
+            Icons.settings,
+          ),
+          _NavDest(
+            AppRoutes.webIntegrations,
+            'Integrations',
+            Icons.integration_instructions_outlined,
+            Icons.integration_instructions,
+          ),
+        ];
       default: // admin / principal / support
         return [
           _NavDest(
@@ -559,6 +575,8 @@ class _MainShellState extends ConsumerState<MainShell> {
         return AppColors.accent;
       case UserRole.hod:
         return AppColors.teal;
+      case UserRole.superAdmin:
+        return AppColors.deepPurple;
       default:
         return AppColors.primary;
     }
@@ -584,6 +602,8 @@ class _MainShellState extends ConsumerState<MainShell> {
         return AppRoutes.canteenProfile;
       case UserRole.hod:
         return AppRoutes.hodProfile;
+      case UserRole.superAdmin:
+        return AppRoutes.profile;
       default:
         return AppRoutes.adminProfile;
     }
@@ -675,6 +695,252 @@ class _DesktopTopBar extends StatelessWidget {
   }
 }
 
+// ── Layout-aware bottom navigation ──────────────────────────────────────────
+
+class _LayoutAwareBottomNav extends StatelessWidget {
+  const _LayoutAwareBottomNav({
+    required this.destinations,
+    required this.navDestinations,
+    required this.selectedIndex,
+    required this.layout,
+    required this.accentColor,
+    required this.primary,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  final List<_NavDest> destinations;
+  final List<NavigationDestination> navDestinations;
+  final int selectedIndex;
+  final LayoutTheme layout;
+  final Color accentColor;
+  final Color primary;
+  final bool isDark;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isDark ? AppColors.cardDark : AppColors.card;
+
+    switch (layout.navStyle) {
+      // ── Floating pill (Ocean Blue default) ──────────────────────────
+      case NavStyle.floatingPill:
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(layout.navCornerRadius),
+            child: Container(
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(layout.navCornerRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.12),
+                    blurRadius: 24,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: NavigationBar(
+                height: 64,
+                selectedIndex: selectedIndex,
+                onDestinationSelected: onTap,
+                destinations: navDestinations,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                indicatorColor: primary.withValues(alpha: 0.18),
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              ),
+            ),
+          ),
+        );
+
+      // ── Floating icon-only rail (Royal Purple) ───────────────────────
+      case NavStyle.floatingRail:
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Container(
+            height: 68,
+            decoration: BoxDecoration(
+              color: primary,
+              borderRadius: BorderRadius.circular(layout.navCornerRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.45),
+                  blurRadius: 28,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(destinations.length, (i) {
+                final isSelected = i == selectedIndex;
+                return GestureDetector(
+                  onTap: () => onTap(i),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.22)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      isSelected
+                          ? (destinations[i].selectedIcon ??
+                                destinations[i].icon)
+                          : destinations[i].icon,
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.55),
+                      size: isSelected ? 26 : 22,
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+
+      // ── Straight flush bar (Crimson Red compact) ─────────────────────
+      case NavStyle.straightBar:
+        return Container(
+          decoration: BoxDecoration(
+            color: bg,
+            border: Border(
+              top: BorderSide(
+                color: isDark ? AppColors.dividerDark : AppColors.divider,
+              ),
+            ),
+          ),
+          child: NavigationBar(
+            height: 56,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onTap,
+            destinations: navDestinations,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            indicatorColor: primary.withValues(alpha: 0.14),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          ),
+        );
+
+      // ── Transparent ghost nav (Solar Orange minimal) ─────────────────
+      case NavStyle.transparent:
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(destinations.length, (i) {
+                final isSelected = i == selectedIndex;
+                return GestureDetector(
+                  onTap: () => onTap(i),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? primary.withValues(alpha: 0.1)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSelected
+                          ? Border.all(color: primary.withValues(alpha: 0.3))
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected
+                              ? (destinations[i].selectedIcon ??
+                                    destinations[i].icon)
+                              : destinations[i].icon,
+                          color: isSelected ? primary : AppColors.textSecondary,
+                          size: 22,
+                        ),
+                        if (layout.showNavLabels) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            destinations[i].label,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? primary
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+
+      // ── M2 tab-indicator bar (Midnight Steel corporate) ──────────────
+      case NavStyle.tabBar:
+        return Container(
+          decoration: BoxDecoration(
+            color: bg,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 12,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // active tab indicator strip
+              Row(
+                children: List.generate(destinations.length, (i) {
+                  return Expanded(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      height: 3,
+                      color: i == selectedIndex ? primary : Colors.transparent,
+                    ),
+                  );
+                }),
+              ),
+              NavigationBar(
+                height: 60,
+                selectedIndex: selectedIndex,
+                onDestinationSelected: onTap,
+                destinations: navDestinations,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                indicatorColor: Colors.transparent,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              ),
+            ],
+          ),
+        );
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _DesktopSidebar extends StatelessWidget {
   const _DesktopSidebar({
     required this.destinations,
@@ -696,6 +962,9 @@ class _DesktopSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = collapsed ? _widthCollapsed : _widthExpanded;
+    final layout =
+        Theme.of(context).extension<LayoutTheme>() ?? LayoutTheme.floatingPill;
+    final itemRadius = (layout.cardCornerRadius * 0.7).clamp(4.0, 16.0);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
@@ -722,7 +991,7 @@ class _DesktopSidebar extends StatelessWidget {
                   height: 32,
                   decoration: BoxDecoration(
                     color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(AppSpacing.xs),
+                    borderRadius: BorderRadius.circular(itemRadius),
                   ),
                   child: const Icon(
                     Icons.school,
@@ -764,13 +1033,13 @@ class _DesktopSidebar extends StatelessWidget {
                       duration: const Duration(milliseconds: 150),
                       padding: EdgeInsets.symmetric(
                         horizontal: collapsed ? AppSpacing.sm : AppSpacing.md,
-                        vertical: AppSpacing.sm,
+                        vertical: layout.listTilePaddingV * 0.6,
                       ),
                       decoration: BoxDecoration(
                         color: isActive
                             ? Colors.white.withValues(alpha: 0.15)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(AppSpacing.sm),
+                        borderRadius: BorderRadius.circular(itemRadius),
                       ),
                       child: Row(
                         children: [

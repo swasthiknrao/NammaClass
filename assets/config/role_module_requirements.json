@@ -1,0 +1,15 @@
+[
+  { "role_key": "driver", "requires_modules": ["transport"] },
+  { "role_key": "warden", "requires_modules": ["hostel"] },
+  { "role_key": "canteenStaff", "requires_modules": ["canteen"] },
+  { "role_key": "librarian", "requires_modules": ["library"] },
+  { "role_key": "staff", "requires_modules": [] },
+  { "role_key": "parent", "requires_modules": [] },
+  { "role_key": "teacher", "requires_modules": [] },
+  { "role_key": "student", "requires_modules": [] },
+  { "role_key": "admin", "requires_modules": [] },
+  { "role_key": "principal", "requires_modules": [] },
+  { "role_key": "accountant", "requires_modules": [] },
+  { "role_key": "support", "requires_modules": [] },
+  { "role_key": "hod", "requires_modules": [] }
+]

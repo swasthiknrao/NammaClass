@@ -145,6 +145,10 @@ class AppRoutes {
   static const String webReportBuilder = '/web/reports/builder';
   // Settings
   static const String webUserManagement = '/web/settings/users';
+  static const String webPlatformDashboard = '/web/platform';
+  static const String webPlatformColleges = '/web/platform/colleges';
+  static const String webPlatformAddCollege = '/web/platform/colleges/add';
+  static const String webPlatformCollegeDetail = '/web/platform/colleges/:id';
   static const String webIntegrations = '/web/settings/integrations';
   static const String webSecurityLog = '/web/settings/security-log';
 

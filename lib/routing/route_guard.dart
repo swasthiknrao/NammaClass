@@ -1,8 +1,8 @@
 import '../core/models/user_model.dart';
-import '../domain/entities/nc_feature.dart';
 import '../domain/entities/tenant_profile.dart';
 import '../features/auth/providers/auth_provider.dart';
 import 'app_routes.dart';
+import 'feature_route_manifest.dart';
 
 /// Role-scoped path map — each path prefix is only accessible to specific roles.
 /// This prevents horizontal privilege escalation even with a valid auth token.
@@ -25,6 +25,7 @@ const _rolePrefixMap = {
     UserRole.librarian,
     UserRole.support,
     UserRole.hod,
+    UserRole.superAdmin,
   },
 };
 
@@ -35,35 +36,6 @@ const _sharedAuthPaths = {
   AppRoutes.events,
   AppRoutes.search,
   '/profile',
-};
-
-/// Feature-gated route → required [NcFeature] pairs.
-/// If the tenant hasn't subscribed to the feature, the path is redirected
-/// to the role's home screen.
-const _featureGatedRoutes = <String, NcFeature>{
-  AppRoutes.parentBus: NcFeature.transport,
-  AppRoutes.parentCanteen: NcFeature.canteen,
-  AppRoutes.studentLibrary: NcFeature.library,
-  AppRoutes.studentCanteen: NcFeature.canteen,
-  AppRoutes.staffPayslips: NcFeature.hrPayroll,
-  AppRoutes.staffCanteen: NcFeature.canteen,
-  AppRoutes.hostel: NcFeature.hostel,
-  AppRoutes.driverRoute: NcFeature.transport,
-  AppRoutes.driverStudents: NcFeature.transport,
-  AppRoutes.librarianCounter: NcFeature.library,
-  AppRoutes.librarianCatalog: NcFeature.library,
-  AppRoutes.librarianReservations: NcFeature.library,
-  AppRoutes.webLibrary: NcFeature.library,
-  AppRoutes.webLibraryReports: NcFeature.library,
-  AppRoutes.webTransport: NcFeature.transport,
-  AppRoutes.webTransportRoutes: NcFeature.transport,
-  AppRoutes.webTransportLive: NcFeature.transport,
-  AppRoutes.webHostel: NcFeature.hostel,
-  AppRoutes.webPayroll: NcFeature.hrPayroll,
-  AppRoutes.webInventoryAssets: NcFeature.inventory,
-  AppRoutes.webInventoryStock: NcFeature.inventory,
-  AppRoutes.webAiTools: NcFeature.aiInsights,
-  AppRoutes.webAnalytics: NcFeature.aiInsights,
 };
 
 /// Role-based route guard. Returns redirect path or null to allow navigation.
@@ -89,6 +61,11 @@ String? routeGuard(String path, AuthState authState, [TenantProfile? tenant]) {
     return _roleHome(role);
   }
 
+  if (path == '/web/platform' || path.startsWith('/web/platform/')) {
+    if (role != UserRole.superAdmin) return _roleHome(role);
+    return _checkFeatureGate(path, role, tenant);
+  }
+
   // Allow shared paths for all authenticated users
   if (_sharedAuthPaths.any((p) => path.startsWith(p))) {
     // Still check feature gating for shared feature paths
@@ -111,13 +88,15 @@ String? routeGuard(String path, AuthState authState, [TenantProfile? tenant]) {
 }
 
 /// Returns a redirect if [path] requires a feature the tenant hasn't subscribed
-/// to. Returns null to allow navigation when the feature is subscribed or
-/// when [tenant] is null (loading state).
+/// to. Uses [TenantProfile.hasFeature], which prefers `entitlement_snapshot.modules`
+/// when present (see repo `docs/schemas/entitlement_snapshot.schema.json`).
+///
+/// Returns null when [tenant] is null (loading) so routing is not blocked mid-flight.
 String? _checkFeatureGate(String path, UserRole? role, TenantProfile? tenant) {
   if (tenant == null) return null;
 
-  for (final entry in _featureGatedRoutes.entries) {
-    if (path.startsWith(entry.key) && !tenant.hasFeature(entry.value)) {
+  for (final gate in featureRouteGates) {
+    if (path.startsWith(gate.prefix) && !tenant.hasFeature(gate.feature)) {
       return _roleHome(role);
     }
   }
@@ -161,6 +140,8 @@ String _roleHome(UserRole? role) {
       return AppRoutes.canteenCounter;
     case UserRole.hod:
       return AppRoutes.webHodHome;
+    case UserRole.superAdmin:
+      return AppRoutes.webPlatformDashboard;
     case null:
       return AppRoutes.login;
   }

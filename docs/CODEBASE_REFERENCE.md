@@ -496,6 +496,9 @@ One-line purpose for maintenance and onboarding.
 | lib/core/services/secure_storage.dart | Wrapper around `flutter_secure_storage`. |
 | lib/core/storage/app_database.dart | Drift database definition. |
 | lib/core/storage/app_database.g.dart | Drift generated code. |
+| lib/core/tenant/tenant_config_loader.dart | Merge entitlement payloads into [TenantProfile](../lib/domain/entities/tenant_profile.dart). |
+| lib/core/tenant/tenant_entitlement_resolver.dart | `visibleNavItems` for dynamic shell from `nav_graph`. |
+| lib/core/tenant/user_role_config_key.dart | Maps [UserRole](../lib/core/models/user_model.dart) to tenant config keys. |
 | lib/core/theme/app_colors.dart | Color tokens. |
 | lib/core/theme/app_glass_theme.dart | Glass / blur styling helpers. |
 | lib/core/theme/app_spacing.dart | Spacing scale. |
@@ -536,8 +539,13 @@ One-line purpose for maintenance and onboarding.
 | lib/domain/constants/demo_tenant.dart | Demo tenant id constant. |
 | lib/domain/entities/attendance_entities.dart | Attendance domain types. |
 | lib/domain/entities/auth_credentials.dart | Tokens + claims entity. |
+| lib/domain/entities/entitlement_snapshot.dart | Billing snapshot: modules, limits, `snapshot_version`. |
 | lib/domain/entities/fee_installment_entity.dart | Fee installment entity. |
+| lib/domain/entities/role_pack_definition.dart | Role pack template parse model. |
 | lib/domain/entities/student_entity.dart | Student entity. |
+| lib/domain/entities/theme_tokens.dart | Semantic white-label theme tokens. |
+| lib/domain/entities/tenant_nav_item.dart | One dynamic navigation entry. |
+| lib/domain/entities/tenant_profile.dart | Tenant branding, features, optional entitlements + nav. |
 | lib/domain/repositories/attendance_repository.dart | Attendance repository interface. |
 | lib/domain/repositories/auth_repository.dart | Auth repository interface. |
 | lib/domain/repositories/fees_repository.dart | Fees repository interface. |
@@ -606,6 +614,7 @@ One-line purpose for maintenance and onboarding.
 | lib/features/student/screens/academics_screen.dart | Academics + attendance heatmap. |
 | lib/features/student/screens/library_screen.dart | Student library view. |
 | lib/features/student/screens/student_home_screen.dart | Student home dashboard. |
+| lib/features/tenant/providers/tenant_provider.dart | `tenantProvider`, `tenantProfileProvider`, `visibleTenantNavItemsProvider`. |
 | lib/features/teacher/models/timeline_models.dart | Timeline domain models. |
 | lib/features/teacher/providers/teacher_providers.dart | Timeline / class context state. |
 | lib/features/teacher/screens/attendance_calendar_screen.dart | Teacher attendance calendar. |
@@ -703,6 +712,23 @@ One-line purpose for maintenance and onboarding.
 | lib/shared/widgets/tables/app_data_table.dart | Data table widget. |
 
 **Total library Dart files indexed:** 233 (includes `app_database.g.dart`).
+
+---
+
+## Multi-tenant ERP blueprint (reference docs)
+
+| Topic | Document |
+|-------|----------|
+| JSON schemas | [schemas/README.md](./schemas/README.md) |
+| REST conventions | [API_STYLE_GUIDE.md](./API_STYLE_GUIDE.md) |
+| INR SKUs & meters | [BILLING_INR_CATALOG.md](./BILLING_INR_CATALOG.md) |
+| Module specs | [modules/MODULE_SPEC_TEMPLATE.md](./modules/MODULE_SPEC_TEMPLATE.md), [attendance](./modules/attendance.md), [fees](./modules/fees.md), [academics](./modules/academics.md), [communication](./modules/communication.md) |
+| Platform Super Admin | [SUPER_ADMIN_CONSOLE.md](./SUPER_ADMIN_CONSOLE.md) |
+| Offline sync / outbox | [OFFLINE_SYNC_ARCHITECTURE.md](./OFFLINE_SYNC_ARCHITECTURE.md) |
+| Roadmap & team | [ERP_ROADMAP_PHASES.md](./ERP_ROADMAP_PHASES.md) |
+| Example tenant JSON | [examples/tenant_config.full.json](./examples/tenant_config.full.json) |
+
+**Client wiring:** [`TenantProfile.hasFeature`](../lib/domain/entities/tenant_profile.dart) prefers `entitlement_snapshot.modules` over the legacy `features` list. [`route_guard.dart`](../lib/routing/route_guard.dart) uses this for feature-gated routes. [`visibleTenantNavItemsProvider`](../lib/features/tenant/providers/tenant_provider.dart) exposes `nav_graph` filtered by role.
 
 ---
 

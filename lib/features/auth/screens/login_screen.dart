@@ -64,6 +64,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       UserRole.canteenStaff: UserModel.canteenStaff,
       UserRole.accountant: UserModel.accountant,
       UserRole.hod: UserModel.hod,
+      UserRole.superAdmin: UserModel.superAdmin,
     };
     ref.read(authProvider.notifier).loginAs(users[role]!);
   }
@@ -195,10 +196,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onTap: () => _loginDemo(UserRole.student),
                         ),
                         _DemoButton(
-                          label: 'Admin',
-                          icon: Icons.admin_panel_settings,
-                          color: AppColors.error,
-                          onTap: () => _loginDemo(UserRole.admin),
+                          label: 'Super Admin',
+                          icon: Icons.verified_user,
+                          color: Colors.deepPurple,
+                          onTap: () => _loginDemo(UserRole.superAdmin),
                         ),
                         _DemoButton(
                           label: 'Principal',

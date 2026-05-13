@@ -30,6 +30,7 @@ class _WebShellState extends ConsumerState<WebShell> {
     final user = ref.watch(currentUserProvider);
     final menuItems = _menuItemsFor(role);
     final currentPath = GoRouterState.of(context).uri.path;
+    final activeRoute = _activeRouteFor(currentPath, menuItems);
     final isMobile = ScreenSize.isMobile(context);
 
     // Mobile: bottom nav instead of sidebar (like MainShell for other roles)
@@ -105,7 +106,7 @@ class _WebShellState extends ConsumerState<WebShell> {
                       vertical: AppSpacing.xs,
                     ),
                     children: menuItems.map((item) {
-                      final isActive = currentPath.startsWith(item.route);
+                      final isActive = item.route == activeRoute;
                       return _SidebarItem(
                         item: item,
                         isActive: isActive,
@@ -234,13 +235,8 @@ class _WebShellState extends ConsumerState<WebShell> {
     final navItems = menuItems.length > 5
         ? menuItems.take(5).toList()
         : menuItems;
-    var selectedIndex = 0;
-    for (var i = 0; i < navItems.length; i++) {
-      if (currentPath.startsWith(navItems[i].route)) {
-        selectedIndex = i;
-        break;
-      }
-    }
+    final activeRoute = _activeRouteFor(currentPath, navItems);
+    final selectedIndex = navItems.indexWhere((i) => i.route == activeRoute);
 
     final accentColor = _accentForRole(role);
 
@@ -312,7 +308,7 @@ class _WebShellState extends ConsumerState<WebShell> {
             ),
             child: NavigationBar(
               height: 64,
-              selectedIndex: selectedIndex,
+              selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
               onDestinationSelected: (index) {
                 context.go(navItems[index].route);
               },
@@ -339,6 +335,9 @@ class _WebShellState extends ConsumerState<WebShell> {
       case UserRole.hod:
         context.go(AppRoutes.hodProfile);
         break;
+      case UserRole.superAdmin:
+        context.go(AppRoutes.profile);
+        break;
       default:
         context.go(AppRoutes.profile);
         break;
@@ -349,12 +348,34 @@ class _WebShellState extends ConsumerState<WebShell> {
     switch (role) {
       case UserRole.hod:
         return AppColors.teal;
+      case UserRole.superAdmin:
+        return AppColors.deepPurple;
       default:
         return AppColors.primary;
     }
   }
 
+  String? _activeRouteFor(String currentPath, List<_MenuItem> items) {
+    String? best;
+    for (final item in items) {
+      final route = item.route;
+      final matches = currentPath == route || currentPath.startsWith('$route/');
+      if (!matches) continue;
+      if (best == null || route.length > best.length) {
+        best = route;
+      }
+    }
+    return best;
+  }
+
   String _titleFor(String path) {
+    if (path == AppRoutes.webPlatformAddCollege) return 'Add college';
+    if (path == AppRoutes.webPlatformColleges) return 'Colleges';
+    if (path == AppRoutes.webPlatformDashboard || path == '/web/platform') {
+      return 'Platform';
+    }
+    if (path.startsWith('/web/platform/colleges/')) return 'College detail';
+
     const titles = {
       '/web/hod-home': 'Home',
       '/web/dashboard': 'Dashboard',
@@ -381,7 +402,7 @@ class _WebShellState extends ConsumerState<WebShell> {
       '/web/inventory/assets': 'Asset Registry',
       '/web/inventory/stock': 'Stock & Purchase',
       '/web/reports/builder': 'Report Builder',
-      '/web/settings/users': 'User Management',
+      '/web/settings/security-log': 'Security log',
       '/web/settings/integrations': 'Integrations',
       '/web/settings': 'Settings',
       '/web/ai': 'AI Tools',
@@ -456,6 +477,41 @@ class _WebShellState extends ConsumerState<WebShell> {
         ),
       ];
     }
+    if (role == UserRole.superAdmin) {
+      return [
+        _MenuItem(
+          AppRoutes.webPlatformDashboard,
+          'Platform',
+          Icons.dashboard_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webPlatformColleges,
+          'Colleges',
+          Icons.apartment_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webPlatformAddCollege,
+          'Add college',
+          Icons.add_business_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webUserManagement,
+          'Users & roles',
+          Icons.manage_accounts_outlined,
+        ),
+        _MenuItem(AppRoutes.webSettings, 'Settings', Icons.settings_outlined),
+        _MenuItem(
+          AppRoutes.webIntegrations,
+          'Integrations',
+          Icons.integration_instructions_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webSecurityLog,
+          'Security log',
+          Icons.security_outlined,
+        ),
+      ];
+    }
     if (role == UserRole.hod) {
       return [
         _MenuItem(AppRoutes.webHodHome, 'My Home', Icons.home_outlined),
@@ -484,7 +540,7 @@ class _WebShellState extends ConsumerState<WebShell> {
         ),
       ];
     }
-    // Admin / Principal / Teacher / Super Admin — full menu
+    // Admin / Principal / Teacher — full academic & ops menu
     return [
       _MenuItem(AppRoutes.webDashboard, 'Dashboard', Icons.dashboard_outlined),
       _MenuItem(

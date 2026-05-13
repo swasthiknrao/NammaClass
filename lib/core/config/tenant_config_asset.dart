@@ -22,8 +22,11 @@ Future<TenantProfile?> loadTenantProfileFromAsset() async {
     final map = jsonDecode(raw) as Map<String, dynamic>;
     final profile = TenantProfile.fromJson(map);
 
-    // Empty `features` in JSON means "not configured yet" — keep app usable.
-    if (profile.features.isEmpty) {
+    final hasEntitlements =
+        profile.entitlementSnapshot?.modules.isNotEmpty ?? false;
+    // Empty `features` in JSON means "not configured yet" — keep app usable
+    // unless entitlement_snapshot already defines modules.
+    if (profile.features.isEmpty && !hasEntitlements) {
       return profile.copyWith(features: NcFeature.values.toSet());
     }
     return profile;

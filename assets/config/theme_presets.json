@@ -1,0 +1,8 @@
+{
+  "default_role_pack_id": "",
+  "presets": [
+    { "id": "modern_university", "label": "Modern University" },
+    { "id": "neo_minimal", "label": "Neo Minimal" },
+    { "id": "corporate_premium", "label": "Corporate Premium" }
+  ]
+}

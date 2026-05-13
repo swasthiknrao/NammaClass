@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nammaclass.local/schemas/role_module_requirements.json",
+  "title": "RoleModuleRequirements",
+  "description": "For each app role, lists NcFeature keys that MUST be enabled on the tenant before the role can be assigned. Single source for client + API validation.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["role_key", "requires_modules"],
+    "properties": {
+      "role_key": {
+        "type": "string",
+        "description": "Stable role id matching UserRole.name / tenantConfigKey"
+      },
+      "requires_modules": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "NcFeature.key values; empty = no module gate"
+      }
+    },
+    "additionalProperties": false
+  },
+  "default": [
+    { "role_key": "driver", "requires_modules": ["transport"] },
+    { "role_key": "warden", "requires_modules": ["hostel"] },
+    { "role_key": "canteenStaff", "requires_modules": ["canteen"] },
+    { "role_key": "librarian", "requires_modules": ["library"] },
+    { "role_key": "staff", "requires_modules": [] },
+    { "role_key": "parent", "requires_modules": [] },
+    { "role_key": "teacher", "requires_modules": [] },
+    { "role_key": "student", "requires_modules": [] },
+    { "role_key": "admin", "requires_modules": [] },
+    { "role_key": "principal", "requires_modules": [] },
+    { "role_key": "accountant", "requires_modules": [] },
+    { "role_key": "support", "requires_modules": [] },
+    { "role_key": "hod", "requires_modules": [] }
+  ]
+}

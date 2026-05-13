@@ -11,10 +11,13 @@ import '../../../routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_presets.dart';
 import '../../../core/providers/theme_mode_provider.dart';
+import '../../../core/providers/theme_preset_provider.dart';
 import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/shell_layout_scope.dart';
+import '../../../core/widgets/theme_picker_sheet.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -964,89 +967,132 @@ class _ThemeTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    String label;
-    switch (themeMode) {
-      case ThemeMode.light:
-        label = 'Light';
-        break;
-      case ThemeMode.dark:
-        label = 'Dark';
-        break;
-      case ThemeMode.system:
-        label = 'System';
-        break;
+    final presetAsync = ref.watch(themePresetProvider);
+    final presetId = presetAsync.valueOrNull ?? AppThemePresets.oceanBlue.id;
+    final preset = AppThemePresets.byId(presetId);
+    final fontScale = ref.watch(fontScaleProvider);
+
+    String fontLabel;
+    if (fontScale <= 0.92) {
+      fontLabel = 'Small';
+    } else if (fontScale >= 1.12) {
+      fontLabel = 'Large';
+    } else {
+      fontLabel = 'Medium';
     }
-    return ListTile(
-      leading: const Icon(
-        Icons.brightness_6_outlined,
-        color: AppColors.textSecondary,
-      ),
-      title: Text('Theme', style: Theme.of(context).textTheme.bodyMedium),
-      subtitle: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+
+    return InkWell(
+      onTap: () => showThemePickerSheet(context),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            // Live colour swatch stack
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: Stack(
+                children: [
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: preset.accentColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: preset.accentColor.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: preset.primaryColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: preset.primaryColor.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          preset.emoji,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Theme & Appearance',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${preset.name}  •  Font: $fontLabel',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: preset.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Change',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: preset.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: preset.primaryColor,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      trailing: const Icon(
-        Icons.chevron_right,
-        color: AppColors.textSecondary,
-        size: 18,
-      ),
-      onTap: () {
-        showModalBottomSheet<void>(
-          context: context,
-          builder: (ctx) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  title: const Text('Light'),
-                  leading: Icon(
-                    Icons.light_mode,
-                    color: themeMode == ThemeMode.light
-                        ? AppColors.primary
-                        : null,
-                  ),
-                  onTap: () {
-                    ref.read(themeModeProvider.notifier).state =
-                        ThemeMode.light;
-                    Navigator.pop(ctx);
-                  },
-                ),
-                ListTile(
-                  title: const Text('Dark'),
-                  leading: Icon(
-                    Icons.dark_mode,
-                    color: themeMode == ThemeMode.dark
-                        ? AppColors.primary
-                        : null,
-                  ),
-                  onTap: () {
-                    ref.read(themeModeProvider.notifier).state = ThemeMode.dark;
-                    Navigator.pop(ctx);
-                  },
-                ),
-                ListTile(
-                  title: const Text('System'),
-                  leading: Icon(
-                    Icons.settings_brightness,
-                    color: themeMode == ThemeMode.system
-                        ? AppColors.primary
-                        : null,
-                  ),
-                  onTap: () {
-                    ref.read(themeModeProvider.notifier).state =
-                        ThemeMode.system;
-                    Navigator.pop(ctx);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

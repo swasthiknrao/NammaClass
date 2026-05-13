@@ -1,4 +1,7 @@
+import 'entitlement_snapshot.dart';
 import 'nc_feature.dart';
+import 'tenant_nav_item.dart';
+import 'theme_tokens.dart';
 
 /// Represents a single institution's subscription and branding profile.
 /// Fetched at launch via `/tenant/config` and drives the entire app experience:
@@ -15,7 +18,16 @@ class TenantProfile {
     required this.timezone,
     required this.currency,
     required this.languages,
+    this.schemaVersion = 1,
+    this.entitlementSnapshot,
+    this.themeTokens,
+    this.navGraph = const [],
+    this.rolePackIds = const [],
+    this.intake,
   });
+
+  /// JSON / API schema breaking-change version for this document.
+  final int schemaVersion;
 
   final String tenantId;
   final String institutionName;
@@ -35,7 +47,23 @@ class TenantProfile {
 
   /// Set of features this institution has subscribed to.
   /// Drives navigation visibility, route guards, and widget rendering.
+  /// When [entitlementSnapshot] lists modules, it takes precedence.
   final Set<NcFeature> features;
+
+  /// Billing-backed module toggles and limits (optional until backend ships).
+  final EntitlementSnapshot? entitlementSnapshot;
+
+  /// Semantic theme tokens (preset, fonts, density).
+  final ThemeTokens? themeTokens;
+
+  /// Dynamic shell navigation entries.
+  final List<TenantNavItem> navGraph;
+
+  /// Role pack ids applied at provisioning (informational on client).
+  final List<String> rolePackIds;
+
+  /// Onboarding questionnaire blob (optional).
+  final Map<String, dynamic>? intake;
 
   /// IANA timezone identifier — e.g. "Asia/Kolkata"
   final String timezone;
@@ -48,7 +76,13 @@ class TenantProfile {
   final List<String> languages;
 
   /// Returns true if this institution has subscribed to [feature].
-  bool hasFeature(NcFeature feature) => features.contains(feature);
+  bool hasFeature(NcFeature feature) {
+    final snap = entitlementSnapshot;
+    if (snap != null && snap.modules.isNotEmpty) {
+      return snap.modules[feature.key]?.enabled ?? false;
+    }
+    return features.contains(feature);
+  }
 
   /// Convenience getter: parsed primary color value for use in Color().
   int get primaryColorValue => int.parse('0xFF$primaryHex');
@@ -69,7 +103,35 @@ class TenantProfile {
         .whereType<NcFeature>()
         .toSet();
 
+    EntitlementSnapshot? snap;
+    final rawSnap =
+        json['entitlement_snapshot'] as Map<String, dynamic>? ??
+        json['entitlementSnapshot'] as Map<String, dynamic>?;
+    if (rawSnap != null) {
+      snap = EntitlementSnapshot.fromJson(rawSnap);
+    }
+
+    ThemeTokens? tokens;
+    final rawTheme =
+        json['theme_tokens'] as Map<String, dynamic>? ??
+        json['themeTokens'] as Map<String, dynamic>?;
+    if (rawTheme != null) {
+      tokens = ThemeTokens.fromJson(rawTheme);
+    }
+
+    final rawNav = json['nav_graph'] as List? ?? json['navGraph'] as List?;
+    final nav = <TenantNavItem>[];
+    if (rawNav != null) {
+      for (final e in rawNav) {
+        if (e is Map<String, dynamic>) {
+          nav.add(TenantNavItem.fromJson(e));
+        }
+      }
+    }
+
     return TenantProfile(
+      schemaVersion:
+          json['schema_version'] as int? ?? json['schemaVersion'] as int? ?? 1,
       tenantId: tenantId,
       institutionName: institutionName,
       logoUrl:
@@ -87,6 +149,17 @@ class TenantProfile {
           (json['accent_hex'] as String?) ??
           'E67E22',
       features: rawFeatures,
+      entitlementSnapshot: snap,
+      themeTokens: tokens,
+      navGraph: nav,
+      rolePackIds: List<String>.from(
+        json['role_pack_ids'] as List? ??
+            json['rolePackIds'] as List? ??
+            const [],
+      ),
+      intake: json['intake'] is Map<String, dynamic>
+          ? Map<String, dynamic>.from(json['intake'] as Map)
+          : null,
       timezone: (json['timezone'] as String?) ?? 'Asia/Kolkata',
       currency: (json['currency'] as String?) ?? 'INR',
       languages: List<String>.from(json['languages'] as List? ?? ['en']),
@@ -94,6 +167,7 @@ class TenantProfile {
   }
 
   Map<String, dynamic> toJson() => {
+    'schema_version': schemaVersion,
     'tenantId': tenantId,
     'institutionName': institutionName,
     'logoUrl': logoUrl,
@@ -101,12 +175,20 @@ class TenantProfile {
     'primaryHex': primaryHex,
     'accentHex': accentHex,
     'features': features.map((f) => f.key).toList(),
+    if (entitlementSnapshot != null)
+      'entitlement_snapshot': entitlementSnapshot!.toJson(),
+    if (themeTokens != null) 'theme_tokens': themeTokens!.toJson(),
+    if (navGraph.isNotEmpty)
+      'nav_graph': navGraph.map((e) => e.toJson()).toList(),
+    if (rolePackIds.isNotEmpty) 'role_pack_ids': rolePackIds,
+    if (intake != null) 'intake': intake,
     'timezone': timezone,
     'currency': currency,
     'languages': languages,
   };
 
   TenantProfile copyWith({
+    int? schemaVersion,
     String? tenantId,
     String? institutionName,
     String? logoUrl,
@@ -114,11 +196,17 @@ class TenantProfile {
     String? primaryHex,
     String? accentHex,
     Set<NcFeature>? features,
+    EntitlementSnapshot? entitlementSnapshot,
+    ThemeTokens? themeTokens,
+    List<TenantNavItem>? navGraph,
+    List<String>? rolePackIds,
+    Map<String, dynamic>? intake,
     String? timezone,
     String? currency,
     List<String>? languages,
   }) {
     return TenantProfile(
+      schemaVersion: schemaVersion ?? this.schemaVersion,
       tenantId: tenantId ?? this.tenantId,
       institutionName: institutionName ?? this.institutionName,
       logoUrl: logoUrl ?? this.logoUrl,
@@ -126,6 +214,11 @@ class TenantProfile {
       primaryHex: primaryHex ?? this.primaryHex,
       accentHex: accentHex ?? this.accentHex,
       features: features ?? this.features,
+      entitlementSnapshot: entitlementSnapshot ?? this.entitlementSnapshot,
+      themeTokens: themeTokens ?? this.themeTokens,
+      navGraph: navGraph ?? this.navGraph,
+      rolePackIds: rolePackIds ?? this.rolePackIds,
+      intake: intake ?? this.intake,
       timezone: timezone ?? this.timezone,
       currency: currency ?? this.currency,
       languages: languages ?? this.languages,

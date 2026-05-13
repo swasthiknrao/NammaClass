@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/tenant_policy_loader.dart';
+import '../../../core/models/user_model.dart';
+import '../../../core/tenant/role_module_requirements.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/nc_chip.dart';
+import '../../tenant/providers/tenant_provider.dart';
 
 class WebUserManagementScreen extends ConsumerStatefulWidget {
   const WebUserManagementScreen({super.key});
@@ -32,80 +36,13 @@ class _WebUserManagementScreenState
     super.dispose();
   }
 
-  final _users = [
-    _User(
-      'Suresh Kumar',
-      'suresh@vidyashree.edu.in',
-      'Principal',
-      '2026-03-05 09:12',
-      'Active',
-    ),
-    _User(
-      'Meena Iyer',
-      'meena@vidyashree.edu.in',
-      'Librarian',
-      '2026-03-04 14:30',
-      'Active',
-    ),
-    _User(
-      'Rajesh Gowda',
-      'rajesh@vidyashree.edu.in',
-      'Teacher',
-      '2026-03-06 08:45',
-      'Active',
-    ),
-    _User(
-      'Priya Sharma',
-      'priya@vidyashree.edu.in',
-      'Accountant',
-      '2026-02-28 11:00',
-      'Inactive',
-    ),
-  ];
-
-  final _auditLog = [
-    (
-      'Suresh Kumar',
-      '2026-03-06 09:12',
-      'Chrome / Windows',
-      '192.168.1.42',
-      'Bengaluru',
-      true,
-    ),
-    (
-      'Meena Iyer',
-      '2026-03-06 08:58',
-      'Safari / macOS',
-      '192.168.1.60',
-      'Bengaluru',
-      true,
-    ),
-    (
-      'Unknown',
-      '2026-03-05 23:11',
-      'Firefox / Linux',
-      '5.6.7.8',
-      'Unknown',
-      false,
-    ),
-  ];
-
-  static const _roles = [
-    ('Principal', ['Dashboard', 'Academics', 'HR', 'Reports', 'Analytics']),
-    ('Accountant', ['Fees & Finance', 'Reports']),
-    ('Librarian', ['Library']),
-    ('Driver', ['Transport']),
-    ('Teacher', ['Academics', 'Attendance', 'Communication']),
-    ('HR Manager', ['HR & Staff', 'Payroll', 'Reports']),
-  ];
-
-  final failedLoginAlert = true;
-
   @override
   Widget build(BuildContext context) {
+    final demo = TenantPolicyLoader.webUserManagementDemo;
+
     return Column(
       children: [
-        if (failedLoginAlert)
+        if (demo.failedLoginAlert)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.sm),
@@ -114,10 +51,10 @@ class _WebUserManagementScreenState
               children: [
                 const Icon(Icons.security, color: AppColors.error),
                 const SizedBox(width: AppSpacing.xs),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Multiple failed logins from IP 5.6.7.8. Auto-blocked for 1 hour.',
-                    style: TextStyle(
+                    demo.failedLoginMessage,
+                    style: const TextStyle(
                       color: AppColors.error,
                       fontWeight: FontWeight.w500,
                     ),
@@ -159,9 +96,13 @@ class _WebUserManagementScreenState
           child: TabBarView(
             controller: _tabs,
             children: [
-              _UsersTab(_users),
-              _RolesTab(_roles),
-              _AuditTab(_auditLog),
+              _UsersTab(demo.users),
+              _RolesTab(
+                demo.roles,
+                demo.rolesTabPermissionColumns,
+                demo.rolesTabModuleRows,
+              ),
+              _AuditTab(demo.auditLog),
             ],
           ),
         ),
@@ -170,8 +111,16 @@ class _WebUserManagementScreenState
   }
 
   void _showInviteDialog(BuildContext context) {
+    final roles = assignableRolesForInvite(ref.read(tenantProfileProvider));
+    if (roles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No roles available for this tenant.')),
+      );
+      return;
+    }
+
     String inviteEmail = '';
-    String inviteRole = _roles.first.$1;
+    var inviteRole = roles.first;
     final formKey = GlobalKey<FormState>();
     final emailController = TextEditingController();
 
@@ -206,21 +155,26 @@ class _WebUserManagementScreenState
                     onChanged: (v) => inviteEmail = v,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  DropdownButtonFormField<String>(
-                    value: inviteRole,
+                  DropdownButtonFormField<UserRole>(
+                    key: ValueKey(inviteRole),
+                    initialValue: inviteRole,
                     decoration: const InputDecoration(
                       labelText: 'Role',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.badge_outlined),
                     ),
-                    items: _roles
+                    items: roles
                         .map(
-                          (r) =>
-                              DropdownMenuItem(value: r.$1, child: Text(r.$1)),
+                          (r) => DropdownMenuItem(
+                            value: r,
+                            child: Text(UserModel.roleDisplayLabel(r)),
+                          ),
                         )
                         .toList(),
                     onChanged: (v) {
-                      setDialogState(() => inviteRole = v ?? _roles.first.$1);
+                      if (v != null) {
+                        setDialogState(() => inviteRole = v);
+                      }
                     },
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -252,7 +206,9 @@ class _WebUserManagementScreenState
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Invitation sent to $inviteEmail!'),
+                      content: Text(
+                        'Invitation sent to $inviteEmail as ${UserModel.roleDisplayLabel(inviteRole)}!',
+                      ),
                       backgroundColor: AppColors.success,
                     ),
                   );
@@ -267,21 +223,27 @@ class _WebUserManagementScreenState
   }
 }
 
-class _User {
-  _User(this.name, this.email, this.role, this.lastLogin, this.status);
-  final String name;
-  final String email;
-  final String role;
-  final String lastLogin;
-  final String status;
-}
-
 class _UsersTab extends StatelessWidget {
   const _UsersTab(this.users);
-  final List<_User> users;
+  final List<WebUserMgmtUser> users;
 
   @override
   Widget build(BuildContext context) {
+    if (users.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Text(
+            'No users yet.',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: NcCard(
@@ -422,34 +384,31 @@ class _UsersTab extends StatelessWidget {
 }
 
 class _RolesTab extends StatelessWidget {
-  const _RolesTab(this.roles);
-  final List<(String, List<String>)> roles;
+  const _RolesTab(this.roles, this.permissions, this.modules);
+  final List<WebUserMgmtRole> roles;
+  final List<String> permissions;
+  final List<String> modules;
 
   @override
   Widget build(BuildContext context) {
-    final permissions = ['View', 'Create', 'Edit', 'Delete', 'Export'];
-    final modules = [
-      'Dashboard',
-      'Students',
-      'Academics',
-      'Fees & Finance',
-      'HR & Staff',
-      'Communication',
-      'Library',
-      'Transport',
-      'Inventory',
-      'Reports',
-    ];
+    if (roles.isEmpty || permissions.isEmpty || modules.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: Text('No role matrix data loaded.'),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: roles.map((role) {
-          final hasFullAccess = role.$2.contains('All Modules');
+          final hasFullAccess = role.modules.contains('All Modules');
           return ExpansionTile(
-            title: Text(role.$1, style: AppTypography.titleSmall),
+            title: Text(role.title, style: AppTypography.titleSmall),
             subtitle: Text(
-              'Modules: ${role.$2.join(", ")}',
+              'Modules: ${role.modules.join(", ")}',
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -491,8 +450,8 @@ class _RolesTab extends StatelessWidget {
                     ...modules.map((m) {
                       final hasAccess =
                           hasFullAccess ||
-                          role.$2.contains(m) ||
-                          role.$2.contains('All Modules');
+                          role.modules.contains(m) ||
+                          role.modules.contains('All Modules');
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
@@ -528,10 +487,25 @@ class _RolesTab extends StatelessWidget {
 
 class _AuditTab extends StatelessWidget {
   const _AuditTab(this.logs);
-  final List<(String, String, String, String, String, bool)> logs;
+  final List<WebUserMgmtAudit> logs;
 
   @override
   Widget build(BuildContext context) {
+    if (logs.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Text(
+            'No login audit entries yet.',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: NcCard(
@@ -591,7 +565,7 @@ class _AuditTab extends StatelessWidget {
               (log) => Container(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: !log.$6
+                  color: !log.success
                       ? AppColors.error.withValues(alpha: 0.05)
                       : null,
                   border: const Border(
@@ -602,12 +576,12 @@ class _AuditTab extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: 3,
-                      child: Text(log.$1, style: AppTypography.labelMedium),
+                      child: Text(log.user, style: AppTypography.labelMedium),
                     ),
                     Expanded(
                       flex: 3,
                       child: Text(
-                        log.$2,
+                        log.time,
                         style: AppTypography.bodySmall.copyWith(
                           fontFamily: 'JetBrainsMono',
                           fontSize: 11,
@@ -617,7 +591,7 @@ class _AuditTab extends StatelessWidget {
                     Expanded(
                       flex: 3,
                       child: Text(
-                        log.$3,
+                        log.device,
                         style: AppTypography.bodySmall.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -626,7 +600,7 @@ class _AuditTab extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: Text(
-                        log.$4,
+                        log.ip,
                         style: AppTypography.bodySmall.copyWith(
                           fontFamily: 'JetBrainsMono',
                         ),
@@ -634,13 +608,15 @@ class _AuditTab extends StatelessWidget {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(log.$5, style: AppTypography.bodySmall),
+                      child: Text(log.location, style: AppTypography.bodySmall),
                     ),
                     Expanded(
                       flex: 2,
                       child: NcChip(
-                        label: log.$6 ? 'Success' : 'Failed',
-                        color: log.$6 ? AppColors.success : AppColors.error,
+                        label: log.success ? 'Success' : 'Failed',
+                        color: log.success
+                            ? AppColors.success
+                            : AppColors.error,
                       ),
                     ),
                   ],

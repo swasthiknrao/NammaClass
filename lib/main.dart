@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/config/tenant_policy_loader.dart';
 import 'core/debug/raw_keyboard_debug_log.dart';
 import 'core/mock/mock_bundle_bootstrap.dart';
 import 'core/mock/mock_data.dart';
@@ -32,6 +33,8 @@ Future<void> main() async {
         AppLogger.instance.error('Persisted bundle load failed', e, st);
         MockData.applyJsonBundle(<String, dynamic>{});
       }
+
+      await TenantPolicyLoader.loadAll();
 
       runApp(
         UncontrolledProviderScope(container: container, child: const App()),

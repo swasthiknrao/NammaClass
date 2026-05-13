@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_glass_theme.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_presets.dart';
 import 'core/providers/theme_mode_provider.dart';
+import 'core/providers/theme_preset_provider.dart';
 import 'features/tenant/providers/tenant_provider.dart';
 import 'routing/app_router.dart';
 
@@ -15,12 +17,18 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final fontScale = ref.watch(fontScaleProvider);
 
-    // Resolved tenant profile drives colors and locale at runtime.
-    // Falls back to default NammaClass palette while the profile is loading.
+    // Selected theme preset overrides tenant colors.
+    // Falls back to tenant/default palette when preset is loading.
+    final presetAsync = ref.watch(themePresetProvider);
+    final presetId = presetAsync.valueOrNull ?? AppThemePresets.oceanBlue.id;
+    final preset = AppThemePresets.byId(presetId);
+
     final tenant = ref.watch(tenantProfileProvider);
-    final primary = Color(tenant.primaryColorValue);
-    final accent = Color(tenant.accentColorValue);
+    final primary = preset.primaryColor;
+    final accent = preset.accentColor;
+    final themeTokens = preset.tokens;
 
     // First language in the tenant's list is the default locale.
     final localeTag = tenant.languages.isNotEmpty
@@ -34,8 +42,16 @@ class App extends ConsumerWidget {
           ? tenant.institutionName
           : 'NammaClass',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.buildLight(primary: primary, accent: accent),
-      darkTheme: AppTheme.buildDark(primary: primary, accent: accent),
+      theme: AppTheme.buildLight(
+        primary: primary,
+        accent: accent,
+        tokens: themeTokens,
+      ),
+      darkTheme: AppTheme.buildDark(
+        primary: primary,
+        accent: accent,
+        tokens: themeTokens,
+      ),
       themeMode: themeMode,
       routerConfig: router,
 
@@ -55,13 +71,18 @@ class App extends ConsumerWidget {
 
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          decoration: BoxDecoration(
-            gradient: isDark
-                ? AppGlassTheme.backgroundGradientDark
-                : AppGlassTheme.backgroundGradientLight,
+        return MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(fontScale)),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: isDark
+                  ? AppGlassTheme.backgroundGradientDark
+                  : AppGlassTheme.backgroundGradientLight,
+            ),
+            child: child ?? const SizedBox.shrink(),
           ),
-          child: child ?? const SizedBox.shrink(),
         );
       },
     );

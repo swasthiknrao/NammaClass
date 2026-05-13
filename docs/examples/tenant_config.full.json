@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "tenant_id": "tenant_demo_full",
+  "institution_name": "Example Composite Institution",
+  "logo_url": "https://cdn.example.com/logo.png",
+  "app_icon_url": "https://cdn.example.com/icon.png",
+  "primary_hex": "1B4F72",
+  "accent_hex": "E67E22",
+  "features": ["transport", "library", "parent_chat"],
+  "timezone": "Asia/Kolkata",
+  "currency": "INR",
+  "languages": ["en", "kn"],
+  "role_pack_ids": ["k12_basic"],
+  "intake": {
+    "institution_types": ["school", "hostel"],
+    "campus_count": 2,
+    "internet_quality": "good"
+  },
+  "entitlement_snapshot": {
+    "schema_version": 1,
+    "snapshot_version": 42,
+    "tenant_id": "tenant_demo_full",
+    "plan_tier": "premium",
+    "modules": {
+      "transport": { "enabled": true, "sku": "MOD_TRANSPORT" },
+      "library": { "enabled": true, "sku": "MOD_LIBRARY" },
+      "parent_chat": { "enabled": true, "sku": "ADDON_PARENT_CHAT" },
+      "hostel": { "enabled": false }
+    },
+    "limits": {
+      "api_requests_per_minute": 600,
+      "storage_gb_included": 100,
+      "sms_segments_per_month": 5000,
+      "ai_tokens_per_month": 250000
+    }
+  },
+  "theme_tokens": {
+    "preset_id": "modern_university",
+    "density": "comfortable",
+    "font_family_primary": "Fraunces",
+    "font_family_body": "Plus Jakarta Sans",
+    "radius_scale": 1.0,
+    "motion_level": "standard",
+    "colors": {
+      "primary": "#1B4F72",
+      "surface": "#FAFAFA",
+      "danger": "#C0392B"
+    }
+  },
+  "nav_graph": [
+    {
+      "id": "home",
+      "label_key": "nav_home",
+      "icon": "home",
+      "route_prefix": "/parent",
+      "roles_allow": ["parent"]
+    },
+    {
+      "id": "bus",
+      "label_key": "nav_bus",
+      "route_prefix": "/parent/bus",
+      "required_feature": "transport",
+      "roles_allow": ["parent"]
+    }
+  ]
+}

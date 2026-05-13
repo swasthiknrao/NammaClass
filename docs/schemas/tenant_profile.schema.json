@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nammaclass.local/schemas/tenant_profile.schema.json",
+  "title": "TenantProfile",
+  "description": "Institution-facing configuration: identity, branding, locales, features, and optional extended bundles (entitlements, theme tokens, navigation graph).",
+  "type": "object",
+  "required": ["schema_version", "tenant_id"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Breaking-change version for this document. Current: 1."
+    },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "institution_name": { "type": "string" },
+    "logo_url": { "type": "string", "format": "uri" },
+    "app_icon_url": { "type": "string", "format": "uri" },
+    "primary_hex": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{6}$",
+      "description": "RGB hex without # (legacy quick brand)"
+    },
+    "accent_hex": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{6}$"
+    },
+    "features": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Subset of NcFeature keys (snake_case). Deprecated in favor of entitlement_snapshot.modules when present."
+    },
+    "timezone": { "type": "string", "examples": ["Asia/Kolkata"] },
+    "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+    "languages": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "intake": {
+      "type": "object",
+      "description": "Onboarding questionnaire (optional).",
+      "properties": {
+        "institution_types": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "campus_count": { "type": "integer", "minimum": 0 },
+        "student_count_band": { "type": "string" },
+        "teacher_count_band": { "type": "string" },
+        "internet_quality": {
+          "type": "string",
+          "enum": ["excellent", "good", "intermittent", "poor"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "role_pack_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Applied role pack identifiers (see role_pack.schema.json)"
+    },
+    "entitlement_snapshot": {
+      "$ref": "entitlement_snapshot.schema.json",
+      "description": "Embedded copy of latest entitlements; may also be fetched via GET /v1/tenants/{id}/entitlements"
+    },
+    "theme_tokens": {
+      "type": "object",
+      "description": "Semantic design tokens; see API_STYLE_GUIDE.md ThemeTokens",
+      "additionalProperties": true
+    },
+    "nav_graph": {
+      "type": "array",
+      "description": "Ordered navigation entries for dynamic shell",
+      "items": {
+        "type": "object",
+        "required": ["id", "route_prefix"],
+        "properties": {
+          "id": { "type": "string" },
+          "label_key": { "type": "string" },
+          "icon": { "type": "string" },
+          "route_prefix": { "type": "string" },
+          "required_feature": { "type": "string" },
+          "roles_allow": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
