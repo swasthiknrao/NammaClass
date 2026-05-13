@@ -159,7 +159,7 @@ class _WebShellState extends ConsumerState<WebShell> {
                     children: [
                       Expanded(
                         child: Text(
-                          _titleFor(currentPath),
+                          _titleFor(currentPath, role),
                           style: AppTypography.headlineMedium,
                         ),
                       ),
@@ -255,7 +255,7 @@ class _WebShellState extends ConsumerState<WebShell> {
               children: [
                 Expanded(
                   child: Text(
-                    _titleFor(currentPath),
+                    _titleFor(currentPath, role),
                     style: AppTypography.headlineSmall,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -350,6 +350,9 @@ class _WebShellState extends ConsumerState<WebShell> {
         return AppColors.teal;
       case UserRole.superAdmin:
         return AppColors.deepPurple;
+      case UserRole.admin:
+      case UserRole.principal:
+        return AppColors.teal;
       default:
         return AppColors.primary;
     }
@@ -368,10 +371,13 @@ class _WebShellState extends ConsumerState<WebShell> {
     return best;
   }
 
-  String _titleFor(String path) {
+  String _titleFor(String path, UserRole? role) {
     if (path == AppRoutes.webPlatformAddCollege) return 'Add college';
     if (path == AppRoutes.webPlatformColleges) return 'Colleges';
     if (path == AppRoutes.webPlatformDashboard || path == '/web/platform') {
+      if (role == UserRole.admin || role == UserRole.principal) {
+        return 'Federation hub';
+      }
       return 'Platform';
     }
     if (path.startsWith('/web/platform/colleges/')) return 'College detail';
@@ -417,6 +423,103 @@ class _WebShellState extends ConsumerState<WebShell> {
       if (path.startsWith(entry.key)) return entry.value;
     }
     return AppConstants.appName;
+  }
+
+  /// Shared long-form web menu for institution operators (admin, principal, teacher).
+  List<_MenuItem> _institutionOpsWebMenu() {
+    return [
+      _MenuItem(AppRoutes.webDashboard, 'Dashboard', Icons.dashboard_outlined),
+      _MenuItem(
+        AppRoutes.webAdmissions,
+        'Admissions',
+        Icons.how_to_reg_outlined,
+      ),
+      _MenuItem(AppRoutes.webStudents, 'Students', Icons.people_outline),
+      _MenuItem(AppRoutes.webAnalytics, 'Analytics', Icons.bar_chart_outlined),
+      _MenuItem(
+        AppRoutes.webTimetable,
+        'Timetable',
+        Icons.table_chart_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webReportCards,
+        'Report Cards',
+        Icons.grading_outlined,
+      ),
+      _MenuItem(AppRoutes.webMarksEntry, 'Marks Entry', Icons.grade_outlined),
+      _MenuItem(
+        AppRoutes.webFeeStructure,
+        'Fee Structure',
+        Icons.list_alt_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webFeeCollection,
+        'Fee Collection',
+        Icons.payments_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webFeeCollect,
+        'Collect Fees',
+        Icons.point_of_sale_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webFinanceLedger,
+        'Finance Ledger',
+        Icons.account_balance_outlined,
+      ),
+      _MenuItem(AppRoutes.webStaff, 'HR & Staff', Icons.badge_outlined),
+      _MenuItem(AppRoutes.webPayroll, 'Payroll', Icons.receipt_long_outlined),
+      _MenuItem(AppRoutes.webNotices, 'Notices', Icons.campaign_outlined),
+      _MenuItem(
+        AppRoutes.webCommunicationAnalytics,
+        'Comms Analytics',
+        Icons.insights_outlined,
+      ),
+      _MenuItem(AppRoutes.webLibrary, 'Library', Icons.local_library_outlined),
+      _MenuItem(
+        AppRoutes.webLibraryReports,
+        'Library Reports',
+        Icons.analytics_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webTransportRoutes,
+        'Transport',
+        Icons.directions_bus_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webTransportLive,
+        'Live Tracking',
+        Icons.gps_fixed_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webInventoryAssets,
+        'Assets',
+        Icons.inventory_2_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webInventoryStock,
+        'Stock & PO',
+        Icons.warehouse_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webReportBuilder,
+        'Report Builder',
+        Icons.summarize_outlined,
+      ),
+      _MenuItem(AppRoutes.webAiTools, 'AI Tools', Icons.auto_awesome_outlined),
+      _MenuItem(AppRoutes.webWebsite, 'Website', Icons.web_outlined),
+      _MenuItem(
+        AppRoutes.webUserManagement,
+        'User Mgmt',
+        Icons.manage_accounts_outlined,
+      ),
+      _MenuItem(
+        AppRoutes.webIntegrations,
+        'Integrations',
+        Icons.cable_outlined,
+      ),
+      _MenuItem(AppRoutes.webSettings, 'Settings', Icons.settings_outlined),
+    ];
   }
 
   List<_MenuItem> _menuItemsFor(UserRole? role) {
@@ -540,100 +643,28 @@ class _WebShellState extends ConsumerState<WebShell> {
         ),
       ];
     }
-    // Admin / Principal / Teacher — full academic & ops menu
-    return [
-      _MenuItem(AppRoutes.webDashboard, 'Dashboard', Icons.dashboard_outlined),
-      _MenuItem(
-        AppRoutes.webAdmissions,
-        'Admissions',
-        Icons.how_to_reg_outlined,
-      ),
-      _MenuItem(AppRoutes.webStudents, 'Students', Icons.people_outline),
-      _MenuItem(AppRoutes.webAnalytics, 'Analytics', Icons.bar_chart_outlined),
-      _MenuItem(
-        AppRoutes.webTimetable,
-        'Timetable',
-        Icons.table_chart_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webReportCards,
-        'Report Cards',
-        Icons.grading_outlined,
-      ),
-      _MenuItem(AppRoutes.webMarksEntry, 'Marks Entry', Icons.grade_outlined),
-      _MenuItem(
-        AppRoutes.webFeeStructure,
-        'Fee Structure',
-        Icons.list_alt_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webFeeCollection,
-        'Fee Collection',
-        Icons.payments_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webFeeCollect,
-        'Collect Fees',
-        Icons.point_of_sale_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webFinanceLedger,
-        'Finance Ledger',
-        Icons.account_balance_outlined,
-      ),
-      _MenuItem(AppRoutes.webStaff, 'HR & Staff', Icons.badge_outlined),
-      _MenuItem(AppRoutes.webPayroll, 'Payroll', Icons.receipt_long_outlined),
-      _MenuItem(AppRoutes.webNotices, 'Notices', Icons.campaign_outlined),
-      _MenuItem(
-        AppRoutes.webCommunicationAnalytics,
-        'Comms Analytics',
-        Icons.insights_outlined,
-      ),
-      _MenuItem(AppRoutes.webLibrary, 'Library', Icons.local_library_outlined),
-      _MenuItem(
-        AppRoutes.webLibraryReports,
-        'Library Reports',
-        Icons.analytics_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webTransportRoutes,
-        'Transport',
-        Icons.directions_bus_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webTransportLive,
-        'Live Tracking',
-        Icons.gps_fixed_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webInventoryAssets,
-        'Assets',
-        Icons.inventory_2_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webInventoryStock,
-        'Stock & PO',
-        Icons.warehouse_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webReportBuilder,
-        'Report Builder',
-        Icons.summarize_outlined,
-      ),
-      _MenuItem(AppRoutes.webAiTools, 'AI Tools', Icons.auto_awesome_outlined),
-      _MenuItem(AppRoutes.webWebsite, 'Website', Icons.web_outlined),
-      _MenuItem(
-        AppRoutes.webUserManagement,
-        'User Mgmt',
-        Icons.manage_accounts_outlined,
-      ),
-      _MenuItem(
-        AppRoutes.webIntegrations,
-        'Integrations',
-        Icons.cable_outlined,
-      ),
-      _MenuItem(AppRoutes.webSettings, 'Settings', Icons.settings_outlined),
-    ];
+    if (role == UserRole.admin || role == UserRole.principal) {
+      return [
+        _MenuItem(
+          AppRoutes.webPlatformDashboard,
+          'Federation hub',
+          Icons.hub_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webPlatformColleges,
+          'College registry',
+          Icons.apartment_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webPlatformAddCollege,
+          'Register college',
+          Icons.domain_add_outlined,
+        ),
+        ..._institutionOpsWebMenu(),
+      ];
+    }
+    // Teacher & other web roles — same day-to-day ops rail (no federation shell)
+    return _institutionOpsWebMenu();
   }
 }
 

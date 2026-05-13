@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/models/user_model.dart';
 import '../../../../core/config/tenant_policy_loader.dart';
 import '../../../../core/platform/platform_revenue_estimate.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,6 +12,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../domain/entities/nc_feature.dart';
 import '../../../../domain/entities/registered_college.dart';
 import '../../../../routing/app_routes.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../tenant/providers/tenant_provider.dart';
 import 'platform_college_registry_provider.dart';
 import 'widgets/live_theme_preview_card.dart';
@@ -23,6 +25,8 @@ class PlatformCollegeDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reg = ref.watch(platformCollegeRegistryProvider);
+    final role = ref.watch(userRoleProvider);
+    final isSuper = role == UserRole.superAdmin;
     final currency = NumberFormat.currency(
       locale: 'en_IN',
       symbol: '₹',
@@ -112,6 +116,50 @@ class PlatformCollegeDetailScreen extends ConsumerWidget {
                     icon: const Icon(Icons.edit_outlined),
                     label: const Text('Add / duplicate flow'),
                   ),
+                  if (isSuper)
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final ok = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Remove from JSON store?'),
+                            content: Text(
+                              'Deletes tenant "$tenantId" from platform_college_registry.json. '
+                              'This cannot be undone from the app.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.error,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('Remove'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (ok != true || !context.mounted) return;
+                        await ref
+                            .read(platformCollegeRegistryProvider.notifier)
+                            .removeCollege(tenantId);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Removed $tenantId from registry JSON.',
+                            ),
+                          ),
+                        );
+                        context.go(AppRoutes.webPlatformColleges);
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Remove from registry'),
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -121,6 +169,7 @@ class PlatformCollegeDetailScreen extends ConsumerWidget {
                 '${college.users.length} users tracked · ${modulesOn.length} modules on · est. rate sum ${currency.format(mrr)} / 1k MAU band',
                 style: AppTypography.bodyMedium,
               ),
+              ..._collegeProfileBlocks(p.intake),
               const SizedBox(height: AppSpacing.lg),
               Text('Theme (live preview)', style: AppTypography.titleSmall),
               const SizedBox(height: AppSpacing.sm),
@@ -219,4 +268,57 @@ class PlatformCollegeDetailScreen extends ConsumerWidget {
         .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
         .join(' ');
   }
+}
+
+/// Rows from [TenantProfile.intake] `college_profile` (same shape as Add college).
+List<Widget> _collegeProfileBlocks(Map<String, dynamic>? intake) {
+  final raw = intake?['college_profile'];
+  if (raw is! Map) return <Widget>[];
+  final map = Map<String, dynamic>.from(raw);
+  final rows = <Widget>[];
+  final sorted = map.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+  for (final e in sorted) {
+    final display = e.value?.toString().trim() ?? '';
+    if (display.isEmpty) continue;
+    rows.add(
+      Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 200,
+              child: Text(
+                e.key.replaceAll('_', ' '),
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            Expanded(child: Text(display, style: AppTypography.bodySmall)),
+          ],
+        ),
+      ),
+    );
+  }
+  if (rows.isEmpty) return <Widget>[];
+  return [
+    const SizedBox(height: AppSpacing.lg),
+    Text('Campus dossier (JSON)', style: AppTypography.titleSmall),
+    const SizedBox(height: AppSpacing.xs),
+    Text(
+      'From profile.intake.college_profile in platform_college_registry.json',
+      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+    ),
+    const SizedBox(height: AppSpacing.sm),
+    Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rows,
+        ),
+      ),
+    ),
+  ];
 }

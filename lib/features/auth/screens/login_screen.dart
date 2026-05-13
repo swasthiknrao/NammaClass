@@ -202,6 +202,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onTap: () => _loginDemo(UserRole.superAdmin),
                         ),
                         _DemoButton(
+                          label: 'Admin',
+                          icon: Icons.admin_panel_settings_outlined,
+                          color: AppColors.primaryDark,
+                          onTap: () => _loginDemo(UserRole.admin),
+                        ),
+                        _DemoButton(
                           label: 'Principal',
                           icon: Icons.school_outlined,
                           color: AppColors.primary,

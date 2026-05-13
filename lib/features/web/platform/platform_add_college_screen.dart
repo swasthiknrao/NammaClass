@@ -28,15 +28,48 @@ class PlatformAddCollegeScreen extends ConsumerStatefulWidget {
 
 class _PlatformAddCollegeScreenState
     extends ConsumerState<PlatformAddCollegeScreen> {
+  static const int _lastStepIndex = 4;
+
   final _nameCtrl = TextEditingController();
   final _tenantIdCtrl = TextEditingController();
   final _rolePackCtrl = TextEditingController();
+  final _legalNameCtrl = TextEditingController();
+  final _shortCodeCtrl = TextEditingController();
+  final _websiteCtrl = TextEditingController();
+  final _contactEmailCtrl = TextEditingController();
+  final _contactPhoneCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
+  final _stateCtrl = TextEditingController();
+  final _postalCtrl = TextEditingController();
+  final _countryCtrl = TextEditingController(text: 'India');
+  final _affiliationCtrl = TextEditingController();
+  final _yearEstablishedCtrl = TextEditingController();
+  final _accreditationCtrl = TextEditingController();
+  final _enrollmentBandCtrl = TextEditingController();
+  final _principalNameCtrl = TextEditingController();
+  final _billingEmailCtrl = TextEditingController();
+  final _registrarOfficeCtrl = TextEditingController();
+  final _taxIdCtrl = TextEditingController();
   Color _primaryColor = AppThemePresets.oceanBlue.primaryColor;
   Color _accentColor = AppThemePresets.oceanBlue.accentColor;
   final Map<NcFeature, bool> _modules = {};
   final Map<String, Set<String>> _moduleSubFeatures = {};
   String _selectedPresetId = AppThemePresets.oceanBlue.id;
   int _step = 0;
+  String _instituteType = 'Affiliated college / aided';
+  String _timezone = 'Asia/Kolkata';
+  String _currency = 'INR';
+
+  /// Stepper state cannot survive a change in [steps] length (e.g. hot reload).
+  /// Bump this string whenever the step count or order changes.
+  static const Object _stepperIdentity = 'platform_add_college_stepper_v5';
+
+  int get _safeCurrentStep {
+    if (_step < 0) return 0;
+    if (_step > _lastStepIndex) return _lastStepIndex;
+    return _step;
+  }
 
   AppThemePreset get _selectedPreset => AppThemePresets.byId(_selectedPresetId);
 
@@ -57,6 +90,14 @@ class _PlatformAddCollegeScreenState
     }
   }
 
+  @override
+  void reassemble() {
+    super.reassemble();
+    // After hot reload, step index may be out of range vs the new Step list.
+    if (_step > _lastStepIndex) _step = _lastStepIndex;
+    if (_step < 0) _step = 0;
+  }
+
   void _selectPreset(AppThemePreset preset) {
     setState(() {
       _selectedPresetId = preset.id;
@@ -70,6 +111,24 @@ class _PlatformAddCollegeScreenState
     _nameCtrl.dispose();
     _tenantIdCtrl.dispose();
     _rolePackCtrl.dispose();
+    _legalNameCtrl.dispose();
+    _shortCodeCtrl.dispose();
+    _websiteCtrl.dispose();
+    _contactEmailCtrl.dispose();
+    _contactPhoneCtrl.dispose();
+    _addressCtrl.dispose();
+    _cityCtrl.dispose();
+    _stateCtrl.dispose();
+    _postalCtrl.dispose();
+    _countryCtrl.dispose();
+    _affiliationCtrl.dispose();
+    _yearEstablishedCtrl.dispose();
+    _accreditationCtrl.dispose();
+    _enrollmentBandCtrl.dispose();
+    _principalNameCtrl.dispose();
+    _billingEmailCtrl.dispose();
+    _registrarOfficeCtrl.dispose();
+    _taxIdCtrl.dispose();
     super.dispose();
   }
 
@@ -140,13 +199,43 @@ class _PlatformAddCollegeScreenState
     });
   }
 
+  Map<String, dynamic> _collegeProfileIntake() {
+    final yearEstablished = int.tryParse(_yearEstablishedCtrl.text.trim());
+    return {
+      'legal_name': _legalNameCtrl.text.trim(),
+      'short_code': _shortCodeCtrl.text.trim().toUpperCase(),
+      'institute_type': _instituteType,
+      'website_url': _websiteCtrl.text.trim(),
+      'contact_email': _contactEmailCtrl.text.trim(),
+      'contact_phone': _contactPhoneCtrl.text.trim(),
+      'address': _addressCtrl.text.trim(),
+      'city': _cityCtrl.text.trim(),
+      'state': _stateCtrl.text.trim(),
+      'postal_code': _postalCtrl.text.trim(),
+      'country': _countryCtrl.text.trim(),
+      'affiliation_board': _affiliationCtrl.text.trim(),
+      'year_established': ?yearEstablished,
+      'accreditation_notes': _accreditationCtrl.text.trim(),
+      'approx_enrollment_band': _enrollmentBandCtrl.text.trim(),
+      'principal_or_head_name': _principalNameCtrl.text.trim(),
+      'billing_email': _billingEmailCtrl.text.trim(),
+      'registrar_office_notes': _registrarOfficeCtrl.text.trim(),
+      'tax_id_or_gstin': _taxIdCtrl.text.trim(),
+      'profile_timezone': _timezone,
+      'profile_currency': _currency,
+    };
+  }
+
   Map<String, dynamic> _buildIntake() {
     final subFeatures = <String, List<String>>{};
     for (final entry in _moduleSubFeatures.entries) {
       if (entry.value.isEmpty) continue;
       subFeatures[entry.key] = entry.value.toList()..sort();
     }
-    return {if (subFeatures.isNotEmpty) 'module_sub_features': subFeatures};
+    return {
+      if (subFeatures.isNotEmpty) 'module_sub_features': subFeatures,
+      'college_profile': _collegeProfileIntake(),
+    };
   }
 
   void _setModuleEnabled(NcFeature feature, bool enabled) {
@@ -183,6 +272,328 @@ class _PlatformAddCollegeScreenState
       decimalDigits: 0,
     );
     return '${currency.format(rate)} / 1k MAU';
+  }
+
+  static const _instituteTypes = <String>[
+    'University',
+    'Deemed university',
+    'Autonomous college',
+    'Affiliated college / aided',
+    'Private unaided college',
+    'Polytechnic / diploma',
+    'ITI / vocational',
+    'Composite campus (school + college)',
+    'Other',
+  ];
+
+  static const _timezoneChoices = <String>[
+    'Asia/Kolkata',
+    'Asia/Dubai',
+    'Asia/Singapore',
+    'Europe/London',
+    'America/New_York',
+    'UTC',
+  ];
+
+  static const _currencyChoices = <String>['INR', 'USD', 'AED', 'EUR', 'GBP'];
+
+  Widget _outlineDropdown({
+    required String label,
+    String? helper,
+    required String value,
+    required List<String> options,
+    required ValueChanged<String> onChanged,
+  }) {
+    final v = options.contains(value) ? value : options.first;
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        helperText: helper,
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsetsDirectional.only(
+          start: 12,
+          end: 8,
+          top: 4,
+          bottom: 4,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: v,
+          items: options
+              .map(
+                (t) => DropdownMenuItem<String>(
+                  value: t,
+                  child: Text(t, overflow: TextOverflow.ellipsis),
+                ),
+              )
+              .toList(),
+          onChanged: (nv) {
+            if (nv != null) onChanged(nv);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCampusStepContent() {
+    Widget row2(Widget a, Widget b) {
+      return LayoutBuilder(
+        builder: (context, c) {
+          if (c.maxWidth >= 720) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: a),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: b),
+              ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              a,
+              const SizedBox(height: AppSpacing.sm),
+              b,
+            ],
+          );
+        },
+      );
+    }
+
+    InputDecoration deco(String label, [String? helper]) => InputDecoration(
+      labelText: label,
+      helperText: helper,
+      border: const OutlineInputBorder(),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.12),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Campus dossier', style: AppTypography.titleMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'These fields are stored under profile.intake.college_profile in '
+                'platform_college_registry.json — mirror them as columns when you '
+                'move to PostgreSQL.',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text('Legal & registry', style: AppTypography.titleSmall),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: _legalNameCtrl,
+          decoration: deco(
+            'Legal / registered name',
+            'As on affiliation letter; can differ from marketing name',
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          TextField(
+            controller: _shortCodeCtrl,
+            decoration: deco(
+              'Short code',
+              '3–8 chars for reports (e.g. RVCE, PESIT)',
+            ),
+            textCapitalization: TextCapitalization.characters,
+            onChanged: (_) => setState(() {}),
+          ),
+          _outlineDropdown(
+            label: 'Institution category',
+            value: _instituteTypes.contains(_instituteType)
+                ? _instituteType
+                : _instituteTypes.last,
+            options: _instituteTypes,
+            onChanged: (v) => setState(() => _instituteType = v),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text('Reachability', style: AppTypography.titleSmall),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: _websiteCtrl,
+          decoration: deco('Website', 'https://…'),
+          keyboardType: TextInputType.url,
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          TextField(
+            controller: _contactEmailCtrl,
+            decoration: deco('Official contact email'),
+            keyboardType: TextInputType.emailAddress,
+            onChanged: (_) => setState(() {}),
+          ),
+          TextField(
+            controller: _contactPhoneCtrl,
+            decoration: deco('Main office phone', '+91 …'),
+            keyboardType: TextInputType.phone,
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text('Postal address', style: AppTypography.titleSmall),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: _addressCtrl,
+          decoration: deco('Street & building'),
+          maxLines: 2,
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          TextField(
+            controller: _cityCtrl,
+            decoration: deco('City / town'),
+            onChanged: (_) => setState(() {}),
+          ),
+          TextField(
+            controller: _stateCtrl,
+            decoration: deco('State / UT'),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          TextField(
+            controller: _postalCtrl,
+            decoration: deco('PIN / postal code'),
+            keyboardType: TextInputType.text,
+            onChanged: (_) => setState(() {}),
+          ),
+          TextField(
+            controller: _countryCtrl,
+            decoration: deco('Country'),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text('Academic footprint', style: AppTypography.titleSmall),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          TextField(
+            controller: _affiliationCtrl,
+            decoration: deco(
+              'Affiliation / board',
+              'VTU, BU, CBSE, autonomous charter…',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          TextField(
+            controller: _yearEstablishedCtrl,
+            decoration: deco('Year established', 'e.g. 1963'),
+            keyboardType: TextInputType.number,
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          TextField(
+            controller: _accreditationCtrl,
+            decoration: deco(
+              'Accreditation & grades',
+              'NAAC A++, NBA, NIRF band…',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          TextField(
+            controller: _enrollmentBandCtrl,
+            decoration: deco(
+              'Approx. student headcount band',
+              'e.g. 800–1.2k UG',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text('Signatories & finance', style: AppTypography.titleSmall),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          TextField(
+            controller: _principalNameCtrl,
+            decoration: deco(
+              'Principal / director (signatory)',
+              'Shown on compliance exports',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          TextField(
+            controller: _billingEmailCtrl,
+            decoration: deco(
+              'Billing / accounts email',
+              'Invoices & renewal notices',
+            ),
+            keyboardType: TextInputType.emailAddress,
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          TextField(
+            controller: _registrarOfficeCtrl,
+            decoration: deco(
+              'Registrar / admin desk notes',
+              'Room no., extension, visiting hours…',
+            ),
+            maxLines: 2,
+            onChanged: (_) => setState(() {}),
+          ),
+          TextField(
+            controller: _taxIdCtrl,
+            decoration: deco(
+              'GSTIN / tax ID',
+              'For future billing integration',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text('ERP defaults', style: AppTypography.titleSmall),
+        const SizedBox(height: AppSpacing.sm),
+        row2(
+          _outlineDropdown(
+            label: 'Default timezone',
+            helper: 'Timetables & attendance',
+            value: _timezoneChoices.contains(_timezone)
+                ? _timezone
+                : _timezoneChoices.first,
+            options: _timezoneChoices,
+            onChanged: (v) => setState(() => _timezone = v),
+          ),
+          _outlineDropdown(
+            label: 'Default currency',
+            helper: 'Fees & canteen',
+            value: _currencyChoices.contains(_currency)
+                ? _currency
+                : _currencyChoices.first,
+            options: _currencyChoices,
+            onChanged: (v) => setState(() => _currency = v),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildModulesStepContent() {
@@ -407,8 +818,8 @@ class _PlatformAddCollegeScreenState
           .where((e) => e.value)
           .map((e) => e.key)
           .toSet(),
-      timezone: 'Asia/Kolkata',
-      currency: 'INR',
+      timezone: _timezone,
+      currency: _currency,
       languages: const ['en'],
       entitlementSnapshot: snap,
       intake: _buildIntake(),
@@ -460,8 +871,8 @@ class _PlatformAddCollegeScreenState
       primaryHex: primary,
       accentHex: accent,
       features: features,
-      timezone: 'Asia/Kolkata',
-      currency: 'INR',
+      timezone: _timezone,
+      currency: _currency,
       languages: const ['en'],
       entitlementSnapshot: snapDraft,
       intake: _buildIntake(),
@@ -490,7 +901,10 @@ class _PlatformAddCollegeScreenState
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Saved $name · snapshot v${snap.snapshotVersion}'),
+        content: Text(
+          'Saved $name · registry JSON (profile.intake.college_profile) · '
+          'snapshot v${snap.snapshotVersion}',
+        ),
       ),
     );
     context.go('/web/platform/colleges/${Uri.encodeComponent(tid)}');
@@ -516,20 +930,21 @@ class _PlatformAddCollegeScreenState
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Step ${_step + 1} of 4 · Data is stored in your local platform registry file until a backend exists.',
+            'Step ${_safeCurrentStep + 1} of ${_lastStepIndex + 1} · Saved to platform_college_registry.json (intake.college_profile) until your API is ready.',
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Stepper(
-            currentStep: _step,
+            key: const ValueKey<Object>(_stepperIdentity),
+            currentStep: _safeCurrentStep,
             physics: const ClampingScrollPhysics(),
             onStepTapped: (int index) {
-              setState(() => _step = index);
+              setState(() => _step = index.clamp(0, _lastStepIndex).toInt());
             },
             onStepContinue: () {
-              if (_step < 3) setState(() => _step++);
+              if (_step < _lastStepIndex) setState(() => _step++);
             },
             onStepCancel: () {
               if (_step > 0) setState(() => _step--);
@@ -545,12 +960,12 @@ class _PlatformAddCollegeScreenState
                         child: const Text('Back'),
                       ),
                     const SizedBox(width: AppSpacing.sm),
-                    if (_step < 3)
+                    if (_step < _lastStepIndex)
                       FilledButton(
                         onPressed: details.onStepContinue,
                         child: const Text('Next'),
                       ),
-                    if (_step == 3)
+                    if (_step == _lastStepIndex)
                       FilledButton(
                         onPressed: _save,
                         child: const Text('Save to registry'),
@@ -597,6 +1012,13 @@ class _PlatformAddCollegeScreenState
                 ),
               ),
               Step(
+                title: const Text('Campus & compliance'),
+                subtitle: const Text(
+                  'Legal identity, address, accreditation — maps cleanly to SQL later',
+                ),
+                content: _buildCampusStepContent(),
+              ),
+              Step(
                 title: const Text('Modules'),
                 subtitle: const Text(
                   'Answer a few setup questions; only real app modules appear.',
@@ -630,6 +1052,53 @@ class _PlatformAddCollegeScreenState
                       style: AppTypography.titleMedium,
                     ),
                     Text(_tenantIdCtrl.text.trim()),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      _instituteType,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    if (_legalNameCtrl.text.trim().isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Legal: ${_legalNameCtrl.text.trim()}',
+                        style: AppTypography.bodySmall,
+                      ),
+                    ],
+                    if (_cityCtrl.text.trim().isNotEmpty ||
+                        _stateCtrl.text.trim().isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        [
+                          _cityCtrl.text.trim(),
+                          _stateCtrl.text.trim(),
+                        ].where((s) => s.isNotEmpty).join(', '),
+                        style: AppTypography.bodySmall,
+                      ),
+                    ],
+                    if (_contactEmailCtrl.text.trim().isNotEmpty ||
+                        _contactPhoneCtrl.text.trim().isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        [
+                          if (_contactEmailCtrl.text.trim().isNotEmpty)
+                            _contactEmailCtrl.text.trim(),
+                          if (_contactPhoneCtrl.text.trim().isNotEmpty)
+                            _contactPhoneCtrl.text.trim(),
+                        ].join(' · '),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      '$_timezone · $_currency',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       '$_enabledModuleCount modules on · ${_selectedPreset.emoji} ${_selectedPreset.name}',

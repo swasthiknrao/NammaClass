@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/models/user_model.dart';
 import '../../../../core/platform/platform_revenue_estimate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../domain/entities/registered_college.dart';
 import '../../../../routing/app_routes.dart';
+import '../../auth/providers/auth_provider.dart';
 import 'platform_college_registry_provider.dart';
 
 /// Super Admin home — KPIs are computed from the persisted college registry + rate card (no random placeholders).
@@ -18,6 +20,8 @@ class SuperAdminDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reg = ref.watch(platformCollegeRegistryProvider);
+    final role = ref.watch(userRoleProvider);
+    final isSuper = role == UserRole.superAdmin;
     final currency = NumberFormat.currency(
       locale: 'en_IN',
       symbol: '₹',
@@ -49,10 +53,41 @@ class SuperAdminDashboardScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Platform control', style: AppTypography.headlineMedium),
-              const SizedBox(height: AppSpacing.xs),
               Text(
-                'Numbers below are computed: active colleges in your registry, user rows you stored per college, estimated monthly rate from enabled modules (₹ per 1k student MAU band from assets/config/module_mrr_inr.json), and provisioning status counts—not mock totals.',
+                isSuper ? 'Platform control' : 'Federation hub',
+                style: AppTypography.headlineMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              if (!isSuper)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.teal.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Text(
+                        'Institution operator view — you keep the full academic web shell '
+                        'plus this federation rail. Registry JSON is shared: you can list, '
+                        'refresh, and register colleges. Super Admin alone removes rows or '
+                        'merges demo seeds.',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              Text(
+                'Numbers below are read from platform_college_registry.json: '
+                'colleges in that file, user rows per college, estimated MRR from '
+                'enabled modules (₹ per 1k MAU from assets/config/module_mrr_inr.json), '
+                'and provisioning status counts.',
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -74,7 +109,7 @@ class SuperAdminDashboardScreen extends ConsumerWidget {
                         icon: Icons.apartment_outlined,
                         label: 'Colleges',
                         value: '$institutions',
-                        subtitle: 'In local registry',
+                        subtitle: 'Rows in JSON registry file',
                         color: AppColors.primary,
                       ),
                       _KpiTile(

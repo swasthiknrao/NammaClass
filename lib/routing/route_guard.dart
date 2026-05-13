@@ -62,7 +62,14 @@ String? routeGuard(String path, AuthState authState, [TenantProfile? tenant]) {
   }
 
   if (path == '/web/platform' || path.startsWith('/web/platform/')) {
-    if (role != UserRole.superAdmin) return _roleHome(role);
+    const platformRoles = {
+      UserRole.superAdmin,
+      UserRole.admin,
+      UserRole.principal,
+    };
+    if (role == null || !platformRoles.contains(role)) {
+      return _roleHome(role);
+    }
     return _checkFeatureGate(path, role, tenant);
   }
 
