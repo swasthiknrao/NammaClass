@@ -1,3 +1,4 @@
+import '../core/auth/portal_capabilities.dart';
 import '../core/models/user_model.dart';
 import '../domain/entities/tenant_profile.dart';
 import '../features/auth/providers/auth_provider.dart';
@@ -35,6 +36,7 @@ const _sharedAuthPaths = {
   AppRoutes.hostel,
   AppRoutes.events,
   AppRoutes.search,
+  AppRoutes.nammaAi,
   '/profile',
 };
 
@@ -62,11 +64,7 @@ String? routeGuard(String path, AuthState authState, [TenantProfile? tenant]) {
   }
 
   if (path == '/web/platform' || path.startsWith('/web/platform/')) {
-    const platformRoles = {
-      UserRole.superAdmin,
-      UserRole.admin,
-      UserRole.principal,
-    };
+    const platformRoles = {UserRole.superAdmin, UserRole.admin};
     if (role == null || !platformRoles.contains(role)) {
       return _roleHome(role);
     }
@@ -85,6 +83,14 @@ String? routeGuard(String path, AuthState authState, [TenantProfile? tenant]) {
       if (role == null || !entry.value.contains(role)) {
         // Role not authorised for this path section — bounce to their home
         return _roleHome(role);
+      }
+      if (PrincipalPortalPolicy.isPrincipal(role) &&
+          PrincipalPortalPolicy.shouldRedirectPrincipalFromAdmin(path)) {
+        return AppRoutes.adminHome;
+      }
+      if (path.startsWith(AppRoutes.principalStudentContacts) &&
+          role != UserRole.principal) {
+        return AppRoutes.adminHome;
       }
       // Role passes — still check feature subscription
       return _checkFeatureGate(path, role, tenant);
@@ -138,7 +144,7 @@ String _roleHome(UserRole? role) {
     case UserRole.staff:
       return AppRoutes.staffHome;
     case UserRole.driver:
-      return AppRoutes.driverRoute;
+      return AppRoutes.driverHome;
     case UserRole.librarian:
       return AppRoutes.librarianCounter;
     case UserRole.warden:

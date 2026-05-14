@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/auth/portal_capabilities.dart';
 import '../core/constants/app_constants.dart';
 import '../core/models/user_model.dart';
 import '../core/theme/app_colors.dart';
@@ -16,6 +17,8 @@ import '../domain/entities/nc_feature.dart';
 import '../domain/entities/tenant_profile.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/tenant/providers/tenant_provider.dart';
+import 'namma_ai/widgets/namma_ai_draggable_fab.dart';
+import 'namma_ai/widgets/namma_ai_panel_overlay.dart';
 import '../routing/app_routes.dart';
 
 class MainShell extends ConsumerStatefulWidget {
@@ -47,30 +50,37 @@ class _MainShellState extends ConsumerState<MainShell> {
         hasPersistentTopBar: true,
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          body: Row(
+          body: Stack(
+            fit: StackFit.expand,
             children: [
-              _DesktopSidebar(
-                destinations: destinations,
-                selectedIndex: selectedIndex,
-                collapsed: _sidebarCollapsed,
-                onTap: (i) => context.go(destinations[i].route),
-                onToggleCollapse: () =>
-                    setState(() => _sidebarCollapsed = !_sidebarCollapsed),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    _DesktopTopBar(
-                      title: _titleFor(currentPath),
-                      onSearchTap: () => context.go(AppRoutes.search),
-                      profileRoute: _profileRouteFor(role),
-                      user: user,
+              Row(
+                children: [
+                  _DesktopSidebar(
+                    destinations: destinations,
+                    selectedIndex: selectedIndex,
+                    collapsed: _sidebarCollapsed,
+                    onTap: (i) => context.go(destinations[i].route),
+                    onToggleCollapse: () =>
+                        setState(() => _sidebarCollapsed = !_sidebarCollapsed),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _DesktopTopBar(
+                          title: _titleFor(currentPath, role),
+                          onSearchTap: () => context.go(AppRoutes.search),
+                          profileRoute: _profileRouteFor(role),
+                          user: user,
+                        ),
+                        const Divider(height: 1),
+                        Expanded(child: widget.child),
+                      ],
                     ),
-                    const Divider(height: 1),
-                    Expanded(child: widget.child),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              const NammaAiDraggableFab(dockAboveBottomNav: false),
+              const NammaAiPanelOverlay(),
             ],
           ),
         ),
@@ -96,7 +106,14 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: widget.child,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          widget.child,
+          const NammaAiDraggableFab(dockAboveBottomNav: true),
+          const NammaAiPanelOverlay(),
+        ],
+      ),
       bottomNavigationBar: _LayoutAwareBottomNav(
         destinations: destinations,
         navDestinations: navDestinations,
@@ -187,6 +204,12 @@ class _MainShellState extends ConsumerState<MainShell> {
             Icons.groups,
           ),
           _NavDest(
+            AppRoutes.teacherMessages,
+            'Comms',
+            Icons.campaign_outlined,
+            Icons.campaign,
+          ),
+          _NavDest(
             AppRoutes.teacherProfile,
             'Profile',
             Icons.person_outline,
@@ -275,6 +298,12 @@ class _MainShellState extends ConsumerState<MainShell> {
         ].take(5).toList();
       case UserRole.driver:
         return [
+          _NavDest(
+            AppRoutes.driverHome,
+            'Today',
+            Icons.dashboard_outlined,
+            Icons.dashboard,
+          ),
           _NavDest(
             AppRoutes.driverRoute,
             'Route',
@@ -397,6 +426,12 @@ class _MainShellState extends ConsumerState<MainShell> {
             Icons.approval,
           ),
           _NavDest(
+            AppRoutes.hodComms,
+            'Comms',
+            Icons.campaign_outlined,
+            Icons.campaign,
+          ),
+          _NavDest(
             AppRoutes.hodProfile,
             'Profile',
             Icons.person_outline,
@@ -436,37 +471,37 @@ class _MainShellState extends ConsumerState<MainShell> {
             Icons.integration_instructions,
           ),
         ];
-      default: // admin / principal / support
+      case UserRole.principal:
+        return InstitutionMobileNavCatalog.principalDestinations()
+            .map((e) => _NavDest(e.route, e.label, e.outline, e.filled))
+            .toList();
+      case UserRole.admin:
+      case UserRole.support:
+        return InstitutionMobileNavCatalog.adminSupportDestinations()
+            .map((e) => _NavDest(e.route, e.label, e.outline, e.filled))
+            .toList();
+      case UserRole.accountant:
         return [
           _NavDest(
-            AppRoutes.adminHome,
-            'Dashboard',
-            Icons.dashboard_outlined,
-            Icons.dashboard,
+            AppRoutes.webAccountantDashboard,
+            'Finance',
+            Icons.account_balance_outlined,
+            Icons.account_balance,
           ),
           _NavDest(
-            AppRoutes.adminApprovals,
-            'Approvals',
-            Icons.approval_outlined,
-            Icons.approval,
-          ),
-          _NavDest(
-            AppRoutes.adminBroadcast,
-            'Broadcast',
-            Icons.campaign_outlined,
-            Icons.campaign,
-          ),
-          _NavDest(
-            AppRoutes.adminPeople,
-            'People',
-            Icons.people_outline,
-            Icons.people,
-          ),
-          _NavDest(
-            AppRoutes.adminProfile,
+            AppRoutes.profile,
             'Profile',
             Icons.person_outline,
             Icons.person,
+          ),
+        ];
+      case null:
+        return [
+          _NavDest(
+            AppRoutes.login,
+            'Sign in',
+            Icons.login_outlined,
+            Icons.login,
           ),
         ];
     }
@@ -479,7 +514,22 @@ class _MainShellState extends ConsumerState<MainShell> {
     return 0;
   }
 
-  static String _titleFor(String path) {
+  static String _titleFor(String path, UserRole? role) {
+    if (path.startsWith(AppRoutes.principalStudentContacts)) {
+      return 'Guardian contacts';
+    }
+    if (path == AppRoutes.adminBroadcast && role == UserRole.principal) {
+      return 'Principal pulse';
+    }
+    if (path.startsWith('${AppRoutes.adminFaculty}/')) {
+      final suffix = path.substring(AppRoutes.adminFaculty.length + 1);
+      if (suffix.isNotEmpty && suffix != 'add') {
+        return 'Team member';
+      }
+    }
+    if (path == AppRoutes.adminFaculty && role == UserRole.principal) {
+      return 'Team directory';
+    }
     const titles = <String, String>{
       AppRoutes.parentHome: 'Home',
       AppRoutes.parentAttendance: 'Attendance',
@@ -499,6 +549,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       AppRoutes.teacherAttendance: 'Attendance',
       AppRoutes.teacherDiary: 'Diary & Homework',
       AppRoutes.teacherStudents: 'My Students',
+      AppRoutes.teacherMessages: 'School Pulse',
       AppRoutes.teacherProfile: 'Profile',
       AppRoutes.teacherLeaveApply: 'Apply Leave',
       AppRoutes.teacherLeaveApprovals: 'Leave Approvals',
@@ -510,15 +561,14 @@ class _MainShellState extends ConsumerState<MainShell> {
       AppRoutes.adminHome: 'Dashboard',
       AppRoutes.adminApprovals: 'Approvals',
       AppRoutes.adminBroadcast: 'Broadcast',
-      AppRoutes.adminPeople: 'People',
+      AppRoutes.principalStudentContacts: 'Guardian contacts',
       AppRoutes.adminAddStaff: 'Add Staff',
-      AppRoutes.adminAddUser: 'Add user',
       AppRoutes.adminProfile: 'Profile',
       AppRoutes.adminTimetableSettings: 'Timetable settings',
       AppRoutes.adminTimetableEdit: 'Timetable (day)',
       AppRoutes.adminTimetableView: 'Timetable',
-      AppRoutes.adminFacultyAdd: 'Add faculty',
-      AppRoutes.adminFaculty: 'Faculty management',
+      AppRoutes.adminFacultyAdd: 'Onboard team member',
+      AppRoutes.adminFaculty: 'Team roster',
       AppRoutes.adminUnavailabilityApprovals: 'Cover requests',
       AppRoutes.teacherTimetable: 'My timetable',
       AppRoutes.teacherUnavailability: 'Unavailability',
@@ -527,6 +577,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       AppRoutes.profile: 'Profile',
       AppRoutes.events: 'Events',
       AppRoutes.search: 'Search',
+      AppRoutes.nammaAi: 'Namma AI',
       AppRoutes.staffHome: 'Home',
       AppRoutes.staffAttendance: 'Attendance',
       AppRoutes.staffLeaves: 'Leaves',
@@ -534,9 +585,13 @@ class _MainShellState extends ConsumerState<MainShell> {
       AppRoutes.staffTraining: 'Training',
       AppRoutes.staffCanteen: 'Food',
       AppRoutes.staffProfile: 'Profile',
+      AppRoutes.driverHome: 'Today',
       AppRoutes.driverRoute: 'Route',
       AppRoutes.driverStudents: 'Students',
       AppRoutes.driverProfile: 'Profile',
+      AppRoutes.driverTripHistory: 'Trip history',
+      AppRoutes.driverVehicleChecklist: 'Vehicle checklist',
+      AppRoutes.driverIncidentReport: 'Incident report',
       AppRoutes.librarianCounter: 'Counter',
       AppRoutes.librarianCatalog: 'Catalog',
       AppRoutes.librarianReservations: 'Reservations',
@@ -545,11 +600,16 @@ class _MainShellState extends ConsumerState<MainShell> {
       AppRoutes.wardenRollcall: 'Roll Call',
       AppRoutes.wardenVisitors: 'Visitors',
       AppRoutes.wardenOutpass: 'Outpass',
+      AppRoutes.wardenDining: 'Mess & dining',
+      AppRoutes.wardenRooms: 'Rooms',
+      AppRoutes.wardenNightPatrol: 'Night patrol',
+      AppRoutes.wardenConcierge: 'Concierge',
       AppRoutes.wardenProfile: 'Profile',
       AppRoutes.canteenCounter: 'Counter',
       AppRoutes.canteenManage: 'Manage',
       AppRoutes.canteenProfile: 'Profile',
       AppRoutes.hodHome: 'Home',
+      AppRoutes.hodComms: 'School Pulse',
       AppRoutes.hodProfile: 'Profile',
       AppRoutes.webTimetable: 'Timetable',
       AppRoutes.webMarksEntry: 'Marks',
@@ -564,8 +624,9 @@ class _MainShellState extends ConsumerState<MainShell> {
   static Color _accentForRole(UserRole? role) {
     switch (role) {
       case UserRole.admin:
-      case UserRole.principal:
         return AppColors.primary;
+      case UserRole.principal:
+        return AppColors.deepPurple;
       case UserRole.teacher:
         return AppColors.teal;
       case UserRole.parent:

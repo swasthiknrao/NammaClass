@@ -107,6 +107,12 @@ int _i(dynamic v) => (v as num).toInt();
 
 double _d(dynamic v) => (v as num).toDouble();
 
+double? _dn(dynamic v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  return double.tryParse('$v');
+}
+
 bool _b(dynamic v) => v as bool;
 
 String _s(dynamic v) => v as String;
@@ -138,6 +144,11 @@ Map<String, List<String>> _parseDriverStopStudents(dynamic raw) {
     if (v is List) out['$k'] = v.map((e) => '$e').toList();
   });
   return out;
+}
+
+List<Map<String, dynamic>> _jsonToMapList(dynamic raw) {
+  if (raw is! List) return [];
+  return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
 }
 
 // ── fromJson ────────────────────────────────────────────────────────────────
@@ -215,6 +226,11 @@ MockChatThread _chatThreadFromJson(Map<String, dynamic> j) => MockChatThread(
   unreadCount: _i(j['unread_count'] ?? j['unreadCount'] ?? 0),
 );
 
+List<String> _listOfStrings(dynamic raw) {
+  if (raw is! List) return const [];
+  return raw.map((e) => '$e').where((s) => s.isNotEmpty).toList();
+}
+
 MockNotice _noticeFromJson(Map<String, dynamic> j) => MockNotice(
   id: _s(j['id']),
   title: _s(j['title']),
@@ -224,6 +240,14 @@ MockNotice _noticeFromJson(Map<String, dynamic> j) => MockNotice(
   isRead: _b(j['is_read'] ?? j['isRead'] ?? false),
   hasAttachment: _b(j['has_attachment'] ?? j['hasAttachment'] ?? false),
   targetUserId: _sn(j['target_user_id'] ?? j['targetUserId']),
+  senderUserId: _sn(j['sender_user_id'] ?? j['senderUserId']),
+  senderName: _sn(j['sender_name'] ?? j['senderName']),
+  audienceRoleKeys: _listOfStrings(
+    j['audience_role_keys'] ?? j['audienceRoleKeys'],
+  ),
+  audienceClassSection: _sn(
+    j['audience_class_section'] ?? j['audienceClassSection'],
+  ),
 );
 
 MockPeriod _periodFromJson(Map<String, dynamic> j) => MockPeriod(
@@ -262,8 +286,10 @@ MockStaffMember _staffFromJson(Map<String, dynamic> j) => MockStaffMember(
   role: _s(j['role']),
   department: _s(j['department']),
   phone: _s(j['phone']),
-  email: _s(j['email']),
+  email: _sn(j['email']),
   salaryCTC: _i(j['salary_ctc'] ?? j['salaryCTC']),
+  employeeCode: _sn(j['employee_code'] ?? j['employeeCode']),
+  campusBlock: _sn(j['campus_block'] ?? j['campusBlock']),
 );
 
 MockCanteenItem _canteenItemFromJson(Map<String, dynamic> j) => MockCanteenItem(
@@ -462,6 +488,8 @@ MockBusStop _busStopFromJson(Map<String, dynamic> j) => MockBusStop(
   eta: _s(j['eta']),
   studentCount: _i(j['student_count'] ?? j['studentCount']),
   isVisited: _b(j['is_visited'] ?? j['isVisited'] ?? false),
+  lat: _dn(j['lat'] ?? j['latitude']),
+  lng: _dn(j['lng'] ?? j['longitude']),
 );
 
 LibraryBorrowerType _borrowerType(dynamic v) => '$v'.toLowerCase() == 'staff'
@@ -675,6 +703,10 @@ Map<String, dynamic> _noticeToJson(MockNotice n) => {
   'is_read': n.isRead,
   'has_attachment': n.hasAttachment,
   'target_user_id': n.targetUserId,
+  'sender_user_id': n.senderUserId,
+  'sender_name': n.senderName,
+  'audience_role_keys': n.audienceRoleKeys,
+  'audience_class_section': n.audienceClassSection,
 };
 
 Map<String, dynamic> _periodToJson(MockPeriod p) => {
@@ -709,6 +741,8 @@ Map<String, dynamic> _staffToJson(MockStaffMember s) => {
   'phone': s.phone,
   'email': s.email,
   'salary_ctc': s.salaryCTC,
+  'employee_code': s.employeeCode,
+  'campus_block': s.campusBlock,
 };
 
 Map<String, dynamic> _canteenItemToJson(MockCanteenItem i) => {
@@ -892,6 +926,8 @@ Map<String, dynamic> _busStopToJson(MockBusStop b) => {
   'eta': b.eta,
   'student_count': b.studentCount,
   'is_visited': b.isVisited,
+  if (b.lat != null) 'lat': b.lat,
+  if (b.lng != null) 'lng': b.lng,
 };
 
 Map<String, dynamic> _bookIssueToJson(MockBookIssue i) => {
@@ -1016,6 +1052,95 @@ class MockData {
     _bundle = _bundle.copyWith(students: [..._bundle.students, student]);
   }
 
+  /// Replace an existing student by [id], or append if missing.
+  static void upsertStudent(MockStudent student) {
+    final list = [..._bundle.students];
+    final i = list.indexWhere((s) => s.id == student.id);
+    if (i < 0) {
+      appendStudent(student);
+      return;
+    }
+    list[i] = student;
+    _bundle = _bundle.copyWith(students: list);
+  }
+
+  /// Shallow-merge keys into [busInfo] (transport / live bus narrative).
+  static void mergeBusInfo(Map<String, dynamic> patch) {
+    final merged = Map<String, dynamic>.from(_bundle.busInfo);
+    merged.addAll(patch);
+    _bundle = _bundle.copyWith(busInfo: merged);
+  }
+
+  static void appendDriverTripHistory(Map<String, dynamic> entry) {
+    driverTripHistory = [
+      ...driverTripHistory,
+      Map<String, dynamic>.from(entry),
+    ];
+  }
+
+  static void setDriverVehicleChecklistItem(String key, bool value) {
+    driverVehicleChecklist[key] = value;
+  }
+
+  static void _ensureDriverVehicleChecklistDefaults() {
+    const keys = <String>[
+      'tyres',
+      'lights',
+      'brakes',
+      'mirrors',
+      'fire_extinguisher',
+      'first_aid',
+    ];
+    for (final k in keys) {
+      driverVehicleChecklist.putIfAbsent(k, () => false);
+    }
+  }
+
+  static void _ensureWardenPatrolDefaults() {
+    const keys = <String>[
+      'gates_locked',
+      'mess_kitchen_closed',
+      'fire_panel_ok',
+      'common_area_lights',
+      'silent_hours_announced',
+      'first_aid_unlocked',
+    ];
+    for (final k in keys) {
+      wardenPatrolChecklist.putIfAbsent(k, () => false);
+    }
+  }
+
+  static void mergeHostelDeskInfo(Map<String, dynamic> patch) {
+    hostelDeskInfo = {...Map<String, dynamic>.from(hostelDeskInfo), ...patch};
+  }
+
+  static void setWardenPatrolItem(String key, bool value) {
+    wardenPatrolChecklist[key] = value;
+  }
+
+  static void appendWardenConciergeLog(Map<String, dynamic> entry) {
+    wardenConciergeLog = [
+      ...wardenConciergeLog,
+      Map<String, dynamic>.from(entry),
+    ];
+  }
+
+  static void patchWardenDiningRound(String id, Map<String, dynamic> patch) {
+    final list = [...wardenDiningRounds];
+    final i = list.indexWhere((e) => e['id'] == id);
+    if (i < 0) return;
+    list[i] = {...Map<String, dynamic>.from(list[i]), ...patch};
+    wardenDiningRounds = list;
+  }
+
+  static void patchWardenRoom(String roomNo, Map<String, dynamic> patch) {
+    final list = [...wardenRoomHousekeeping];
+    final i = list.indexWhere((e) => e['room_no'] == roomNo);
+    if (i < 0) return;
+    list[i] = {...Map<String, dynamic>.from(list[i]), ...patch};
+    wardenRoomHousekeeping = list;
+  }
+
   static List<MockFeeInstallment> get fees => _bundle.fees;
   static List<MockNotice> get notices => _bundle.notices;
   static List<MockChatThread> get chatThreads => _bundle.chatThreads;
@@ -1057,6 +1182,69 @@ class MockData {
   static List<MockAdmissionEnquiry> admissionEnquiries = [];
   static List<MockAsset> assets = [];
   static List<MockStaffLeaveRequest> staffLeaveRequests = [];
+
+  /// Students marked absent for transport today (names as roster keys).
+  static List<String> driverAbsentStudentNames = [];
+
+  /// Completed / submitted trip rows for driver audit trail.
+  static List<Map<String, dynamic>> driverTripHistory = [];
+
+  /// Pre-trip vehicle checklist item id → done.
+  static Map<String, bool> driverVehicleChecklist = {};
+
+  /// Front-desk copy: property tagline, mess highlight, quiet hours (demo JSON).
+  static Map<String, dynamic> hostelDeskInfo = {};
+
+  /// Mess / dining “covers” — meal window, expected boarders, served count.
+  static List<Map<String, dynamic>> wardenDiningRounds = [];
+
+  /// Lodge-style room turnover & linen (demo rows).
+  static List<Map<String, dynamic>> wardenRoomHousekeeping = [];
+
+  /// Night patrol / curfew checklist.
+  static Map<String, bool> wardenPatrolChecklist = {};
+
+  /// Concierge shift log lines.
+  static List<Map<String, dynamic>> wardenConciergeLog = [];
+
+  /// Accountant finance suite — snapshot KPIs (bank, PF/ESI chips, trend, etc.).
+  static Map<String, dynamic> financeSnapshot = {};
+
+  /// Ledger income lines (`period` = YYYY-MM, `amount_paise`, `booked_at`, `label`).
+  static List<Map<String, dynamic>> financeIncomeLines = [];
+
+  /// Ledger expense lines.
+  static List<Map<String, dynamic>> financeExpenseLines = [];
+
+  /// Payables / approval pipeline (`status`, `vendor`, `budget_category`, …).
+  static List<Map<String, dynamic>> financeExpensePipeline = [];
+
+  /// Control-tower exceptions (bounced pay, holds, unmatched bank).
+  static List<Map<String, dynamic>> financeExceptions = [];
+
+  /// Recent collection events for dashboard feed.
+  static List<Map<String, dynamic>> financeCollectionEvents = [];
+
+  /// Pending fee exposure by class section (`class_section`, `amount_paise`).
+  static List<Map<String, dynamic>> financePendingByClass = [];
+
+  /// Budget vs actual bars for expenses screen.
+  static List<Map<String, dynamic>> financeBudgetVsActual = [];
+
+  /// Month-close checklist rows (`id`, `label`, `done`).
+  static List<Map<String, dynamic>> financeMonthCloseItems = [];
+
+  static void mergeFinanceSnapshot(Map<String, dynamic> patch) {
+    financeSnapshot = {...Map<String, dynamic>.from(financeSnapshot), ...patch};
+  }
+
+  static void patchFinanceMonthCloseItem(String id, bool done) {
+    final list = [...financeMonthCloseItems];
+    final i = list.indexWhere((e) => e['id'] == id);
+    if (i < 0) return;
+    list[i] = {...Map<String, dynamic>.from(list[i]), 'done': done};
+    financeMonthCloseItems = list;
+  }
 
   /// Replace all in-memory datasets from [json]. Missing keys → empty lists/maps.
   static void applyJsonBundle(Map<String, dynamic> json) {
@@ -1121,6 +1309,53 @@ class MockData {
       json['staff_leave_requests'],
       _staffLeaveReqFromJson,
     );
+
+    driverAbsentStudentNames =
+        (json['driver_absent_students'] as List?)?.map((e) => '$e').toList() ??
+        [];
+    driverTripHistory =
+        (json['driver_trip_history'] as List?)
+            ?.whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList() ??
+        [];
+    driverVehicleChecklist.clear();
+    final rawVc = json['driver_vehicle_checklist'];
+    if (rawVc is Map) {
+      rawVc.forEach((k, v) {
+        driverVehicleChecklist['$k'] =
+            v == true || v == 1 || '$v'.toLowerCase() == 'true';
+      });
+    }
+    _ensureDriverVehicleChecklistDefaults();
+
+    hostelDeskInfo = Map<String, dynamic>.from(
+      json['hostel_desk'] as Map? ?? {},
+    );
+    wardenDiningRounds = _jsonToMapList(json['warden_dining']);
+    wardenRoomHousekeeping = _jsonToMapList(json['warden_rooms']);
+    wardenConciergeLog = _jsonToMapList(json['warden_concierge_log']);
+    wardenPatrolChecklist.clear();
+    final rawPatrol = json['warden_patrol'];
+    if (rawPatrol is Map) {
+      rawPatrol.forEach((k, v) {
+        wardenPatrolChecklist['$k'] =
+            v == true || v == 1 || '$v'.toLowerCase() == 'true';
+      });
+    }
+    _ensureWardenPatrolDefaults();
+
+    financeSnapshot = Map<String, dynamic>.from(
+      json['finance_snapshot'] as Map? ?? {},
+    );
+    financeIncomeLines = _jsonToMapList(json['finance_income_lines']);
+    financeExpenseLines = _jsonToMapList(json['finance_expense_lines']);
+    financeExpensePipeline = _jsonToMapList(json['finance_expense_pipeline']);
+    financeExceptions = _jsonToMapList(json['finance_exceptions']);
+    financeCollectionEvents = _jsonToMapList(json['finance_collection_events']);
+    financePendingByClass = _jsonToMapList(json['finance_pending_by_class']);
+    financeBudgetVsActual = _jsonToMapList(json['finance_budget_vs_actual']);
+    financeMonthCloseItems = _jsonToMapList(json['finance_month_close_items']);
   }
 
   /// Snapshot for disk persistence ([MockBundlePersistence]) / export tooling.
@@ -1179,6 +1414,49 @@ class MockData {
       'assets': assets.map(_assetToJson).toList(),
       'staff_leave_requests': staffLeaveRequests
           .map(_staffLeaveReqToJson)
+          .toList(),
+      'driver_absent_students': [...driverAbsentStudentNames],
+      'driver_trip_history': driverTripHistory
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'driver_vehicle_checklist': Map<String, bool>.from(
+        driverVehicleChecklist,
+      ),
+      'hostel_desk': Map<String, dynamic>.from(hostelDeskInfo),
+      'warden_dining': wardenDiningRounds
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'warden_rooms': wardenRoomHousekeeping
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'warden_patrol': Map<String, bool>.from(wardenPatrolChecklist),
+      'warden_concierge_log': wardenConciergeLog
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'finance_snapshot': Map<String, dynamic>.from(financeSnapshot),
+      'finance_income_lines': financeIncomeLines
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'finance_expense_lines': financeExpenseLines
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'finance_expense_pipeline': financeExpensePipeline
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'finance_exceptions': financeExceptions
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'finance_collection_events': financeCollectionEvents
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'finance_pending_by_class': financePendingByClass
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'finance_budget_vs_actual': financeBudgetVsActual
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      'finance_month_close_items': financeMonthCloseItems
+          .map((e) => Map<String, dynamic>.from(e))
           .toList(),
     };
   }

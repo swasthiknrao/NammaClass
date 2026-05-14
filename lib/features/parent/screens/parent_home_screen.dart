@@ -18,8 +18,11 @@ import '../../../shared/widgets/layout/constrained_content.dart';
 import '../../../shared/widgets/layout/responsive_builder.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_shimmer.dart';
+import '../../../domain/entities/nc_feature.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../features/tenant/providers/tenant_provider.dart';
 import '../../../routing/app_routes.dart';
+import '../../namma_ai/providers/namma_ai_panel_provider.dart';
 import '../providers/parent_providers.dart';
 
 class ParentHomeScreen extends ConsumerWidget {
@@ -39,6 +42,7 @@ class ParentHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final tenant = ref.watch(tenantProfileProvider);
     final child = ref.watch(parentChildProvider);
     final feesAsync = ref.watch(parentFeesProvider);
     final noticesAsync = ref.watch(parentNoticesProvider);
@@ -270,6 +274,16 @@ class ParentHomeScreen extends ConsumerWidget {
                                 () => context.go(AppRoutes.parentLeaveApply),
                                 itemWidth,
                               ),
+                              if (tenant.hasFeature(NcFeature.aiInsights))
+                                _QuickAction(
+                                  Icons.auto_awesome,
+                                  'Namma AI',
+                                  AppColors.accent,
+                                  () => ref
+                                      .read(nammaAiPanelProvider.notifier)
+                                      .open(),
+                                  itemWidth,
+                                ),
                               _QuickAction(
                                 Icons.directions_bus,
                                 'Bus',
@@ -800,10 +814,11 @@ class _DesktopNarrowLayout extends StatelessWidget {
   }
 }
 
-class _DesktopQuickActionsGrid extends StatelessWidget {
+class _DesktopQuickActionsGrid extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    final actions = [
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tenant = ref.watch(tenantProfileProvider);
+    var actions = <(IconData, String, Color, String)>[
       (
         Icons.calendar_month,
         'Attendance',
@@ -824,6 +839,14 @@ class _DesktopQuickActionsGrid extends StatelessWidget {
       (Icons.restaurant, 'Canteen', AppColors.success, AppRoutes.parentCanteen),
       (Icons.hotel, 'Hostel', AppColors.teal, AppRoutes.hostel),
     ];
+    if (tenant.hasFeature(NcFeature.aiInsights)) {
+      actions.add((
+        Icons.auto_awesome,
+        'Namma AI',
+        AppColors.accent,
+        AppRoutes.nammaAi,
+      ));
+    }
     return NcCard(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -858,6 +881,9 @@ class _DesktopQuickActionsGrid extends StatelessWidget {
                 label: a.$2,
                 color: a.$3,
                 route: a.$4,
+                onPressed: a.$4 == AppRoutes.nammaAi
+                    ? () => ref.read(nammaAiPanelProvider.notifier).open()
+                    : null,
               );
             }).toList(),
           ),
@@ -873,18 +899,20 @@ class _DesktopQuickActionTile extends StatelessWidget {
     required this.label,
     required this.color,
     required this.route,
+    this.onPressed,
   });
   final IconData icon;
   final String label;
   final Color color;
   final String route;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => context.go(route),
+        onTap: onPressed ?? () => context.go(route),
         borderRadius: BorderRadius.circular(12),
         child: Container(
           width: 100,

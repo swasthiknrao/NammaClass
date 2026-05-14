@@ -7,8 +7,13 @@
     { "path_prefix": "/staff/payslips", "requires_module": "hr_payroll" },
     { "path_prefix": "/staff/canteen", "requires_module": "canteen" },
     { "path_prefix": "/hostel", "requires_module": "hostel" },
+    { "path_prefix": "/warden/", "requires_module": "hostel" },
+    { "path_prefix": "/driver/home", "requires_module": "transport" },
     { "path_prefix": "/driver/route", "requires_module": "transport" },
     { "path_prefix": "/driver/students", "requires_module": "transport" },
+    { "path_prefix": "/driver/history", "requires_module": "transport" },
+    { "path_prefix": "/driver/checklist", "requires_module": "transport" },
+    { "path_prefix": "/driver/incident", "requires_module": "transport" },
     { "path_prefix": "/librarian/counter", "requires_module": "library" },
     { "path_prefix": "/librarian/catalog", "requires_module": "library" },
     { "path_prefix": "/librarian/reservations", "requires_module": "library" },
@@ -19,9 +24,11 @@
     { "path_prefix": "/web/transport", "requires_module": "transport" },
     { "path_prefix": "/web/hostel", "requires_module": "hostel" },
     { "path_prefix": "/web/payroll", "requires_module": "hr_payroll" },
+    { "path_prefix": "/web/accountant/payroll", "requires_module": "hr_payroll" },
     { "path_prefix": "/web/inventory/assets", "requires_module": "inventory" },
     { "path_prefix": "/web/inventory/stock", "requires_module": "inventory" },
     { "path_prefix": "/web/ai", "requires_module": "ai_insights" },
+    { "path_prefix": "/namma-ai", "requires_module": "ai_insights" },
     { "path_prefix": "/web/analytics", "requires_module": "ai_insights" }
   ]
 }

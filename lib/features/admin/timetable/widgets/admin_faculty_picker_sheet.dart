@@ -223,7 +223,7 @@ class _FacultyPickerBodyState extends State<_FacultyPickerBody> {
         builder: (dCtx) => AlertDialog(
           backgroundColor: widget.panelColor,
           title: Text(
-            'Faculty engaged',
+            'Already teaching elsewhere',
             style: TextStyle(color: widget.textColor),
           ),
           content: Text(
@@ -294,7 +294,7 @@ class _FacultyPickerBodyState extends State<_FacultyPickerBody> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Select faculty',
+                              'Select staff',
                               style: TextStyle(
                                 color: widget.textColor,
                                 fontWeight: FontWeight.bold,
@@ -636,7 +636,7 @@ class _FacultyPickerBodyState extends State<_FacultyPickerBody> {
         Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'No faculty in this department.',
+            'No staff in this department.',
             style: TextStyle(color: widget.textColor.withValues(alpha: 0.65)),
           ),
         )

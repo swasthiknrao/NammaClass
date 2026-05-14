@@ -6,6 +6,7 @@ import '../features/librarian/screens/librarian_catalog_screen.dart';
 import '../features/librarian/screens/librarian_counter_screen.dart';
 import '../features/librarian/screens/librarian_reservations_screen.dart';
 import '../features/main_shell.dart';
+import '../features/namma_ai/screens/namma_ai_screen.dart';
 import '../features/shared/profile/profile_screen.dart';
 import 'app_routes.dart';
 
@@ -34,6 +35,11 @@ List<RouteBase> librarianShellRoutes(GlobalKey<NavigatorState> navigatorKey) =>
             path: AppRoutes.librarianProfile,
             pageBuilder: (c, s) =>
                 fadeSlideTransition(c, s, const ProfileScreen()),
+          ),
+          GoRoute(
+            path: AppRoutes.nammaAi,
+            pageBuilder: (c, s) =>
+                fadeSlideTransition(c, s, const NammaAiScreen()),
           ),
         ],
       ),

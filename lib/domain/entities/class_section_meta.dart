@@ -11,7 +11,7 @@ class ClassSectionMeta {
   final String yearLabel;
   final String sectionLetter;
 
-  /// Academic / admin department (stream, faculty pool). Optional — helps smart picks.
+  /// Academic / admin department (stream, staff pool). Optional — helps smart picks.
   final String departmentName;
 
   /// e.g. "BCA VIII-A" or "BCA VIII-A · Science" when department set.

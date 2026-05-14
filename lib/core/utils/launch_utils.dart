@@ -41,3 +41,32 @@ Future<void> launchTel(
     }
   }
 }
+
+/// Opens Google Maps (web / app) at [latitude], [longitude].
+Future<void> launchMapsGeo(
+  BuildContext context, {
+  required double latitude,
+  required double longitude,
+  String? fallbackSnackBar,
+}) async {
+  final query = Uri.encodeComponent('$latitude,$longitude');
+  final uri = Uri.parse(
+    'https://www.google.com/maps/search/?api=1&query=$query',
+  );
+  try {
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      throw StateError('Cannot launch maps');
+    }
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(fallbackSnackBar ?? 'Cannot open maps'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+}

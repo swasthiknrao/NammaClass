@@ -79,11 +79,59 @@ class _InfoCardsPanel extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
         _RouteEtaCard(bus: bus),
+        if (((bus['delay_minutes'] as num?)?.toInt() ?? 0) > 0) ...[
+          const SizedBox(height: AppSpacing.md),
+          _DelayBanner(bus: bus),
+        ],
         const SizedBox(height: AppSpacing.md),
         _DriverCard(bus: bus),
         const SizedBox(height: AppSpacing.md),
         _SosButton(),
       ],
+    );
+  }
+}
+
+class _DelayBanner extends StatelessWidget {
+  const _DelayBanner({required this.bus});
+  final Map<String, dynamic> bus;
+
+  @override
+  Widget build(BuildContext context) {
+    final mins = (bus['delay_minutes'] as num?)?.toInt() ?? 0;
+    final reason = bus['delay_reason']?.toString() ?? '';
+    return NcCard(
+      color: AppColors.warning.withValues(alpha: 0.12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.schedule, color: AppColors.warning),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bus running about $mins min late',
+                  style: AppTypography.titleSmall.copyWith(
+                    color: AppColors.warning,
+                  ),
+                ),
+                if (reason.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      reason,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -404,6 +452,10 @@ class _MobileBusLayout extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _RouteEtaCard(bus: bus),
+                if (((bus['delay_minutes'] as num?)?.toInt() ?? 0) > 0) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  _DelayBanner(bus: bus),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 _DriverCard(bus: bus),
                 const SizedBox(height: AppSpacing.md),

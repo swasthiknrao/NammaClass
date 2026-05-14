@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/auth/portal_capabilities.dart';
+import '../domain/entities/nc_feature.dart';
+import '../features/tenant/providers/tenant_provider.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/screen_size.dart';
@@ -11,6 +14,8 @@ import '../features/auth/providers/auth_provider.dart';
 import '../core/models/user_model.dart';
 import '../core/widgets/nc_avatar.dart';
 import '../core/widgets/notification_icon_button.dart';
+import '../features/namma_ai/widgets/namma_ai_draggable_fab.dart';
+import '../features/namma_ai/widgets/namma_ai_panel_overlay.dart';
 import '../routing/app_routes.dart';
 
 class WebShell extends ConsumerStatefulWidget {
@@ -28,7 +33,7 @@ class _WebShellState extends ConsumerState<WebShell> {
   Widget build(BuildContext context) {
     final role = ref.watch(userRoleProvider);
     final user = ref.watch(currentUserProvider);
-    final menuItems = _menuItemsFor(role);
+    final menuItems = _menuItemsFor(ref, role);
     final currentPath = GoRouterState.of(context).uri.path;
     final activeRoute = _activeRouteFor(currentPath, menuItems);
     final isMobile = ScreenSize.isMobile(context);
@@ -42,183 +47,196 @@ class _WebShellState extends ConsumerState<WebShell> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Row(
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          // ── Sidebar ────────────────────────────────────────────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeInOut,
-            width: sidebarWidth,
-            decoration: BoxDecoration(
-              color: AppColors.sidebarBg,
-              border: Border(
-                right: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Column(
-              children: [
-                // Logo area
-                SizedBox(
-                  height: 56,
-                  child: Row(
-                    children: [
-                      const SizedBox(width: AppSpacing.md),
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(AppSpacing.xs),
-                        ),
-                        child: const Icon(
-                          Icons.school,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                      if (!_collapsed) ...[
-                        const SizedBox(width: AppSpacing.xs),
-                        Expanded(
-                          child: Text(
-                            AppConstants.appName,
-                            style: AppTypography.headlineSmall.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const Divider(color: Colors.white12, height: 1),
-                const SizedBox(height: AppSpacing.xs),
-
-                // Menu items
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xs,
-                      vertical: AppSpacing.xs,
-                    ),
-                    children: menuItems.map((item) {
-                      final isActive = item.route == activeRoute;
-                      return _SidebarItem(
-                        item: item,
-                        isActive: isActive,
-                        collapsed: _collapsed,
-                        onTap: () => context.go(item.route),
-                      );
-                    }).toList(),
-                  ),
-                ),
-
-                const Divider(color: Colors.white12, height: 1),
-                InkWell(
-                  onTap: () => setState(() => _collapsed = !_collapsed),
-                  child: SizedBox(
-                    height: 48,
-                    child: Row(
-                      mainAxisAlignment: _collapsed
-                          ? MainAxisAlignment.center
-                          : MainAxisAlignment.end,
-                      children: [
-                        if (!_collapsed) const SizedBox(width: AppSpacing.md),
-                        Icon(
-                          _collapsed ? Icons.chevron_right : Icons.chevron_left,
-                          color: Colors.white54,
-                          size: 22,
-                        ),
-                        if (!_collapsed) const SizedBox(width: AppSpacing.md),
-                      ],
+          Row(
+            children: [
+              // ── Sidebar ────────────────────────────────────────────────────
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                width: sidebarWidth,
+                decoration: BoxDecoration(
+                  color: AppColors.sidebarBg,
+                  border: Border(
+                    right: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      width: 1,
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          // ── Main area ──────────────────────────────────────────
-          Expanded(
-            child: Column(
-              children: [
-                // Top bar
-                Container(
-                  height: 56,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.cardDark
-                      : AppColors.card,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _titleFor(currentPath, role),
-                          style: AppTypography.headlineMedium,
-                        ),
-                      ),
-                      // Search
-                      SizedBox(
-                        width: 220,
-                        height: 36,
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Search…',
-                            prefixIcon: const Icon(Icons.search, size: 18),
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                            ),
-                            isDense: true,
-                            border: OutlineInputBorder(
+                child: Column(
+                  children: [
+                    // Logo area
+                    SizedBox(
+                      height: 56,
+                      child: Row(
+                        children: [
+                          const SizedBox(width: AppSpacing.md),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.accent,
                               borderRadius: BorderRadius.circular(
-                                AppSpacing.xl,
-                              ),
-                              borderSide: const BorderSide(
-                                color: AppColors.divider,
+                                AppSpacing.xs,
                               ),
                             ),
+                            child: const Icon(
+                              Icons.school,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      const NotificationIconButton(
-                        iconColor: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      if (user != null)
-                        Row(
-                          children: [
-                            NcAvatar(name: user.name, radius: 16),
+                          if (!_collapsed) ...[
                             const SizedBox(width: AppSpacing.xs),
-                            if (MediaQuery.sizeOf(context).width > 900)
-                              Text(
-                                user.name.split(' ').first,
-                                style: AppTypography.labelMedium,
+                            Expanded(
+                              child: Text(
+                                AppConstants.appName,
+                                style: AppTypography.headlineSmall.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const Divider(color: Colors.white12, height: 1),
+                    const SizedBox(height: AppSpacing.xs),
+
+                    // Menu items
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xs,
+                          vertical: AppSpacing.xs,
+                        ),
+                        children: menuItems.map((item) {
+                          final isActive = item.route == activeRoute;
+                          return _SidebarItem(
+                            item: item,
+                            isActive: isActive,
+                            collapsed: _collapsed,
+                            onTap: () => context.go(item.route),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                    const Divider(color: Colors.white12, height: 1),
+                    InkWell(
+                      onTap: () => setState(() => _collapsed = !_collapsed),
+                      child: SizedBox(
+                        height: 48,
+                        child: Row(
+                          mainAxisAlignment: _collapsed
+                              ? MainAxisAlignment.center
+                              : MainAxisAlignment.end,
+                          children: [
+                            if (!_collapsed)
+                              const SizedBox(width: AppSpacing.md),
+                            Icon(
+                              _collapsed
+                                  ? Icons.chevron_right
+                                  : Icons.chevron_left,
+                              color: Colors.white54,
+                              size: 22,
+                            ),
+                            if (!_collapsed)
+                              const SizedBox(width: AppSpacing.md),
                           ],
                         ),
-                    ],
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
-                const Divider(height: 1),
+              ),
 
-                // Content
-                Expanded(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 1400),
-                    alignment: Alignment.topCenter,
-                    child: widget.child,
-                  ),
+              // ── Main area ──────────────────────────────────────────
+              Expanded(
+                child: Column(
+                  children: [
+                    // Top bar
+                    Container(
+                      height: 56,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.cardDark
+                          : AppColors.card,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _titleFor(currentPath, role),
+                              style: AppTypography.headlineMedium,
+                            ),
+                          ),
+                          // Search
+                          SizedBox(
+                            width: 220,
+                            height: 36,
+                            child: TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Search…',
+                                prefixIcon: const Icon(Icons.search, size: 18),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppSpacing.xl,
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.divider,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          const NotificationIconButton(
+                            iconColor: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          if (user != null)
+                            Row(
+                              children: [
+                                NcAvatar(name: user.name, radius: 16),
+                                const SizedBox(width: AppSpacing.xs),
+                                if (MediaQuery.sizeOf(context).width > 900)
+                                  Text(
+                                    user.name.split(' ').first,
+                                    style: AppTypography.labelMedium,
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+
+                    // Content
+                    Expanded(
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 1400),
+                        alignment: Alignment.topCenter,
+                        child: widget.child,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          const NammaAiDraggableFab(dockAboveBottomNav: false),
+          const NammaAiPanelOverlay(),
         ],
       ),
     );
@@ -242,50 +260,57 @@ class _WebShellState extends ConsumerState<WebShell> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Column(
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          // Compact top bar
-          Container(
-            height: 56,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.cardDark
-                : AppColors.card,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _titleFor(currentPath, role),
-                    style: AppTypography.headlineSmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                InkWell(
-                  onTap: () => context.go(AppRoutes.search),
-                  borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Icon(Icons.search, size: 22),
-                  ),
-                ),
-                const NotificationIconButton(
-                  iconColor: AppColors.textSecondary,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                if (user != null)
-                  InkWell(
-                    onTap: () => _goToProfileForRole(context, role),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: NcAvatar(name: user.name, radius: 18),
+          Column(
+            children: [
+              // Compact top bar
+              Container(
+                height: 56,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.cardDark
+                    : AppColors.card,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _titleFor(currentPath, role),
+                        style: AppTypography.headlineSmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-              ],
-            ),
+                    InkWell(
+                      onTap: () => context.go(AppRoutes.search),
+                      borderRadius: BorderRadius.circular(20),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.search, size: 22),
+                      ),
+                    ),
+                    const NotificationIconButton(
+                      iconColor: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    if (user != null)
+                      InkWell(
+                        onTap: () => _goToProfileForRole(context, role),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: NcAvatar(name: user.name, radius: 18),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(child: widget.child),
+            ],
           ),
-          const Divider(height: 1),
-          Expanded(child: widget.child),
+          const NammaAiDraggableFab(dockAboveBottomNav: true),
+          const NammaAiPanelOverlay(),
         ],
       ),
       bottomNavigationBar: Padding(
@@ -351,8 +376,9 @@ class _WebShellState extends ConsumerState<WebShell> {
       case UserRole.superAdmin:
         return AppColors.deepPurple;
       case UserRole.admin:
-      case UserRole.principal:
         return AppColors.teal;
+      case UserRole.principal:
+        return AppColors.deepPurple;
       default:
         return AppColors.primary;
     }
@@ -375,7 +401,7 @@ class _WebShellState extends ConsumerState<WebShell> {
     if (path == AppRoutes.webPlatformAddCollege) return 'Add college';
     if (path == AppRoutes.webPlatformColleges) return 'Colleges';
     if (path == AppRoutes.webPlatformDashboard || path == '/web/platform') {
-      if (role == UserRole.admin || role == UserRole.principal) {
+      if (role == UserRole.admin) {
         return 'Federation hub';
       }
       return 'Platform';
@@ -383,6 +409,7 @@ class _WebShellState extends ConsumerState<WebShell> {
     if (path.startsWith('/web/platform/colleges/')) return 'College detail';
 
     const titles = {
+      '/hod/comms': 'School Pulse',
       '/web/hod-home': 'Home',
       '/web/dashboard': 'Dashboard',
       '/web/analytics': 'Analytics',
@@ -418,6 +445,9 @@ class _WebShellState extends ConsumerState<WebShell> {
       '/web/support/complaints': 'Complaints',
       '/web/support/kb': 'Knowledge Base',
       '/web/accountant/dashboard': 'Finance Dashboard',
+      '/web/accountant/payroll': 'Payroll overview',
+      '/web/accountant/expenses': 'Payables & spend',
+      '/web/accountant/reports': 'Month close',
     };
     for (final entry in titles.entries) {
       if (path.startsWith(entry.key)) return entry.value;
@@ -522,7 +552,7 @@ class _WebShellState extends ConsumerState<WebShell> {
     ];
   }
 
-  List<_MenuItem> _menuItemsFor(UserRole? role) {
+  List<_MenuItem> _menuItemsFor(WidgetRef ref, UserRole? role) {
     if (role == UserRole.librarian) {
       return [
         _MenuItem(
@@ -562,6 +592,7 @@ class _WebShellState extends ConsumerState<WebShell> {
       ];
     }
     if (role == UserRole.accountant) {
+      final tenant = ref.watch(tenantProfileProvider);
       return [
         _MenuItem(
           AppRoutes.webAccountantDashboard,
@@ -577,6 +608,22 @@ class _WebShellState extends ConsumerState<WebShell> {
           AppRoutes.webFinanceLedger,
           'Finance Ledger',
           Icons.account_balance_outlined,
+        ),
+        if (tenant.hasFeature(NcFeature.hrPayroll))
+          _MenuItem(
+            AppRoutes.webAccountantPayroll,
+            'Payroll',
+            Icons.payments_outlined,
+          ),
+        _MenuItem(
+          AppRoutes.webAccountantExpenses,
+          'Expenses',
+          Icons.receipt_long_outlined,
+        ),
+        _MenuItem(
+          AppRoutes.webAccountantReports,
+          'Month close',
+          Icons.fact_check_outlined,
         ),
       ];
     }
@@ -618,13 +665,14 @@ class _WebShellState extends ConsumerState<WebShell> {
     if (role == UserRole.hod) {
       return [
         _MenuItem(AppRoutes.webHodHome, 'My Home', Icons.home_outlined),
+        _MenuItem(AppRoutes.hodComms, 'School Pulse', Icons.campaign_outlined),
         _MenuItem(
           AppRoutes.webDashboard,
           'Dashboard',
           Icons.dashboard_outlined,
         ),
         _MenuItem(AppRoutes.webStudents, 'Students', Icons.people_outline),
-        _MenuItem(AppRoutes.webStaff, 'Faculty & staff', Icons.groups_outlined),
+        _MenuItem(AppRoutes.webStaff, 'Staff directory', Icons.groups_outlined),
         _MenuItem(
           AppRoutes.webUserManagement,
           'Access & invites',
@@ -649,7 +697,7 @@ class _WebShellState extends ConsumerState<WebShell> {
         ),
       ];
     }
-    if (role == UserRole.admin || role == UserRole.principal) {
+    if (role == UserRole.admin) {
       return [
         _MenuItem(
           AppRoutes.webPlatformDashboard,
@@ -668,6 +716,11 @@ class _WebShellState extends ConsumerState<WebShell> {
         ),
         ..._institutionOpsWebMenu(),
       ];
+    }
+    if (role == UserRole.principal) {
+      return InstitutionWebNavCatalog.principalLeadershipMenu()
+          .map((e) => _MenuItem(e.route, e.label, e.icon))
+          .toList();
     }
     // Teacher & other web roles — same day-to-day ops rail (no federation shell)
     return _institutionOpsWebMenu();

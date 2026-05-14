@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/demo_permissions.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/providers/secure_storage_provider.dart';
 import '../../../core/services/audit_log.dart';
@@ -78,3 +79,11 @@ final currentUserProvider = Provider<UserModel?>(
 final userRoleProvider = Provider<UserRole?>(
   (ref) => ref.watch(authProvider).role,
 );
+
+/// Demo JWT-style claims for the signed-in role — drives fine-grained UI gates
+/// until a real ACL API exists.
+final demoPermissionsProvider = Provider<List<String>>((ref) {
+  final role = ref.watch(userRoleProvider);
+  if (role == null) return const [];
+  return demoPermissionsForRole(role);
+});

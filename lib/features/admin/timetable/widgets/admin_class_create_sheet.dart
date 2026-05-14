@@ -440,7 +440,7 @@ class _ClassCreateSheetBodyState extends State<_ClassCreateSheetBody> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Department is optional — it powers smarter faculty suggestions.',
+                              'Department is optional — it powers smarter staff suggestions.',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.88),
                                 fontSize: 11.5,

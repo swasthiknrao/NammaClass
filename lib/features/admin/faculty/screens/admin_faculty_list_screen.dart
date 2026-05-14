@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/auth/portal_capabilities.dart';
 import '../../../../core/mock/mock_data.dart';
 import '../../../../core/widgets/shell_layout_scope.dart';
 import '../../../../routing/app_routes.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../providers/admin_providers.dart';
 import '../../providers/staff_notifier.dart';
 
 Color _facultyPageBg(BuildContext c) => Theme.of(c).colorScheme.surface;
@@ -19,7 +22,7 @@ Color _facultyAccent(BuildContext c) => Theme.of(c).colorScheme.secondary;
 
 Color _facultyOnAccent(BuildContext c) => Theme.of(c).colorScheme.onSecondary;
 
-/// ERP-style faculty hub: department rail, search, role filter, edit/move/delete
+/// Team roster hub: department rail, search, role filter, edit/move/delete
 /// on [MockStaffMember] via [staffNotifierProvider] — no Firebase.
 class AdminFacultyListScreen extends ConsumerStatefulWidget {
   const AdminFacultyListScreen({super.key});
@@ -29,11 +32,22 @@ class AdminFacultyListScreen extends ConsumerStatefulWidget {
       _AdminFacultyListScreenState();
 }
 
+enum _RosterScope { staff, students, all }
+
+enum _StaffSort { nameAsc, nameDesc, roleAz, deptAz, joinNewest }
+
+enum _StudentSort { nameAsc, nameDesc, classThenRoll, rollNo, feeStatus }
+
 class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
     with SingleTickerProviderStateMixin {
   String? _deptFilter;
+  String? _classFilter;
   String _search = '';
   String? _roleFilter;
+  String? _staffStatusFilter;
+  _RosterScope _scope = _RosterScope.staff;
+  _StaffSort _staffSort = _StaffSort.nameAsc;
+  _StudentSort _studentSort = _StudentSort.nameAsc;
   bool _editMode = false;
   bool _multiSelect = false;
   final Set<String> _selectedIds = {};
@@ -57,6 +71,29 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
     return Icons.badge_outlined;
   }
 
+  /// Every non-empty token must match at least one field (AND across tokens).
+  bool _smartRowMatch(String query, List<String?> fields) {
+    final tokens = query
+        .trim()
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty)
+        .toList();
+    if (tokens.isEmpty) return true;
+    for (final t in tokens) {
+      if (!fields.any((f) => (f ?? '').toLowerCase().contains(t))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  List<String> _classSections(List<MockStudent> students) {
+    final s = students.map((e) => e.classSection).toSet().toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return s;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -72,19 +109,103 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
     super.dispose();
   }
 
-  List<MockStaffMember> _filtered(List<MockStaffMember> staff) {
-    return staff.where((m) {
-        if (_deptFilter != null && m.department != _deptFilter) return false;
-        if (_roleFilter != null && m.role != _roleFilter) return false;
-        if (_search.isEmpty) return true;
-        final q = _search.toLowerCase();
-        return m.name.toLowerCase().contains(q) ||
-            m.role.toLowerCase().contains(q) ||
-            m.department.toLowerCase().contains(q) ||
-            m.phone.contains(q) ||
-            (m.email?.toLowerCase().contains(q) ?? false);
-      }).toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  List<MockStaffMember> _filteredStaff(List<MockStaffMember> staff) {
+    var list = staff.where((m) {
+      if (_deptFilter != null && m.department != _deptFilter) return false;
+      if (_roleFilter != null && m.role != _roleFilter) return false;
+      if (_staffStatusFilter != null && m.status != _staffStatusFilter) {
+        return false;
+      }
+      if (_search.isEmpty) return true;
+      return _smartRowMatch(_search, [
+        m.name,
+        m.role,
+        m.department,
+        m.phone,
+        m.email,
+        m.employeeCode,
+        m.campusBlock,
+        m.status,
+      ]);
+    }).toList();
+
+    int cmpDate(MockStaffMember a, MockStaffMember b) {
+      final da = a.joinDate ?? DateTime(1970);
+      final db = b.joinDate ?? DateTime(1970);
+      return db.compareTo(da);
+    }
+
+    switch (_staffSort) {
+      case _StaffSort.nameAsc:
+        list.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
+        break;
+      case _StaffSort.nameDesc:
+        list.sort(
+          (a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()),
+        );
+        break;
+      case _StaffSort.roleAz:
+        list.sort(
+          (a, b) => a.role.toLowerCase().compareTo(b.role.toLowerCase()),
+        );
+        break;
+      case _StaffSort.deptAz:
+        list.sort(
+          (a, b) =>
+              a.department.toLowerCase().compareTo(b.department.toLowerCase()),
+        );
+        break;
+      case _StaffSort.joinNewest:
+        list.sort(cmpDate);
+        break;
+    }
+    return list;
+  }
+
+  List<MockStudent> _filteredStudents(List<MockStudent> students) {
+    var list = students.where((s) {
+      if (_classFilter != null && s.classSection != _classFilter) return false;
+      if (_search.isEmpty) return true;
+      return _smartRowMatch(_search, [
+        s.name,
+        s.rollNo,
+        s.classSection,
+        s.parentName,
+        s.parentPhone,
+        s.feeStatus,
+      ]);
+    }).toList();
+
+    switch (_studentSort) {
+      case _StudentSort.nameAsc:
+        list.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case _StudentSort.nameDesc:
+        list.sort((a, b) => b.name.compareTo(a.name));
+        break;
+      case _StudentSort.classThenRoll:
+        list.sort((a, b) {
+          final c = a.classSection.compareTo(b.classSection);
+          if (c != 0) return c;
+          return (int.tryParse(a.rollNo) ?? 0).compareTo(
+            int.tryParse(b.rollNo) ?? 0,
+          );
+        });
+        break;
+      case _StudentSort.rollNo:
+        list.sort(
+          (a, b) => (int.tryParse(a.rollNo) ?? 0).compareTo(
+            int.tryParse(b.rollNo) ?? 0,
+          ),
+        );
+        break;
+      case _StudentSort.feeStatus:
+        list.sort((a, b) => a.feeStatus.compareTo(b.feeStatus));
+        break;
+    }
+    return list;
   }
 
   Set<String> _roleOptions(List<MockStaffMember> staff) {
@@ -106,11 +227,11 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: _facultyCard(context),
         title: Text(
-          'Remove faculty',
+          'Remove from roster',
           style: TextStyle(color: _facultyBodyText(context)),
         ),
         content: Text(
-          'Remove ${_selectedIds.length} profile(s) from the demo directory?',
+          'Remove ${_selectedIds.length} people from the roster?',
           style: TextStyle(color: _facultyBodyText(context)),
         ),
         actions: [
@@ -138,7 +259,7 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
           behavior: SnackBarBehavior.floating,
           backgroundColor: cs.inverseSurface,
           content: Text(
-            'Selected faculty removed from session',
+            'Removed from roster',
             style: TextStyle(color: cs.onInverseSurface),
           ),
         ),
@@ -431,6 +552,282 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
     );
   }
 
+  void _openSortSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: _facultyCard(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Sort',
+                  style: TextStyle(
+                    color: _facultyBodyText(context),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_scope != _RosterScope.students) ...[
+                  Text(
+                    'Staff',
+                    style: TextStyle(
+                      color: _facultyAccent(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  ..._StaffSort.values.map(
+                    (s) => RadioListTile<_StaffSort>(
+                      dense: true,
+                      value: s,
+                      groupValue: _staffSort,
+                      onChanged: (v) {
+                        if (v != null) {
+                          setState(() => _staffSort = v);
+                          Navigator.pop(ctx);
+                        }
+                      },
+                      title: Text(switch (s) {
+                        _StaffSort.nameAsc => 'Name A → Z',
+                        _StaffSort.nameDesc => 'Name Z → A',
+                        _StaffSort.roleAz => 'Role A → Z',
+                        _StaffSort.deptAz => 'Department A → Z',
+                        _StaffSort.joinNewest => 'Newest join first',
+                      }, style: TextStyle(color: _facultyBodyText(context))),
+                    ),
+                  ),
+                  const Divider(),
+                ],
+                if (_scope != _RosterScope.staff) ...[
+                  Text(
+                    'Students',
+                    style: TextStyle(
+                      color: _facultyAccent(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  ..._StudentSort.values.map(
+                    (s) => RadioListTile<_StudentSort>(
+                      dense: true,
+                      value: s,
+                      groupValue: _studentSort,
+                      onChanged: (v) {
+                        if (v != null) {
+                          setState(() => _studentSort = v);
+                          Navigator.pop(ctx);
+                        }
+                      },
+                      title: Text(switch (s) {
+                        _StudentSort.nameAsc => 'Name A → Z',
+                        _StudentSort.nameDesc => 'Name Z → A',
+                        _StudentSort.classThenRoll => 'Class, then roll no.',
+                        _StudentSort.rollNo => 'Roll number',
+                        _StudentSort.feeStatus => 'Fee status',
+                      }, style: TextStyle(color: _facultyBodyText(context))),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _setScope(_RosterScope s) {
+    setState(() {
+      _scope = s;
+      if (s != _RosterScope.staff) _exitEditMode();
+    });
+  }
+
+  Widget _scopeSelector() {
+    final a = _facultyAccent(context);
+    final on = _facultyOnAccent(context);
+    final t = _facultyBodyText(context);
+    Widget chip(_RosterScope s, IconData i, String label) {
+      final sel = _scope == s;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: FilterChip(
+          avatar: Icon(i, size: 18, color: sel ? on : a),
+          label: Text(label),
+          selected: sel,
+          onSelected: (_) => _setScope(s),
+          selectedColor: a,
+          checkmarkColor: on,
+          showCheckmark: true,
+          labelStyle: TextStyle(
+            color: sel ? on : t,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            chip(_RosterScope.staff, Icons.badge_outlined, 'Staff'),
+            chip(_RosterScope.students, Icons.school_outlined, 'Students'),
+            chip(_RosterScope.all, Icons.hub_outlined, 'All'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 18,
+            decoration: BoxDecoration(
+              color: _facultyAccent(context),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: _facultyBodyText(context),
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.people_outline,
+              size: 56,
+              color: _facultyAccent(context).withValues(alpha: 0.45),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No matches',
+              style: TextStyle(
+                color: _facultyBodyText(context),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Try another filter, class, or search tokens (e.g. role + name).',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _facultyBodyText(context).withValues(alpha: 0.8),
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_scope == _RosterScope.staff || _scope == _RosterScope.all)
+              FilledButton.icon(
+                onPressed: _pushAddFaculty,
+                icon: const Icon(Icons.add),
+                label: const Text('Onboard'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: _facultyAccent(context),
+                  foregroundColor: _facultyOnAccent(context),
+                ),
+              ),
+            if (_scope == _RosterScope.students ||
+                _scope == _RosterScope.all) ...[
+              if (_scope == _RosterScope.all) const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => context.push(AppRoutes.webStudents),
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Open web students'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _staffCard(
+    BuildContext context,
+    StaffNotifier n,
+    MockStaffMember m,
+    List<String> departments, {
+    required bool principalReadOnly,
+  }) {
+    final selected = _selectedIds.contains(m.id);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _FacultyErpCard(
+        member: m,
+        selected: selected,
+        editMode: principalReadOnly ? false : _editMode,
+        multiSelect: _multiSelect,
+        roleIcon: _iconForRole(m.role),
+        accent: _facultyAccent(context),
+        bg: _facultyPageBg(context),
+        textColor: _facultyBodyText(context),
+        onTap: () {
+          if (principalReadOnly) {
+            context.go(AppRoutes.adminFacultyDetailPath(m.id));
+            return;
+          }
+          if (_editMode && _multiSelect) {
+            setState(() {
+              if (selected) {
+                _selectedIds.remove(m.id);
+              } else {
+                _selectedIds.add(m.id);
+              }
+            });
+          } else if (_editMode) {
+            _openActionSheet(n, m, departments);
+          } else {
+            context.go(AppRoutes.adminFacultyDetailPath(m.id));
+          }
+        },
+        onLongPress: () {
+          if (principalReadOnly) return;
+          if (!_editMode &&
+              (_scope == _RosterScope.staff || _scope == _RosterScope.all)) {
+            setState(() {
+              _editMode = true;
+              _multiSelect = true;
+              _selectedIds.add(m.id);
+            });
+          }
+        },
+      ),
+    );
+  }
+
   void _pushAddFaculty() {
     final dept = _deptFilter;
     if (dept != null && dept.isNotEmpty) {
@@ -446,6 +843,11 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
   Widget build(BuildContext context) {
     final hideAppBar =
         ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true;
+    final portalRole = ref.watch(userRoleProvider);
+    final principalReadOnly = !PortalCapabilityRegistry.hasCapability(
+      portalRole,
+      PortalCapability.staffDirectoryHrWrite,
+    );
     final staffAsync = ref.watch(staffNotifierProvider);
     final n = ref.read(staffNotifierProvider.notifier);
 
@@ -463,24 +865,34 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
         appBar: hideAppBar
             ? null
             : AppBar(
-                title: const Text('Faculty management'),
+                title: Text(
+                  principalReadOnly
+                      ? 'Team directory (read-only)'
+                      : 'Team roster',
+                ),
                 actions: [
-                  if (_editMode)
-                    TextButton(
-                      onPressed: _exitEditMode,
-                      child: const Text('Done'),
-                    )
-                  else
-                    IconButton(
-                      tooltip: 'Edit mode',
-                      icon: const Icon(Icons.tune),
-                      onPressed: () => setState(() => _editMode = true),
-                    ),
-                  IconButton(
-                    tooltip: 'Add faculty',
-                    icon: const Icon(Icons.person_add_alt_1_outlined),
-                    onPressed: _pushAddFaculty,
-                  ),
+                  if (!principalReadOnly) ...[
+                    if (_scope == _RosterScope.staff ||
+                        _scope == _RosterScope.all)
+                      if (_editMode)
+                        TextButton(
+                          onPressed: _exitEditMode,
+                          child: const Text('Done'),
+                        )
+                      else
+                        IconButton(
+                          tooltip: 'Edit mode',
+                          icon: const Icon(Icons.tune),
+                          onPressed: () => setState(() => _editMode = true),
+                        ),
+                    if (_scope == _RosterScope.staff ||
+                        _scope == _RosterScope.all)
+                      IconButton(
+                        tooltip: 'Onboard team member',
+                        icon: const Icon(Icons.person_add_alt_1_outlined),
+                        onPressed: _pushAddFaculty,
+                      ),
+                  ],
                 ],
               ),
         body: staffAsync.when(
@@ -489,284 +901,430 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
           ),
           error: (e, _) => Center(child: Text('$e')),
           data: (staff) {
-            final departments = n.allDepartments();
-            final filtered = _filtered(staff);
-            final roles = _roleOptions(staff).toList()..sort();
+            final studentsAsync = ref.watch(adminStudentsProvider);
+            return studentsAsync.when(
+              loading: () => Center(
+                child: CircularProgressIndicator(
+                  color: _facultyAccent(context),
+                ),
+              ),
+              error: (e, _) => Center(child: Text('$e')),
+              data: (students) {
+                final departments = n.allDepartments();
+                final classSections = _classSections(students);
+                final filteredStaff = _filteredStaff(staff);
+                final filteredStudents = _filteredStudents(students);
+                final roles = _roleOptions(staff).toList()..sort();
+                final showStaff =
+                    _scope == _RosterScope.staff || _scope == _RosterScope.all;
+                final showStudents =
+                    _scope == _RosterScope.students ||
+                    _scope == _RosterScope.all;
+                final listEmpty = switch (_scope) {
+                  _RosterScope.staff => filteredStaff.isEmpty,
+                  _RosterScope.students => filteredStudents.isEmpty,
+                  _RosterScope.all =>
+                    filteredStaff.isEmpty && filteredStudents.isEmpty,
+                };
 
-            return FadeTransition(
-              opacity: CurvedAnimation(parent: _intro, curve: Curves.easeOut),
-              child: Column(
-                children: [
-                  if (hideAppBar)
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        12,
-                        MediaQuery.paddingOf(context).top + 8,
-                        12,
-                        0,
-                      ),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.arrow_back,
-                              color: _facultyAccent(context),
-                            ),
-                            onPressed: () => context.pop(),
-                          ),
-                          Expanded(
-                            child: Text(
-                              'Faculty management',
-                              style: TextStyle(
-                                color: _facultyBodyText(context),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (_editMode)
-                            TextButton(
-                              onPressed: _exitEditMode,
-                              child: const Text('Done'),
-                            ),
-                        ],
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: _DepartmentRail(
-                      departments: departments,
-                      selected: _deptFilter,
-                      onAll: () => setState(() => _deptFilter = null),
-                      onPick: (d) => setState(() => _deptFilter = d),
-                      onAddDept: () => _showAddDepartment(n),
-                    ),
+                return FadeTransition(
+                  opacity: CurvedAnimation(
+                    parent: _intro,
+                    curve: Curves.easeOut,
                   ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _facultyCard(context),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.outlineVariant.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.search,
-                            color: _facultyAccent(context),
-                            size: 22,
+                  child: Column(
+                    children: [
+                      if (hideAppBar)
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            12,
+                            MediaQuery.paddingOf(context).top + 8,
+                            12,
+                            0,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              onChanged: (v) => setState(() => _search = v),
-                              style: TextStyle(
-                                color: _facultyBodyText(context),
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Search name, role, phone…',
-                                hintStyle: TextStyle(
-                                  color: _facultyBodyText(context),
-                                  fontSize: 14,
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.arrow_back,
+                                  color: _facultyAccent(context),
                                 ),
-                                border: InputBorder.none,
-                                isDense: true,
+                                onPressed: () => context.pop(),
                               ),
-                            ),
-                          ),
-                          if (roles.isNotEmpty)
-                            DropdownButtonHideUnderline(
-                              child: DropdownButton<String?>(
-                                dropdownColor: _facultyCard(context),
-                                value: _roleFilter,
-                                hint: Text(
-                                  'Role',
+                              Expanded(
+                                child: Text(
+                                  'Team roster',
                                   style: TextStyle(
                                     color: _facultyBodyText(context),
-                                    fontSize: 13,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                items: [
-                                  DropdownMenuItem<String?>(
-                                    value: null,
-                                    child: Text(
-                                      'All roles',
+                              ),
+                              if ((_scope == _RosterScope.staff ||
+                                      _scope == _RosterScope.all) &&
+                                  !principalReadOnly)
+                                if (_editMode)
+                                  TextButton(
+                                    onPressed: _exitEditMode,
+                                    child: const Text('Done'),
+                                  ),
+                            ],
+                          ),
+                        ),
+                      _scopeSelector(),
+                      if (showStaff)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                          child: _DepartmentRail(
+                            title: 'Departments',
+                            headerIcon: Icons.account_tree_outlined,
+                            departments: departments,
+                            selected: _deptFilter,
+                            onAll: () => setState(() => _deptFilter = null),
+                            onPick: (d) => setState(() => _deptFilter = d),
+                            onAddDept: () => _showAddDepartment(n),
+                          ),
+                        ),
+                      if (showStudents) ...[
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                          child: _DepartmentRail(
+                            title: 'Classes',
+                            headerIcon: Icons.class_outlined,
+                            trailing: TextButton(
+                              onPressed: () =>
+                                  context.push(AppRoutes.webStudents),
+                              child: const Text('Web roster'),
+                            ),
+                            departments: classSections,
+                            selected: _classFilter,
+                            onAll: () => setState(() => _classFilter = null),
+                            onPick: (d) => setState(() => _classFilter = d),
+                            onAddDept: () {},
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _facultyCard(context),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outlineVariant
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.manage_search_rounded,
+                                color: _facultyAccent(context),
+                                size: 22,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  onChanged: (v) => setState(() => _search = v),
+                                  style: TextStyle(
+                                    color: _facultyBodyText(context),
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText:
+                                        'Smart search — try “sci 9” or phone…',
+                                    hintStyle: TextStyle(
+                                      color: _facultyBodyText(context),
+                                      fontSize: 13,
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Sort',
+                                icon: Icon(
+                                  Icons.sort_rounded,
+                                  color: _facultyAccent(context),
+                                ),
+                                onPressed: _openSortSheet,
+                              ),
+                              if (showStaff && roles.isNotEmpty)
+                                DropdownButtonHideUnderline(
+                                  child: DropdownButton<String?>(
+                                    dropdownColor: _facultyCard(context),
+                                    value: _roleFilter,
+                                    hint: Text(
+                                      'Role',
                                       style: TextStyle(
                                         color: _facultyBodyText(context),
+                                        fontSize: 13,
                                       ),
                                     ),
-                                  ),
-                                  ...roles.map(
-                                    (r) => DropdownMenuItem<String>(
-                                      value: r,
-                                      child: Text(
-                                        r,
-                                        style: TextStyle(
-                                          color: _facultyBodyText(context),
+                                    items: [
+                                      DropdownMenuItem<String?>(
+                                        value: null,
+                                        child: Text(
+                                          'All roles',
+                                          style: TextStyle(
+                                            color: _facultyBodyText(context),
+                                          ),
                                         ),
                                       ),
+                                      ...roles.map(
+                                        (r) => DropdownMenuItem<String>(
+                                          value: r,
+                                          child: Text(
+                                            r,
+                                            style: TextStyle(
+                                              color: _facultyBodyText(context),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    onChanged: (v) =>
+                                        setState(() => _roleFilter = v),
+                                  ),
+                                ),
+                              if (showStaff)
+                                DropdownButtonHideUnderline(
+                                  child: DropdownButton<String?>(
+                                    dropdownColor: _facultyCard(context),
+                                    value: _staffStatusFilter,
+                                    hint: Text(
+                                      'Status',
+                                      style: TextStyle(
+                                        color: _facultyBodyText(context),
+                                        fontSize: 13,
+                                      ),
                                     ),
+                                    items: [
+                                      DropdownMenuItem<String?>(
+                                        value: null,
+                                        child: Text(
+                                          'Any status',
+                                          style: TextStyle(
+                                            color: _facultyBodyText(context),
+                                          ),
+                                        ),
+                                      ),
+                                      const DropdownMenuItem<String>(
+                                        value: 'active',
+                                        child: Text('Active'),
+                                      ),
+                                      const DropdownMenuItem<String>(
+                                        value: 'inactive',
+                                        child: Text('Inactive'),
+                                      ),
+                                    ],
+                                    onChanged: (v) =>
+                                        setState(() => _staffStatusFilter = v),
                                   ),
-                                ],
-                                onChanged: (v) =>
-                                    setState(() => _roleFilter = v),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (_editMode) ...[
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          FilterChip(
-                            label: Text(
-                              _multiSelect ? 'Multi-select on' : 'Multi-select',
-                            ),
-                            selected: _multiSelect,
-                            onSelected: (v) => setState(() {
-                              _multiSelect = v;
-                              if (!v) _selectedIds.clear();
-                            }),
-                            selectedColor: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer
-                                .withValues(alpha: 0.85),
-                            checkmarkColor: _facultyAccent(context),
-                            labelStyle: TextStyle(
-                              color: _multiSelect
-                                  ? Theme.of(
-                                      context,
-                                    ).colorScheme.onSecondaryContainer
-                                  : _facultyBodyText(context),
-                            ),
+                                ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          if (_deptFilter != null)
-                            ActionChip(
-                              label: const Text('Reassign dept…'),
-                              onPressed: () => _dissolveDepartmentDialog(
-                                n,
-                                _deptFilter!,
-                                departments,
-                              ),
-                            ),
-                          const Spacer(),
-                          if (_multiSelect && _selectedIds.isNotEmpty) ...[
-                            TextButton(
-                              onPressed: () => _pickMoveTarget(n, departments),
-                              child: const Text('Move'),
-                            ),
-                            TextButton(
-                              onPressed: () => _confirmDeleteMany(n),
-                              child: const Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.redAccent),
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.people_outline,
-                                  size: 56,
-                                  color: _facultyAccent(
-                                    context,
-                                  ).withValues(alpha: 0.45),
+                      if (!principalReadOnly &&
+                          _editMode &&
+                          (_scope == _RosterScope.staff ||
+                              _scope == _RosterScope.all)) ...[
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              FilterChip(
+                                label: Text(
+                                  _multiSelect
+                                      ? 'Multi-select on'
+                                      : 'Multi-select',
                                 ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No matches',
-                                  style: TextStyle(
-                                    color: _facultyBodyText(context),
-                                    fontSize: 16,
+                                selected: _multiSelect,
+                                onSelected: (v) => setState(() {
+                                  _multiSelect = v;
+                                  if (!v) _selectedIds.clear();
+                                }),
+                                selectedColor: Theme.of(context)
+                                    .colorScheme
+                                    .secondaryContainer
+                                    .withValues(alpha: 0.85),
+                                checkmarkColor: _facultyAccent(context),
+                                labelStyle: TextStyle(
+                                  color: _multiSelect
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.onSecondaryContainer
+                                      : _facultyBodyText(context),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (_deptFilter != null)
+                                ActionChip(
+                                  label: const Text('Reassign dept…'),
+                                  onPressed: () => _dissolveDepartmentDialog(
+                                    n,
+                                    _deptFilter!,
+                                    departments,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                FilledButton.icon(
-                                  onPressed: _pushAddFaculty,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Add faculty'),
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: _facultyAccent(context),
-                                    foregroundColor: _facultyOnAccent(context),
+                              const Spacer(),
+                              if (_multiSelect && _selectedIds.isNotEmpty) ...[
+                                TextButton(
+                                  onPressed: () =>
+                                      _pickMoveTarget(n, departments),
+                                  child: const Text('Move'),
+                                ),
+                                TextButton(
+                                  onPressed: () => _confirmDeleteMany(n),
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.redAccent),
                                   ),
                                 ),
                               ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
-                            itemCount: filtered.length,
-                            itemBuilder: (ctx, i) {
-                              final m = filtered[i];
-                              final selected = _selectedIds.contains(m.id);
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: _FacultyErpCard(
-                                  member: m,
-                                  selected: selected,
-                                  editMode: _editMode,
-                                  multiSelect: _multiSelect,
-                                  roleIcon: _iconForRole(m.role),
-                                  accent: _facultyAccent(context),
-                                  bg: _facultyPageBg(context),
-                                  textColor: _facultyBodyText(context),
-                                  onTap: () {
-                                    if (_editMode && _multiSelect) {
-                                      setState(() {
-                                        if (selected) {
-                                          _selectedIds.remove(m.id);
-                                        } else {
-                                          _selectedIds.add(m.id);
-                                        }
-                                      });
-                                    } else if (_editMode) {
-                                      _openActionSheet(n, m, departments);
-                                    } else {
-                                      context.go(
-                                        AppRoutes.adminFacultyDetailPath(m.id),
-                                      );
-                                    }
-                                  },
-                                  onLongPress: () {
-                                    if (!_editMode) {
-                                      setState(() {
-                                        _editMode = true;
-                                        _multiSelect = true;
-                                        _selectedIds.add(m.id);
-                                      });
-                                    }
-                                  },
-                                ),
-                              );
-                            },
+                            ],
                           ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: listEmpty
+                            ? _emptyState(context)
+                            : _scope == _RosterScope.all
+                            ? CustomScrollView(
+                                slivers: [
+                                  if (filteredStaff.isNotEmpty) ...[
+                                    SliverToBoxAdapter(
+                                      child: _sectionLabel(
+                                        context,
+                                        'Staff (${filteredStaff.length})',
+                                      ),
+                                    ),
+                                    SliverPadding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        0,
+                                        16,
+                                        8,
+                                      ),
+                                      sliver: SliverList(
+                                        delegate: SliverChildBuilderDelegate((
+                                          ctx,
+                                          i,
+                                        ) {
+                                          final m = filteredStaff[i];
+                                          return _staffCard(
+                                            context,
+                                            n,
+                                            m,
+                                            departments,
+                                            principalReadOnly:
+                                                principalReadOnly,
+                                          );
+                                        }, childCount: filteredStaff.length),
+                                      ),
+                                    ),
+                                  ],
+                                  if (filteredStudents.isNotEmpty) ...[
+                                    SliverToBoxAdapter(
+                                      child: _sectionLabel(
+                                        context,
+                                        'Students (${filteredStudents.length})',
+                                      ),
+                                    ),
+                                    SliverPadding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        0,
+                                        16,
+                                        8,
+                                      ),
+                                      sliver: SliverList(
+                                        delegate: SliverChildBuilderDelegate((
+                                          ctx,
+                                          i,
+                                        ) {
+                                          final m = filteredStudents[i];
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 10,
+                                            ),
+                                            child: _StudentRosterCard(
+                                              student: m,
+                                              accent: _facultyAccent(context),
+                                              textColor: _facultyBodyText(
+                                                context,
+                                              ),
+                                              bg: _facultyPageBg(context),
+                                              onTap: () => context.push(
+                                                AppRoutes.webStudents,
+                                              ),
+                                            ),
+                                          );
+                                        }, childCount: filteredStudents.length),
+                                      ),
+                                    ),
+                                    if (filteredStaff.isNotEmpty ||
+                                        filteredStudents.isNotEmpty)
+                                      const SliverToBoxAdapter(
+                                        child: SizedBox(height: 88),
+                                      ),
+                                  ],
+                                ],
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  88,
+                                ),
+                                itemCount: showStaff && !showStudents
+                                    ? filteredStaff.length
+                                    : filteredStudents.length,
+                                itemBuilder: (ctx, i) {
+                                  if (showStaff && !showStudents) {
+                                    return _staffCard(
+                                      context,
+                                      n,
+                                      filteredStaff[i],
+                                      departments,
+                                      principalReadOnly: principalReadOnly,
+                                    );
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: _StudentRosterCard(
+                                      student: filteredStudents[i],
+                                      accent: _facultyAccent(context),
+                                      textColor: _facultyBodyText(context),
+                                      bg: _facultyPageBg(context),
+                                      onTap: () => principalReadOnly
+                                          ? context.go(
+                                              AppRoutes
+                                                  .principalStudentContacts,
+                                            )
+                                          : context.push(AppRoutes.webStudents),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         ),
@@ -806,14 +1364,33 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
                   ),
                 ),
               ),
-            FloatingActionButton.extended(
-              heroTag: 'fab_add_fac',
-              onPressed: _pushAddFaculty,
-              backgroundColor: _facultyAccent(context),
-              foregroundColor: _facultyOnAccent(context),
-              icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Add faculty'),
-            ),
+            if (principalReadOnly)
+              FloatingActionButton.extended(
+                heroTag: 'fab_principal_contacts',
+                onPressed: () => context.go(AppRoutes.principalStudentContacts),
+                backgroundColor: _facultyAccent(context),
+                foregroundColor: _facultyOnAccent(context),
+                icon: const Icon(Icons.contact_phone_outlined),
+                label: const Text('Guardian contacts'),
+              )
+            else if (_scope == _RosterScope.staff || _scope == _RosterScope.all)
+              FloatingActionButton.extended(
+                heroTag: 'fab_add_fac',
+                onPressed: _pushAddFaculty,
+                backgroundColor: _facultyAccent(context),
+                foregroundColor: _facultyOnAccent(context),
+                icon: const Icon(Icons.person_add_alt_1),
+                label: const Text('Onboard'),
+              )
+            else
+              FloatingActionButton.extended(
+                heroTag: 'fab_web_students',
+                onPressed: () => context.push(AppRoutes.webStudents),
+                backgroundColor: _facultyAccent(context),
+                foregroundColor: _facultyOnAccent(context),
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Web students'),
+              ),
           ],
         ),
       ),
@@ -885,8 +1462,8 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
                 final ok = await showDialog<bool>(
                   context: context,
                   builder: (c2) => AlertDialog(
-                    title: const Text('Remove faculty?'),
-                    content: Text('Remove ${m.name} from the demo directory?'),
+                    title: const Text('Remove from roster?'),
+                    content: Text('Remove ${m.name} from the roster?'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(c2, false),
@@ -909,8 +1486,123 @@ class _AdminFacultyListScreenState extends ConsumerState<AdminFacultyListScreen>
   }
 }
 
+class _StudentRosterCard extends StatelessWidget {
+  const _StudentRosterCard({
+    required this.student,
+    required this.accent,
+    required this.textColor,
+    required this.bg,
+    required this.onTap,
+  });
+
+  final MockStudent student;
+  final Color accent;
+  final Color textColor;
+  final Color bg;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: accent.withValues(alpha: 0.22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accent.withValues(alpha: 0.15),
+                  border: Border.all(color: accent.withValues(alpha: 0.45)),
+                ),
+                child: Icon(Icons.school_outlined, color: accent, size: 26),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      student.name,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${student.classSection} · Roll ${student.rollNo}',
+                      style: TextStyle(
+                        color: textColor.withValues(alpha: 0.75),
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (student.parentName != null &&
+                        student.parentName!.isNotEmpty)
+                      Text(
+                        'Parent: ${student.parentName}',
+                        style: TextStyle(
+                          color: textColor.withValues(alpha: 0.65),
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  student.feeStatus,
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right, color: accent.withValues(alpha: 0.55)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DepartmentRail extends StatelessWidget {
   const _DepartmentRail({
+    required this.title,
+    this.trailing,
+    this.headerIcon = Icons.account_tree_outlined,
     required this.departments,
     required this.selected,
     required this.onAll,
@@ -918,6 +1610,9 @@ class _DepartmentRail extends StatelessWidget {
     required this.onAddDept,
   });
 
+  final String title;
+  final Widget? trailing;
+  final IconData headerIcon;
   final List<String> departments;
   final String? selected;
   final VoidCallback onAll;
@@ -960,28 +1655,28 @@ class _DepartmentRail extends StatelessWidget {
                       color: cs.outlineVariant.withValues(alpha: 0.45),
                     ),
                   ),
-                  child: Icon(
-                    Icons.account_tree_outlined,
-                    color: cs.secondary,
-                    size: 18,
-                  ),
+                  child: Icon(headerIcon, color: cs.secondary, size: 18),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Departments',
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: cs.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: onAddDept,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('New'),
-                  style: TextButton.styleFrom(foregroundColor: cs.secondary),
-                ),
+                if (trailing != null)
+                  trailing!
+                else
+                  TextButton.icon(
+                    onPressed: onAddDept,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('New'),
+                    style: TextButton.styleFrom(foregroundColor: cs.secondary),
+                  ),
               ],
             ),
           ),

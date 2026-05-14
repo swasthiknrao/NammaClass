@@ -13,4 +13,10 @@ class EnvConfig {
     'API_BASE_URL',
     defaultValue: '',
   );
+
+  /// Namma AI Gateway (SSE). Example: `http://127.0.0.1:8787`
+  static const String nammaAiBaseUrl = String.fromEnvironment(
+    'NAMMA_AI_BASE_URL',
+    defaultValue: '',
+  );
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_glass_theme.dart';
@@ -8,6 +7,7 @@ import 'core/theme/theme_presets.dart';
 import 'core/providers/theme_mode_provider.dart';
 import 'core/providers/theme_preset_provider.dart';
 import 'features/tenant/providers/tenant_provider.dart';
+import 'l10n/app_localizations.dart';
 import 'routing/app_router.dart';
 
 class App extends ConsumerWidget {
@@ -35,7 +35,12 @@ class App extends ConsumerWidget {
         ? tenant.languages.first
         : 'en';
     final parts = localeTag.split('_');
-    final locale = Locale(parts[0], parts.length > 1 ? parts[1] : null);
+    var locale = Locale(parts[0], parts.length > 1 ? parts[1] : null);
+    // App-generated l10n only ships en / hi / kn — avoid a null AppLocalizations tree.
+    const l10nCodes = {'en', 'hi', 'kn'};
+    if (!l10nCodes.contains(locale.languageCode)) {
+      locale = const Locale('en');
+    }
 
     return MaterialApp.router(
       title: tenant.institutionName.isNotEmpty
@@ -63,11 +68,7 @@ class App extends ConsumerWidget {
         Locale('hi'),
         Locale('ta'),
       ],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
 
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;

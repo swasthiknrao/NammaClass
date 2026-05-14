@@ -8,42 +8,22 @@ class NotificationService extends StateNotifier<List<MockNotice>> {
   NotificationService() : super(List.from(MockData.notices));
 
   void markAsRead(String id) {
-    state = [
-      for (final n in state)
-        n.id == id
-            ? MockNotice(
-                id: n.id,
-                title: n.title,
-                body: n.body,
-                date: n.date,
-                category: n.category,
-                isRead: true,
-                hasAttachment: n.hasAttachment,
-                targetUserId: n.targetUserId,
-              )
-            : n,
-    ];
+    state = [for (final n in state) n.id == id ? n.copyWith(isRead: true) : n];
   }
 
   void markAllRead() {
-    state = [
-      for (final n in state)
-        MockNotice(
-          id: n.id,
-          title: n.title,
-          body: n.body,
-          date: n.date,
-          category: n.category,
-          isRead: true,
-          hasAttachment: n.hasAttachment,
-          targetUserId: n.targetUserId,
-        ),
-    ];
+    state = [for (final n in state) n.copyWith(isRead: true)];
   }
 
   /// Prepends a notice (e.g. admin broadcast demo).
   void prependNotice(MockNotice notice) {
     state = [notice, ...state];
+  }
+
+  /// Prepends several notices (e.g. direct messages to many recipients).
+  void prependNotices(List<MockNotice> notices) {
+    if (notices.isEmpty) return;
+    state = [...notices, ...state];
   }
 }
 

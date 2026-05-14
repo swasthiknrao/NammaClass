@@ -7,6 +7,7 @@ import 'role_module_requirements.dart';
 Set<UserRole> get schoolAdminOpsInviteRoles => {
   UserRole.principal,
   UserRole.hod,
+  UserRole.teacher,
   UserRole.driver,
   UserRole.staff,
   UserRole.librarian,
@@ -24,7 +25,7 @@ Set<UserRole> get hodAcademicInviteRoles => {
 
 /// Human-readable lines for the User Management “access map” panel.
 List<String> schoolInviteAccessMapLines() => const [
-  'Admin — principal, HOD, librarian, warden, accountant, driver, general staff, support & canteen (when modules allow).',
+  'Admin — principal, HOD, teachers, librarian, warden, accountant, driver, general staff, support & canteen (when modules allow).',
   'Principal — everything the admin can invite, plus teachers and students (same authority as HOD for academics).',
   'HOD — teachers and students in their scope.',
   'Teacher — students only (parents get portal credentials when you add a learner on the Students page).',

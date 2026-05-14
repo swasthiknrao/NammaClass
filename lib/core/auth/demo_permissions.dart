@@ -1,10 +1,17 @@
 import '../models/user_model.dart';
 
+/// Claim keys used with [demoPermissionsForRole] and the Riverpod
+/// `demoPermissionsProvider` in `auth_provider.dart`.
+/// Keep in sync with [PortalCapabilityRegistry] in `portal_capabilities.dart`.
+abstract final class DemoPermission {
+  static const approvalsWrite = 'approvals:write';
+  static const coverApprove = 'cover:approve';
+}
+
 /// Demo permission strings until backend JWT drives claims.
 List<String> demoPermissionsForRole(UserRole role) {
   switch (role) {
     case UserRole.admin:
-    case UserRole.principal:
       return [
         'students:read',
         'students:write',
@@ -13,8 +20,25 @@ List<String> demoPermissionsForRole(UserRole role) {
         'attendance:read',
         'attendance:write',
         'inventory:read',
+        'library:read',
+        'transport:read',
         'support:read',
         'web:access',
+        DemoPermission.approvalsWrite,
+        DemoPermission.coverApprove,
+      ];
+    case UserRole.principal:
+      return [
+        'students:read',
+        'students:contact:write',
+        'fees:read',
+        'attendance:read',
+        'library:read',
+        'transport:read',
+        'support:read',
+        'web:access',
+        DemoPermission.approvalsWrite,
+        DemoPermission.coverApprove,
       ];
     case UserRole.accountant:
       return ['fees:read', 'fees:write', 'students:read', 'web:access'];
@@ -30,7 +54,14 @@ List<String> demoPermissionsForRole(UserRole role) {
     case UserRole.support:
       return ['support:read', 'support:write', 'students:read', 'web:access'];
     case UserRole.hod:
-      return ['students:read', 'staff:read', 'attendance:read', 'web:access'];
+      return [
+        'students:read',
+        'staff:read',
+        'attendance:read',
+        'web:access',
+        DemoPermission.approvalsWrite,
+        DemoPermission.coverApprove,
+      ];
     case UserRole.superAdmin:
       return [
         'platform:tenants',
@@ -39,6 +70,9 @@ List<String> demoPermissionsForRole(UserRole role) {
         'platform:audit',
         'students:read',
         'students:write',
+        'fees:read',
+        'library:read',
+        'transport:read',
         'web:access',
       ];
     case UserRole.parent:

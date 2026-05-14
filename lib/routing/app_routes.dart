@@ -30,6 +30,7 @@ class AppRoutes {
   static const String teacherAttendanceMark = '/teacher/attendance/mark';
   static const String teacherDiary = '/teacher/diary';
   static const String teacherStudents = '/teacher/students';
+  static const String teacherMessages = '/teacher/messages';
   static const String teacherProfile = '/teacher/profile';
   // Part 2 — Leave
   static const String teacherLeaveApply = '/teacher/leave-apply';
@@ -57,6 +58,7 @@ class AppRoutes {
   static const String adminFacultyAdd = '/admin/faculty/add';
   static const String adminFacultyDetail = '/admin/faculty/:id';
   static const String adminUnavailabilityApprovals = '/admin/unavailability';
+  static const String principalStudentContacts = '/admin/principal/contacts';
 
   static String adminFacultyDetailPath(String id) => '/admin/faculty/$id';
 
@@ -72,6 +74,9 @@ class AppRoutes {
   static const String events = '/events';
   static const String search = '/search';
 
+  /// Namma AI — institutional co-pilot (feature-gated: `ai_insights`).
+  static const String nammaAi = '/namma-ai';
+
   // ── Staff HR Portal (Part 2) ──────────────────────────────────────────────
   static const String staffHome = '/staff/home';
   static const String staffAttendance = '/staff/attendance';
@@ -82,9 +87,13 @@ class AppRoutes {
   static const String staffProfile = '/staff/profile';
 
   // ── Driver App (Part 2) ───────────────────────────────────────────────────
+  static const String driverHome = '/driver/home';
   static const String driverRoute = '/driver/route';
   static const String driverStudents = '/driver/students';
   static const String driverProfile = '/driver/profile';
+  static const String driverTripHistory = '/driver/history';
+  static const String driverVehicleChecklist = '/driver/checklist';
+  static const String driverIncidentReport = '/driver/incident';
 
   // ── Librarian App (Part 2) ────────────────────────────────────────────────
   static const String librarianCounter = '/librarian/counter';
@@ -97,6 +106,10 @@ class AppRoutes {
   static const String wardenRollcall = '/warden/rollcall';
   static const String wardenVisitors = '/warden/visitors';
   static const String wardenOutpass = '/warden/outpass';
+  static const String wardenDining = '/warden/dining';
+  static const String wardenRooms = '/warden/rooms';
+  static const String wardenNightPatrol = '/warden/night-patrol';
+  static const String wardenConcierge = '/warden/concierge';
   static const String wardenProfile = '/warden/profile';
 
   // ── Canteen Staff App (Part 2) ────────────────────────────────────────────
@@ -106,6 +119,7 @@ class AppRoutes {
 
   // ── HOD (mobile-first) ───────────────────────────────────────────────────────
   static const String hodHome = '/hod/home';
+  static const String hodComms = '/hod/comms';
   static const String hodProfile = '/hod/profile';
 
   // ── Shared Food/Canteen (for student, staff, parent) ──────────────────────
@@ -174,4 +188,7 @@ class AppRoutes {
 
   // ── Accountant Portal ──────────────────────────────────────────────────────
   static const String webAccountantDashboard = '/web/accountant/dashboard';
+  static const String webAccountantPayroll = '/web/accountant/payroll';
+  static const String webAccountantExpenses = '/web/accountant/expenses';
+  static const String webAccountantReports = '/web/accountant/reports';
 }

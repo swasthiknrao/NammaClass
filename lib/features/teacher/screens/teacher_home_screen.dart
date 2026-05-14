@@ -12,8 +12,11 @@ import '../../../core/widgets/nc_avatar.dart';
 import '../../../core/widgets/nc_card.dart';
 import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/notification_icon_button.dart';
+import '../../../domain/entities/nc_feature.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../features/tenant/providers/tenant_provider.dart';
 import '../../../routing/app_routes.dart';
+import '../../namma_ai/providers/namma_ai_panel_provider.dart';
 
 class TeacherHomeScreen extends ConsumerWidget {
   const TeacherHomeScreen({super.key});
@@ -504,9 +507,10 @@ class _TaskBanner extends StatelessWidget {
   }
 }
 
-class _QuickActionsCard extends StatelessWidget {
+class _QuickActionsCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tenant = ref.watch(tenantProfileProvider);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -562,6 +566,12 @@ class _QuickActionsCard extends StatelessWidget {
             label: 'Mark unavailable',
             onTap: () => context.go(AppRoutes.teacherUnavailability),
           ),
+          if (tenant.hasFeature(NcFeature.aiInsights))
+            _QuickActionTile(
+              icon: Icons.auto_awesome_rounded,
+              label: 'Namma AI',
+              onTap: () => ref.read(nammaAiPanelProvider.notifier).open(),
+            ),
         ],
       ),
     );

@@ -20,7 +20,7 @@ class AdminFacultyDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
           ? null
-          : AppBar(title: const Text('Faculty profile')),
+          : AppBar(title: const Text('Team member')),
       backgroundColor: Colors.transparent,
       body: staffAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -44,6 +44,10 @@ class AdminFacultyDetailScreen extends ConsumerWidget {
                     children: [
                       _line('Role', s.role),
                       _line('Department', s.department),
+                      if (s.employeeCode != null && s.employeeCode!.isNotEmpty)
+                        _line('Employee ID', s.employeeCode!),
+                      if (s.campusBlock != null && s.campusBlock!.isNotEmpty)
+                        _line('Block / wing', s.campusBlock!),
                       _line('Phone', s.phone),
                       if (s.email != null) _line('Email', s.email!),
                       _line('Status', s.status),

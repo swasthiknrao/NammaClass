@@ -27,6 +27,30 @@ class MockStudent {
   final String? parentName;
   final String? parentPhone;
   final String feeStatus;
+
+  MockStudent copyWith({
+    String? id,
+    String? name,
+    String? rollNo,
+    String? classSection,
+    double? attendancePercent,
+    String? avatarUrl,
+    String? parentName,
+    String? parentPhone,
+    String? feeStatus,
+  }) {
+    return MockStudent(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      rollNo: rollNo ?? this.rollNo,
+      classSection: classSection ?? this.classSection,
+      attendancePercent: attendancePercent ?? this.attendancePercent,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      parentName: parentName ?? this.parentName,
+      parentPhone: parentPhone ?? this.parentPhone,
+      feeStatus: feeStatus ?? this.feeStatus,
+    );
+  }
 }
 
 // ── Attendance model ───────────────────────────────────────────────────────────
@@ -155,6 +179,10 @@ class MockNotice {
     this.isRead = false,
     this.hasAttachment = false,
     this.targetUserId,
+    this.senderUserId,
+    this.senderName,
+    this.audienceRoleKeys = const [],
+    this.audienceClassSection,
   });
 
   final String id;
@@ -168,6 +196,59 @@ class MockNotice {
   /// If set, this notice is shown only to the user with this ID.
   /// Also used for library overdue: matches borrowerId or student/staff name.
   final String? targetUserId;
+
+  /// Portal user id of sender (e.g. admin broadcast, teacher message).
+  final String? senderUserId;
+
+  /// Display name for inbox ("From …").
+  final String? senderName;
+
+  /// When [targetUserId] is null: only users whose [UserRole.name] is in this list
+  /// see the notice. Empty means no role filter (school-wide).
+  final List<String> audienceRoleKeys;
+
+  /// Optional class/section filter (e.g. `8-A`) combined with [audienceRoleKeys].
+  final String? audienceClassSection;
+
+  MockNotice copyWith({
+    String? id,
+    String? title,
+    String? body,
+    DateTime? date,
+    String? category,
+    bool? isRead,
+    bool? hasAttachment,
+    String? targetUserId,
+    bool clearTargetUserId = false,
+    String? senderUserId,
+    bool clearSenderUserId = false,
+    String? senderName,
+    bool clearSenderName = false,
+    List<String>? audienceRoleKeys,
+    String? audienceClassSection,
+    bool clearAudienceClassSection = false,
+  }) {
+    return MockNotice(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      date: date ?? this.date,
+      category: category ?? this.category,
+      isRead: isRead ?? this.isRead,
+      hasAttachment: hasAttachment ?? this.hasAttachment,
+      targetUserId: clearTargetUserId
+          ? null
+          : (targetUserId ?? this.targetUserId),
+      senderUserId: clearSenderUserId
+          ? null
+          : (senderUserId ?? this.senderUserId),
+      senderName: clearSenderName ? null : (senderName ?? this.senderName),
+      audienceRoleKeys: audienceRoleKeys ?? this.audienceRoleKeys,
+      audienceClassSection: clearAudienceClassSection
+          ? null
+          : (audienceClassSection ?? this.audienceClassSection),
+    );
+  }
 }
 
 // ── Timetable model ────────────────────────────────────────────────────────────
@@ -238,6 +319,8 @@ class MockStaffMember {
     this.joinDate,
     this.status = 'active',
     this.salaryCTC = 0,
+    this.employeeCode,
+    this.campusBlock,
   });
 
   final String id;
@@ -249,6 +332,8 @@ class MockStaffMember {
   final DateTime? joinDate;
   final String status;
   final int salaryCTC;
+  final String? employeeCode;
+  final String? campusBlock;
 
   MockStaffMember copyWith({
     String? id,
@@ -260,7 +345,11 @@ class MockStaffMember {
     DateTime? joinDate,
     String? status,
     int? salaryCTC,
+    String? employeeCode,
+    String? campusBlock,
     bool clearEmail = false,
+    bool clearEmployeeCode = false,
+    bool clearCampusBlock = false,
   }) {
     return MockStaffMember(
       id: id ?? this.id,
@@ -272,6 +361,10 @@ class MockStaffMember {
       joinDate: joinDate ?? this.joinDate,
       status: status ?? this.status,
       salaryCTC: salaryCTC ?? this.salaryCTC,
+      employeeCode: clearEmployeeCode
+          ? null
+          : (employeeCode ?? this.employeeCode),
+      campusBlock: clearCampusBlock ? null : (campusBlock ?? this.campusBlock),
     );
   }
 }
@@ -698,6 +791,8 @@ class MockBusStop {
     required this.eta,
     required this.studentCount,
     required this.isVisited,
+    this.lat,
+    this.lng,
   });
 
   final String id;
@@ -705,6 +800,10 @@ class MockBusStop {
   final String eta;
   final int studentCount;
   bool isVisited;
+
+  /// WGS84 — used for external maps deep links when non-null.
+  final double? lat;
+  final double? lng;
 }
 
 /// Borrower type for library issues

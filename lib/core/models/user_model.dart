@@ -134,6 +134,7 @@ class UserModel {
     phone: '9876543210',
     email: 'suresh.kumar@gmail.com',
     schoolId: 'SCH_001',
+    studentId: 'STU_2024_0042',
   );
 
   static const teacher = UserModel(

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_button.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../namma_ai/providers/namma_ai_panel_provider.dart';
 
-class WebAiToolsScreen extends StatelessWidget {
+class WebAiToolsScreen extends ConsumerWidget {
   const WebAiToolsScreen({super.key});
 
   static final _tools = [
@@ -48,7 +51,7 @@ class WebAiToolsScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -66,6 +69,21 @@ class WebAiToolsScreen extends StatelessWidget {
             'NammaClass AI-powered features',
             style: AppTypography.bodyMedium.copyWith(
               color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          NcCard(
+            child: ListTile(
+              leading: const Icon(Icons.auto_awesome, color: AppColors.accent),
+              title: Text('Namma AI', style: AppTypography.titleMedium),
+              subtitle: Text(
+                'Institutional co-pilot — streaming answers, role-aware data, charts.',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => ref.read(nammaAiPanelProvider.notifier).open(),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),

@@ -40,7 +40,7 @@ final adminStudentsProvider = FutureProvider<List<MockStudent>>((ref) async {
   return MockData.students;
 });
 
-/// Staff list with add support. Used by WebStaffScreen and PeopleScreen.
+/// Staff list with add support. Used by WebStaffScreen and admin team roster.
 final adminStaffProvider = Provider<AsyncValue<List<MockStaffMember>>>((ref) {
   return ref.watch(staffNotifierProvider);
 });

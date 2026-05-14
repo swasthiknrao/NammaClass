@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'page_transitions.dart';
+import '../features/namma_ai/screens/namma_ai_screen.dart';
 import '../features/web/academics/web_marks_entry_screen.dart';
 import '../features/web/academics/web_report_card_builder_screen.dart';
 import '../features/web/academics/web_timetable_screen.dart';
@@ -39,11 +40,15 @@ import '../features/web/students/web_students_screen.dart';
 import '../features/web/transport/web_transport_live_screen.dart';
 import '../features/web/transport/web_transport_routes_screen.dart';
 import '../features/web/website/web_website_manager_screen.dart';
+import '../features/web/accountant/accountant_payroll_overview_screen.dart';
 import '../features/web/accountant/web_accountant_dashboard_screen.dart';
+import '../features/web/accountant/web_accountant_expenses_screen.dart';
+import '../features/web/accountant/web_accountant_month_close_screen.dart';
 import '../features/web/support/web_support_complaints_screen.dart';
 import '../features/web/support/web_support_dashboard_screen.dart';
 import '../features/web/support/web_support_knowledge_base_screen.dart';
 import '../features/web/support/web_support_tickets_screen.dart';
+import '../features/hod/screens/hod_comms_screen.dart';
 import '../features/hod/screens/hod_home_screen.dart';
 import '../features/web_shell.dart';
 import 'app_routes.dart';
@@ -81,6 +86,11 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       GoRoute(
         path: AppRoutes.webHodHome,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, const HodHomeScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.hodComms,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const HodCommsScreen()),
       ),
       GoRoute(
         path: AppRoutes.webDashboard,
@@ -146,6 +156,10 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       GoRoute(
         path: AppRoutes.webAiTools,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, WebAiToolsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.nammaAi,
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, const NammaAiScreen()),
       ),
       GoRoute(
         path: AppRoutes.webWebsite,
@@ -264,6 +278,21 @@ List<RouteBase> webShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
         path: AppRoutes.webAccountantDashboard,
         pageBuilder: (c, s) =>
             fadeSlideTransition(c, s, WebAccountantDashboardScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webAccountantPayroll,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const AccountantPayrollOverviewScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webAccountantExpenses,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const WebAccountantExpensesScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.webAccountantReports,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const WebAccountantMonthCloseScreen()),
       ),
     ],
   ),

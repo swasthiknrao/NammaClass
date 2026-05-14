@@ -383,6 +383,631 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverRouteTitle => 'My Route';
 
   @override
+  String get driverHomeTitle => 'Today\'s trip';
+
+  @override
+  String get driverTodaySummary => 'Today\'s summary';
+
+  @override
+  String get driverBusNumberLabel => 'Bus';
+
+  @override
+  String get driverMorningStart => 'Morning';
+
+  @override
+  String get driverEveningStart => 'Evening';
+
+  @override
+  String get driverNextStopLabel => 'Next stop';
+
+  @override
+  String get driverEtaLabel => 'ETA';
+
+  @override
+  String get driverNoUpcomingStop => 'All stops completed';
+
+  @override
+  String get driverSafetyTip => 'Safety tip';
+
+  @override
+  String get driverSafetyTipFallback =>
+      'Drive rested, buckle up, watch for two-wheelers.';
+
+  @override
+  String get driverReportDelay => 'Report delay';
+
+  @override
+  String driverDelayMinutesLabel(int count) {
+    return '$count min late';
+  }
+
+  @override
+  String get driverApplyDelay => 'Apply delay';
+
+  @override
+  String get driverDelayDefaultReason => 'Traffic / route conditions';
+
+  @override
+  String driverDelayUpdatedSnack(int count) {
+    return 'Parents notified: bus running about $count min late.';
+  }
+
+  @override
+  String get driverShareLiveTrip => 'Share live trip';
+
+  @override
+  String get driverShareLiveTripSubtitle =>
+      'Parents with bus tracking see movement (demo toggle).';
+
+  @override
+  String get driverQuickLinks => 'Quick links';
+
+  @override
+  String get driverOpenFullRoute => 'Open route & stops';
+
+  @override
+  String get driverStudentRoster => 'Student roster';
+
+  @override
+  String get driverTripHistory => 'Trip history';
+
+  @override
+  String get driverVehicleChecklist => 'Vehicle checklist';
+
+  @override
+  String get driverIncidentReport => 'Incident report';
+
+  @override
+  String get driverCallOffice => 'Call transport office';
+
+  @override
+  String get driverOpenInMaps => 'Open in Maps';
+
+  @override
+  String get driverTripHistoryTitle => 'Trip history';
+
+  @override
+  String get driverTripLogEmpty =>
+      'No completed trips yet. Submit a boarding report to build history.';
+
+  @override
+  String driverTripHistoryCounts(int boarded, int total) {
+    return '$boarded boarded / $total on roster';
+  }
+
+  @override
+  String get driverVehicleChecklistTitle => 'Vehicle checklist';
+
+  @override
+  String get driverVehicleChecklistIntro =>
+      'Complete before every trip. Tap to tick each item.';
+
+  @override
+  String get driverChecklistTyres => 'Tyres & pressure';
+
+  @override
+  String get driverChecklistLights => 'Lights & indicators';
+
+  @override
+  String get driverChecklistBrakes => 'Brakes';
+
+  @override
+  String get driverChecklistMirrors => 'Mirrors & horn';
+
+  @override
+  String get driverChecklistFireExtinguisher => 'Fire extinguisher';
+
+  @override
+  String get driverChecklistFirstAid => 'First aid kit';
+
+  @override
+  String get driverIncidentReportTitle => 'Incident report';
+
+  @override
+  String get driverIncidentIntro =>
+      'Describe any incident, near-miss, or student concern. Transport office receives a copy in this demo.';
+
+  @override
+  String get driverIncidentHint => 'What happened? Where? Who was involved?';
+
+  @override
+  String get driverIncidentEmpty => 'Please enter a short description.';
+
+  @override
+  String get driverIncidentSubmitted => 'Incident report logged.';
+
+  @override
+  String get driverSosDialogTitle => 'Send SOS alert';
+
+  @override
+  String get driverSosCategoryLabel => 'Category';
+
+  @override
+  String get driverSosCategoryMedical => 'Medical';
+
+  @override
+  String get driverSosCategoryBreakdown => 'Breakdown';
+
+  @override
+  String get driverSosCategorySecurity => 'Security';
+
+  @override
+  String get driverSosCategoryOther => 'Other';
+
+  @override
+  String get driverSosNoteLabel => 'Short note (optional)';
+
+  @override
+  String get driverSosSend => 'Send SOS';
+
+  @override
+  String get driverSosSentSnack =>
+      'SOS logged — transport manager notified (demo).';
+
+  @override
+  String get driverSosShort => 'SOS';
+
+  @override
+  String get driverLiveRouteMap => 'Live route map';
+
+  @override
+  String get driverGpsTrackingActive => 'GPS tracking active';
+
+  @override
+  String get driverNoStopsOnRoute => 'No stops on this route';
+
+  @override
+  String driverProgressStops(int visited, int total) {
+    return 'Progress: $visited/$total stops';
+  }
+
+  @override
+  String driverProgressPercent(int p) {
+    return '$p% complete';
+  }
+
+  @override
+  String get driverTripStartedSnack =>
+      'Trip started — GPS broadcasting (demo).';
+
+  @override
+  String get driverTripEndedSnack => 'Trip ended — summary saved (demo).';
+
+  @override
+  String get driverStartTrip => 'Start trip';
+
+  @override
+  String get driverEndTrip => 'End trip';
+
+  @override
+  String get driverNoRouteStopsYet => 'No route stops yet';
+
+  @override
+  String get driverNoRouteStopsBody =>
+      'When your school assigns bus stops to this route, they will appear here with ETAs and student counts.';
+
+  @override
+  String driverStopEtaStudents(String eta, int count) {
+    return 'ETA: $eta  ·  $count students';
+  }
+
+  @override
+  String get driverMarkArrived => 'Arrived';
+
+  @override
+  String get driverStudentsBoardingTitle => 'Student boarding';
+
+  @override
+  String get driverMorningTrip => 'Morning trip';
+
+  @override
+  String get driverEveningTrip => 'Evening trip';
+
+  @override
+  String get driverPickup => 'Pickup';
+
+  @override
+  String get driverDropoff => 'Drop-off';
+
+  @override
+  String get driverAbsentSection => 'Absent today (not expected on bus)';
+
+  @override
+  String get driverScanStudentQr => 'Scan student QR card';
+
+  @override
+  String get driverQrCameraStubTitle => 'QR scanner';
+
+  @override
+  String get driverQrCameraStubNote =>
+      'Production builds can use the device camera (mobile_scanner). For this demo, simulate a successful scan below.';
+
+  @override
+  String get driverQrSimulateScan => 'Simulate scan';
+
+  @override
+  String get driverSubmitBoardingTitle => 'Submit boarding report';
+
+  @override
+  String driverSubmitBoardingBody(int boarded, int total) {
+    return '$boarded of $total students marked. Submit?';
+  }
+
+  @override
+  String get driverBoardingReportSubmitted => 'Boarding report submitted!';
+
+  @override
+  String get driverTripHistorySubmitted => 'Submitted';
+
+  @override
+  String get driverBoardedOk => 'Boarded ✓';
+
+  @override
+  String get driverDroppedOk => 'Dropped ✓';
+
+  @override
+  String get driverBoardedLabel => 'Boarded';
+
+  @override
+  String get driverDroppedLabel => 'Dropped';
+
+  @override
+  String driverStopStudentCount(int n) {
+    return '$n students';
+  }
+
+  @override
+  String driverBoardingFooter(int done, int total) {
+    return 'Marked: $done / $total students';
+  }
+
+  @override
+  String get wardenLodgeDeskTitle => 'Lodge desk';
+
+  @override
+  String get wardenLodgeHospitalityLine =>
+      'Hospitality & safety — one calm campus night at a time.';
+
+  @override
+  String get wardenLodgeSeasonalCard => 'Tonight at the house';
+
+  @override
+  String get wardenLodgeChefSpecialLabel => 'Chef\'s counter';
+
+  @override
+  String get wardenLodgeQuietHoursLabel => 'Quiet hours';
+
+  @override
+  String get wardenLodgeOccupancyLabel => 'House occupancy';
+
+  @override
+  String get wardenLodgeMessHall => 'Mess & dining floor';
+
+  @override
+  String get wardenLodgeMessHallSubtitle =>
+      'Covers, seconds, and allergy call-outs like a busy restaurant pass.';
+
+  @override
+  String get wardenLodgeRoomBoard => 'Rooms & housekeeping';
+
+  @override
+  String get wardenLodgeRoomBoardSubtitle =>
+      'Turnover, linen, and VIP parent rooms — lodge operations board.';
+
+  @override
+  String get wardenLodgeNightPatrol => 'Night patrol';
+
+  @override
+  String get wardenLodgeNightPatrolSubtitle =>
+      'Gates, mess lock-up, fire panel — curfew checklist.';
+
+  @override
+  String get wardenLodgeConcierge => 'Concierge log';
+
+  @override
+  String get wardenLodgeConciergeSubtitle =>
+      'Shift notes parents and admin will thank you for.';
+
+  @override
+  String get wardenLodgeOverview => 'Tonight\'s snapshot';
+
+  @override
+  String get wardenLodgeHouseOps => 'House operations';
+
+  @override
+  String get wardenLodgeAbsentHint =>
+      'Open roll call to call guardians and log reasons.';
+
+  @override
+  String get wardenLodgeGoodMorning => 'Good morning';
+
+  @override
+  String get wardenLodgeGoodAfternoon => 'Good afternoon';
+
+  @override
+  String get wardenLodgeGoodEvening => 'Good evening';
+
+  @override
+  String get wardenLodgeRollCallHint => 'Roll call · 8:00 PM';
+
+  @override
+  String get wardenDiningTitle => 'Mess & dining';
+
+  @override
+  String get wardenDiningWindow => 'Window';
+
+  @override
+  String get wardenDiningExpected => 'Expected';
+
+  @override
+  String get wardenDiningServed => 'Served';
+
+  @override
+  String get wardenDiningPortionServed => 'Portion served';
+
+  @override
+  String get wardenDiningRoundComplete => 'Service complete for this meal';
+
+  @override
+  String get wardenDiningChefNote => 'Pass note';
+
+  @override
+  String get wardenRoomsTitle => 'Rooms & linen';
+
+  @override
+  String wardenRoomFloor(String floor) {
+    return 'Floor $floor';
+  }
+
+  @override
+  String get wardenRoomLinen => 'Linen';
+
+  @override
+  String get wardenRoomTapCycle => 'Tap status to cycle';
+
+  @override
+  String get wardenRoomStatusReady => 'Ready';
+
+  @override
+  String get wardenRoomStatusOccupied => 'Occupied';
+
+  @override
+  String get wardenRoomStatusTurnover => 'Turnover';
+
+  @override
+  String get wardenPatrolTitle => 'Night patrol';
+
+  @override
+  String get wardenPatrolSubtitle => 'Tick before signing off the shift.';
+
+  @override
+  String get wardenPatrolGates => 'Main gates & perimeter locked';
+
+  @override
+  String get wardenPatrolMess => 'Mess / kitchen closed & gas off';
+
+  @override
+  String get wardenPatrolFire => 'Fire panel — no alerts';
+
+  @override
+  String get wardenPatrolLights => 'Common-area lights to night mode';
+
+  @override
+  String get wardenPatrolQuiet => 'Quiet hours announced on PA';
+
+  @override
+  String get wardenPatrolFirstAid => 'First-aid room accessible';
+
+  @override
+  String get wardenConciergeTitle => 'Concierge log';
+
+  @override
+  String get wardenConciergeEmpty =>
+      'No entries yet — log handovers, calls, and medicine drops.';
+
+  @override
+  String get wardenConciergeDetailHint => 'What should the next shift know?';
+
+  @override
+  String get wardenConciergeAdd => 'Log entry';
+
+  @override
+  String get wardenConciergeQuickParentCall => 'Parent called — returned';
+
+  @override
+  String get wardenConciergeQuickMedicine => 'Medicine handed to student';
+
+  @override
+  String get wardenConciergeQuickMaintenance => 'Maintenance ticket raised';
+
+  @override
+  String get accountantFinanceTitle => 'Finance dashboard';
+
+  @override
+  String get accountantFinanceSubtitle =>
+      'Collections, payroll obligation, and operating spend for the selected month.';
+
+  @override
+  String get accountantPeriodLabel => 'Finance period';
+
+  @override
+  String get accountantTodaysCollection => 'Today\'s collection';
+
+  @override
+  String get accountantTotalPending => 'Pending fees';
+
+  @override
+  String get accountantOverdueAmount => 'Overdue';
+
+  @override
+  String get accountantStudentsCleared => 'Students cleared';
+
+  @override
+  String get accountantPayrollLiability => 'Payroll liability (pending)';
+
+  @override
+  String get accountantExpenseBurnMtd => 'MTD operating spend';
+
+  @override
+  String get accountantCollectionTrend => 'Collection trend (7 days)';
+
+  @override
+  String get accountantQuickLinks => 'Quick links';
+
+  @override
+  String get accountantPayrollSnapshot => 'Payroll snapshot';
+
+  @override
+  String get accountantPfEmployerChip => 'PF (employer est.)';
+
+  @override
+  String get accountantEsiEmployerChip => 'ESI (employer est.)';
+
+  @override
+  String get accountantExpenseBurnTitle => 'Budget vs actual';
+
+  @override
+  String get accountantExceptionsTitle => 'Exceptions & holds';
+
+  @override
+  String get accountantPendingByClass => 'Pending by class';
+
+  @override
+  String get accountantRecentCollections => 'Recent collections';
+
+  @override
+  String get accountantViewAll => 'View all';
+
+  @override
+  String get accountantCollectFeesCta => 'Collect fees';
+
+  @override
+  String get accountantLinkLedger => 'Finance ledger';
+
+  @override
+  String get accountantLinkPayroll => 'Payroll overview';
+
+  @override
+  String get accountantLinkExpenses => 'Payables & spend';
+
+  @override
+  String get accountantLinkMonthClose => 'Month close';
+
+  @override
+  String get accountantPrintSummary => 'Print summary';
+
+  @override
+  String get accountantPrintSummarySnack =>
+      'Today\'s summary queued for printer (demo).';
+
+  @override
+  String get accountantPayrollScreenTitle => 'Payroll & compliance';
+
+  @override
+  String get accountantPayrollScreenSubtitle =>
+      'Read-only roster with payslip status for the finance period.';
+
+  @override
+  String get accountantExportBankFile => 'Export bank file';
+
+  @override
+  String get accountantBankFileSnack =>
+      'Bank file CSV copied to clipboard (demo).';
+
+  @override
+  String get accountantProcessPayrollSnack =>
+      'Payroll processing is admin-only in production — demo acknowledgement logged.';
+
+  @override
+  String get accountantExpensesTitle => 'Payables & spend';
+
+  @override
+  String get accountantExpensesSubtitle =>
+      'Vendor pipeline and budget bars (mock).';
+
+  @override
+  String get accountantPipelineVendor => 'Vendor';
+
+  @override
+  String get accountantPipelineAmount => 'Amount';
+
+  @override
+  String get accountantPipelineStatus => 'Status';
+
+  @override
+  String get accountantPipelineDue => 'Due';
+
+  @override
+  String get accountantMonthCloseTitle => 'Month close';
+
+  @override
+  String get accountantMonthCloseSubtitle =>
+      'Checklist, exports, and India-friendly presets (demo).';
+
+  @override
+  String get accountantMonthCloseChecklist => 'Close checklist';
+
+  @override
+  String get accountantExportPdfPlaceholder => 'Export PDF summary';
+
+  @override
+  String accountantExportPdfSnack(String period) {
+    return 'PDF placeholder — file name: finance_close_$period.pdf';
+  }
+
+  @override
+  String get accountantExportTallyPreset => 'Tally / CSV preset';
+
+  @override
+  String get accountantExportTallySnack =>
+      'Preset label copied — map to your COA in Tally (demo).';
+
+  @override
+  String get ledgerColDescription => 'Description';
+
+  @override
+  String get ledgerColAmount => 'Amount';
+
+  @override
+  String get ledgerColDate => 'Date';
+
+  @override
+  String get accountantLedgerTitle => 'Finance ledger';
+
+  @override
+  String get accountantLedgerExport => 'Export CSV';
+
+  @override
+  String get accountantLedgerExportSnack => 'Ledger CSV copied to clipboard.';
+
+  @override
+  String get accountantLedgerIncomeVsExpense => 'Income vs expenses';
+
+  @override
+  String get accountantTabIncome => 'Income';
+
+  @override
+  String get accountantTabExpenses => 'Expenses';
+
+  @override
+  String get accountantTabPl => 'P&L statement';
+
+  @override
+  String get accountantPlPettyCash => 'Petty cash';
+
+  @override
+  String get accountantPlMargin => 'Net margin (on income)';
+
+  @override
+  String get accountantSeverityHigh => 'High';
+
+  @override
+  String get accountantSeverityMedium => 'Medium';
+
+  @override
+  String get accountantPayablesPipelineTitle => 'Payables pipeline';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

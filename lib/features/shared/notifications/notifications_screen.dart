@@ -11,8 +11,16 @@ import '../../../core/widgets/shell_layout_scope.dart';
 import 'notification_service.dart';
 import 'notices_for_user_provider.dart';
 
-class NotificationsScreen extends ConsumerWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
+
+  @override
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  String? _categoryFilter;
 
   void _markOrDismiss(WidgetRef ref, String noticeId, List notices) {
     if (noticeId.startsWith('lib_overdue_')) {
@@ -38,9 +46,22 @@ class NotificationsScreen extends ConsumerWidget {
     }
   }
 
+  List<dynamic> _filtered(List notices) {
+    if (_categoryFilter == null) return notices;
+    return notices
+        .where((n) => (n.category as String) == _categoryFilter)
+        .toList();
+  }
+
+  Set<String> _categoriesIn(List notices) {
+    return notices.map((n) => n.category as String).toSet();
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final notices = ref.watch(noticesForCurrentUserProvider);
+    final filtered = _filtered(notices);
+    final cats = _categoriesIn(notices).toList()..sort();
 
     return Scaffold(
       appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
@@ -59,86 +80,150 @@ class NotificationsScreen extends ConsumerWidget {
               ],
             ),
       backgroundColor: Colors.transparent,
-      body: notices.isEmpty
-          ? const NcEmptyState(
-              title: 'No Notifications',
-              body: 'You\'re all caught up!',
-              illustration: NcIllustration.noNotifications,
-            )
-          : ListView.builder(
-              itemCount: notices.length,
-              itemBuilder: (ctx, i) {
-                final n = notices[i];
-                return Dismissible(
-                  key: Key(n.id),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (_) {
-                    _markOrDismiss(ref, n.id, notices);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Notification marked read')),
-                    );
-                  },
-                  background: Container(
-                    color: AppColors.error,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: AppSpacing.md),
-                    child: const Icon(Icons.delete, color: Colors.white),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (cats.isNotEmpty)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                0,
+              ),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.xs),
+                    child: ChoiceChip(
+                      label: const Text('All'),
+                      selected: _categoryFilter == null,
+                      onSelected: (_) => setState(() => _categoryFilter = null),
+                    ),
                   ),
-                  child:
-                      ListTile(
-                            onTap: () => _markOrDismiss(ref, n.id, notices),
-                            tileColor: n.isRead
-                                ? AppColors.card
-                                : AppColors.primary.withValues(alpha: 0.04),
-                            leading: CircleAvatar(
-                              backgroundColor: _categoryColor(
-                                n.category,
-                              ).withValues(alpha: 0.15),
-                              child: Icon(
-                                _categoryIcon(n.category),
-                                color: _categoryColor(n.category),
-                                size: 20,
-                              ),
-                            ),
-                            title: Text(
-                              n.title,
-                              style: AppTypography.labelLarge.copyWith(
-                                fontWeight: n.isRead
-                                    ? FontWeight.w400
-                                    : FontWeight.w700,
-                              ),
-                            ),
-                            subtitle: Row(
-                              children: [
-                                if (!n.isRead)
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    margin: const EdgeInsets.only(right: 4),
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.accent,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                Text(
-                                  AppFormatters.timeAgo(n.date),
-                                  style: AppTypography.bodySmall,
+                  ...cats.map(
+                    (c) => Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.xs),
+                      child: ChoiceChip(
+                        label: Text(c),
+                        selected: _categoryFilter == c,
+                        onSelected: (_) => setState(() => _categoryFilter = c),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: filtered.isEmpty
+                ? NcEmptyState(
+                    title: _categoryFilter == null
+                        ? 'No Notifications'
+                        : 'Nothing in this category',
+                    body: _categoryFilter == null
+                        ? 'You\'re all caught up!'
+                        : 'Try another filter or clear the chip above.',
+                    illustration: NcIllustration.noNotifications,
+                  )
+                : ListView.builder(
+                    itemCount: filtered.length,
+                    itemBuilder: (ctx, i) {
+                      final n = filtered[i];
+                      return Dismissible(
+                            key: Key(n.id),
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (_) {
+                              _markOrDismiss(ref, n.id, filtered);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Notification marked read'),
                                 ),
-                              ],
+                              );
+                            },
+                            background: Container(
+                              color: AppColors.error,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(
+                                right: AppSpacing.md,
+                              ),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                              ),
                             ),
-                            trailing: Text(
-                              n.category,
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.textSecondary,
+                            child: ListTile(
+                              onTap: () => _markOrDismiss(ref, n.id, filtered),
+                              tileColor: n.isRead
+                                  ? AppColors.card
+                                  : AppColors.primary.withValues(alpha: 0.04),
+                              leading: CircleAvatar(
+                                backgroundColor: _categoryColor(
+                                  n.category,
+                                ).withValues(alpha: 0.15),
+                                child: Icon(
+                                  _categoryIcon(n.category),
+                                  color: _categoryColor(n.category),
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                n.title,
+                                style: AppTypography.labelLarge.copyWith(
+                                  fontWeight: n.isRead
+                                      ? FontWeight.w400
+                                      : FontWeight.w700,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (n.senderName != null &&
+                                      n.senderName!.isNotEmpty)
+                                    Text(
+                                      'From ${n.senderName}',
+                                      style: AppTypography.bodySmall.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  Row(
+                                    children: [
+                                      if (!n.isRead)
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          margin: const EdgeInsets.only(
+                                            right: 4,
+                                          ),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.accent,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      Text(
+                                        AppFormatters.timeAgo(n.date),
+                                        style: AppTypography.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              trailing: Text(
+                                n.category,
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                             ),
                           )
                           .animate()
                           .fadeIn(duration: 280.ms, delay: (24 * i).ms)
-                          .slideX(begin: 0.03, curve: Curves.easeOutCubic),
-                );
-              },
-            ),
+                          .slideX(begin: 0.03, curve: Curves.easeOutCubic);
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -154,6 +239,13 @@ class NotificationsScreen extends ConsumerWidget {
         return AppColors.success;
       case 'Library':
         return AppColors.teal;
+      case 'Transport':
+        return AppColors.warning;
+      case 'Canteen':
+        return AppColors.purple;
+      case 'Broadcast':
+      case 'Message':
+        return AppColors.deepPurple;
       default:
         return AppColors.primary;
     }
@@ -171,6 +263,14 @@ class NotificationsScreen extends ConsumerWidget {
         return Icons.celebration;
       case 'Library':
         return Icons.local_library;
+      case 'Transport':
+        return Icons.directions_bus;
+      case 'Canteen':
+        return Icons.restaurant;
+      case 'Broadcast':
+        return Icons.campaign_outlined;
+      case 'Message':
+        return Icons.mark_unread_chat_alt_outlined;
       default:
         return Icons.notifications;
     }

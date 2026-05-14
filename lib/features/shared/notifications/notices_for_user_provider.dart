@@ -4,6 +4,7 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../features/librarian/providers/library_provider.dart';
+import '../../../features/shared/messaging/messaging_policy.dart';
 import 'notification_service.dart';
 
 /// Issue IDs that the user has dismissed from library overdue notices.
@@ -32,10 +33,17 @@ final noticesForCurrentUserProvider = Provider<List<MockNotice>>((ref) {
   final borrowerId = user != null ? _currentUserBorrowerId(user.name) : null;
   final userName = user?.name;
 
-  // Filter main notices: show if targetUserId is null (global) or matches
   final filtered = mainNotices.where((n) {
-    if (n.targetUserId == null) return true;
-    return n.targetUserId == borrowerId || n.targetUserId == userName;
+    if (n.targetUserId != null) {
+      return MessagingPolicy.directNoticeMatchesUser(
+        notice: n,
+        user: user,
+        borrowerId: borrowerId,
+        userName: userName,
+      );
+    }
+    if (user == null) return false;
+    return MessagingPolicy.announcementVisibleToUser(notice: n, user: user);
   }).toList();
 
   // Add library overdue notices for this borrower
@@ -59,6 +67,7 @@ final noticesForCurrentUserProvider = Provider<List<MockNotice>>((ref) {
           category: 'Library',
           isRead: false,
           targetUserId: borrowerId ?? userName,
+          audienceRoleKeys: const [],
         ),
       );
     }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'page_transitions.dart';
 import '../features/main_shell.dart';
+import '../features/namma_ai/screens/namma_ai_screen.dart';
 import '../features/shared/notifications/notifications_screen.dart';
 import '../features/shared/profile/profile_screen.dart';
 import '../features/staff/screens/staff_attendance_screen.dart';
@@ -55,6 +56,10 @@ List<RouteBase> staffShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
         path: AppRoutes.notifications,
         pageBuilder: (c, s) =>
             fadeSlideTransition(c, s, const NotificationsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.nammaAi,
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, const NammaAiScreen()),
       ),
     ],
   ),

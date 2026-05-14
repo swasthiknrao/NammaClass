@@ -1,0 +1,13 @@
+{
+  "name": "namma-ai-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Namma AI Gateway — SSE chat, RBAC tools, RAG, audit, rate limits",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

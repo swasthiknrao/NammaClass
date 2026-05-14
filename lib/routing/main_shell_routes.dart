@@ -6,8 +6,7 @@ import '../features/admin/screens/admin_dash_screen.dart';
 import '../features/admin/screens/admin_unavailability_approvals_screen.dart';
 import '../features/admin/screens/approvals_screen.dart';
 import '../features/admin/screens/broadcast_screen.dart';
-import '../features/admin/screens/admin_add_user_screen.dart';
-import '../features/admin/screens/people_screen.dart';
+import '../features/admin/screens/principal_student_contacts_screen.dart';
 import '../features/admin/faculty/screens/admin_faculty_add_screen.dart';
 import '../features/admin/faculty/screens/admin_faculty_detail_screen.dart';
 import '../features/admin/faculty/screens/admin_faculty_list_screen.dart';
@@ -15,6 +14,7 @@ import '../features/admin/timetable/screens/admin_timetable_management_screen.da
 import '../features/admin/timetable/screens/admin_timetable_settings_screen.dart';
 import '../features/admin/timetable/screens/admin_timetable_view_screen.dart';
 import '../features/web/staff/add_staff_screen.dart';
+import '../features/namma_ai/screens/namma_ai_screen.dart';
 import '../features/parent/screens/bus_tracking_screen.dart';
 import '../features/parent/screens/canteen_screen.dart';
 import '../features/parent/screens/chat_thread_screen.dart';
@@ -40,11 +40,13 @@ import '../features/teacher/screens/attendance_calendar_screen.dart';
 import '../features/teacher/screens/attendance_mark_screen.dart';
 import '../features/teacher/screens/diary_entry_screen.dart';
 import '../features/teacher/screens/my_students_screen.dart';
+import '../features/teacher/screens/teacher_comms_screen.dart';
 import '../features/teacher/screens/teacher_home_screen.dart';
 import '../features/teacher/screens/teacher_leave_apply_screen.dart';
 import '../features/teacher/screens/teacher_leave_approvals_screen.dart';
 import '../features/teacher/timetable/screens/teacher_my_timetable_screen.dart';
 import '../features/teacher/unavailability/screens/teacher_unavailability_screen.dart';
+import '../features/hod/screens/hod_comms_screen.dart';
 import '../features/hod/screens/hod_home_screen.dart';
 import '../features/main_shell.dart';
 import 'app_routes.dart';
@@ -148,6 +150,11 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
         pageBuilder: (c, s) => fadeSlideTransition(c, s, MyStudentsScreen()),
       ),
       GoRoute(
+        path: AppRoutes.teacherMessages,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const TeacherCommsScreen()),
+      ),
+      GoRoute(
         path: AppRoutes.teacherProfile,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
       ),
@@ -204,8 +211,13 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
         pageBuilder: (c, s) => fadeSlideTransition(c, s, BroadcastScreen()),
       ),
       GoRoute(
+        path: AppRoutes.principalStudentContacts,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const PrincipalStudentContactsScreen()),
+      ),
+      GoRoute(
         path: AppRoutes.adminPeople,
-        pageBuilder: (c, s) => fadeSlideTransition(c, s, PeopleScreen()),
+        redirect: (context, state) => AppRoutes.adminFaculty,
       ),
       GoRoute(
         path: AppRoutes.adminAddStaff,
@@ -214,8 +226,7 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       ),
       GoRoute(
         path: AppRoutes.adminAddUser,
-        pageBuilder: (c, s) =>
-            fadeSlideTransition(c, s, const AdminAddUserScreen()),
+        redirect: (context, state) => AppRoutes.adminFacultyAdd,
       ),
       GoRoute(
         path: AppRoutes.adminProfile,
@@ -267,6 +278,11 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
         pageBuilder: (c, s) => fadeSlideTransition(c, s, const HodHomeScreen()),
       ),
       GoRoute(
+        path: AppRoutes.hodComms,
+        pageBuilder: (c, s) =>
+            fadeSlideTransition(c, s, const HodCommsScreen()),
+      ),
+      GoRoute(
         path: AppRoutes.hodProfile,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, ProfileScreen()),
       ),
@@ -289,6 +305,10 @@ List<RouteBase> mainShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       GoRoute(
         path: AppRoutes.search,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, GlobalSearchScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.nammaAi,
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, const NammaAiScreen()),
       ),
     ],
   ),

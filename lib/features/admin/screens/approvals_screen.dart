@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/demo_permissions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -11,6 +12,7 @@ import '../../../core/widgets/shell_layout_scope.dart';
 import '../../../core/widgets/nc_chip.dart';
 import '../../../core/widgets/nc_shimmer.dart';
 import '../providers/admin_providers.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class ApprovalsScreen extends ConsumerWidget {
   const ApprovalsScreen({super.key});
@@ -18,6 +20,9 @@ class ApprovalsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final approvalsAsync = ref.watch(adminApprovalsProvider);
+    final canAct = ref
+        .watch(demoPermissionsProvider)
+        .contains(DemoPermission.approvalsWrite);
 
     return Scaffold(
       appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
@@ -43,16 +48,19 @@ class ApprovalsScreen extends ConsumerWidget {
                 child: TabBarView(
                   children: [
                     _ApprovalList(
+                      canAct: canAct,
                       approvals: approvals
                           .where((a) => a.status == 'pending')
                           .toList(),
                     ),
                     _ApprovalList(
+                      canAct: canAct,
                       approvals: approvals
                           .where((a) => a.status == 'approved')
                           .toList(),
                     ),
                     _ApprovalList(
+                      canAct: canAct,
                       approvals: approvals
                           .where((a) => a.status == 'rejected')
                           .toList(),
@@ -69,8 +77,9 @@ class ApprovalsScreen extends ConsumerWidget {
 }
 
 class _ApprovalList extends StatelessWidget {
-  const _ApprovalList({required this.approvals});
+  const _ApprovalList({required this.approvals, required this.canAct});
   final List<MockApproval> approvals;
+  final bool canAct;
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +124,7 @@ class _ApprovalList extends StatelessWidget {
                     color: AppColors.textSecondary,
                   ),
                 ),
-                if (a.status == 'pending') ...[
+                if (a.status == 'pending' && canAct) ...[
                   const SizedBox(height: AppSpacing.sm),
                   Row(
                     children: [
@@ -167,6 +176,14 @@ class _ApprovalList extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ] else if (a.status == 'pending' && !canAct) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Demo account lacks approvals:write — read-only.',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ],

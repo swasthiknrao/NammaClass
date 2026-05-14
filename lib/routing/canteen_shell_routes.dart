@@ -5,6 +5,7 @@ import 'page_transitions.dart';
 import '../features/canteen/screens/canteen_counter_screen.dart';
 import '../features/canteen/screens/canteen_manager_screen.dart';
 import '../features/main_shell.dart';
+import '../features/namma_ai/screens/namma_ai_screen.dart';
 import '../features/shared/profile/profile_screen.dart';
 import 'app_routes.dart';
 
@@ -26,6 +27,10 @@ List<RouteBase> canteenShellRoutes(GlobalKey<NavigatorState> navigatorKey) => [
       GoRoute(
         path: AppRoutes.canteenProfile,
         pageBuilder: (c, s) => fadeSlideTransition(c, s, const ProfileScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.nammaAi,
+        pageBuilder: (c, s) => fadeSlideTransition(c, s, const NammaAiScreen()),
       ),
     ],
   ),

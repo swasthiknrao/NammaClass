@@ -454,7 +454,7 @@ class _AdminTimetableManagementScreenState
             if (sub.isEmpty || (facultyId ?? '').isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Subject and faculty are required'),
+                  content: Text('Subject and staff assignee are required'),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -909,9 +909,9 @@ class _AdminTimetableManagementScreenState
                                 ),
                                 decoration:
                                     _slotDialogFieldDeco(
-                                      label: 'Faculty',
+                                      label: 'Staff',
                                       hint: (facultyName?.isEmpty ?? true)
-                                          ? 'Choose faculty'
+                                          ? 'Choose staff'
                                           : null,
                                     ).copyWith(
                                       suffixIcon: Icon(
@@ -988,7 +988,7 @@ class _AdminTimetableManagementScreenState
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
-                                          'This faculty is already booked in another section '
+                                          'This person is already booked in another section '
                                           'for this bell — you can still save.',
                                           style: TextStyle(
                                             color: textCol.withValues(

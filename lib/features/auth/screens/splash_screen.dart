@@ -80,7 +80,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       case UserRole.staff:
         return AppRoutes.staffHome;
       case UserRole.driver:
-        return AppRoutes.driverRoute;
+        return AppRoutes.driverHome;
       case UserRole.librarian:
         return AppRoutes.librarianCounter;
       case UserRole.warden:

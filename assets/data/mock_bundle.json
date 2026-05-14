@@ -11,11 +11,148 @@
     "newAdmissions": 34,
     "pendingApprovals": 5
   },
-  "bus_info": {},
+  "bus_info": {
+    "route": "Route 3 — Jayanagar",
+    "busNumber": "KA-01-AB-1234",
+    "etaMinutes": 12,
+    "driverName": "Venkat Reddy",
+    "driverPhone": "9900112233",
+    "nextStop": "Jayanagar 4th Block",
+    "delay_minutes": 0,
+    "delay_reason": "",
+    "trip_active": false,
+    "share_live_trip": false,
+    "transport_office_phone": "08025551234",
+    "safety_tip": "Light rain possible — slow down near school zone.",
+    "morning_start": "6:45 AM",
+    "evening_start": "3:15 PM"
+  },
   "leave_balance": {},
   "hod_department": "",
-  "students": [],
-  "fees": [],
+  "students": [
+    {
+      "id": "stu_001",
+      "name": "Arjun Kumar",
+      "roll_no": "101",
+      "class_section": "10-B",
+      "attendance_percent": 96,
+      "fee_status": "paid"
+    },
+    {
+      "id": "stu_002",
+      "name": "Priya Nair",
+      "roll_no": "102",
+      "class_section": "9-A",
+      "attendance_percent": 92,
+      "fee_status": "pending"
+    },
+    {
+      "id": "stu_003",
+      "name": "Rahul Desai",
+      "roll_no": "103",
+      "class_section": "8-A",
+      "attendance_percent": 88,
+      "fee_status": "pending"
+    },
+    {
+      "id": "stu_004",
+      "name": "Sneha Rao",
+      "roll_no": "104",
+      "class_section": "7-C",
+      "attendance_percent": 94,
+      "fee_status": "overdue"
+    },
+    {
+      "id": "stu_005",
+      "name": "Kiran Patil",
+      "roll_no": "105",
+      "class_section": "10-A",
+      "attendance_percent": 90,
+      "fee_status": "pending"
+    },
+    {
+      "id": "stu_006",
+      "name": "Meera Iyer",
+      "roll_no": "106",
+      "class_section": "6-B",
+      "attendance_percent": 91,
+      "fee_status": "paid"
+    }
+  ],
+  "fees": [
+    {
+      "id": "fee_t1_001",
+      "label": "Term 1 Tuition",
+      "amount_paise": 4500000,
+      "due_date": "2026-04-10",
+      "status": "paid",
+      "paid_date": "2026-04-08",
+      "transaction_id": "UPI-88421"
+    },
+    {
+      "id": "fee_t2_001",
+      "label": "Term 2 Tuition",
+      "amount_paise": 4500000,
+      "due_date": "2026-05-08",
+      "status": "overdue",
+      "paid_date": null,
+      "transaction_id": null
+    },
+    {
+      "id": "fee_tr_001",
+      "label": "Transport — Annual",
+      "amount_paise": 1200000,
+      "due_date": "2026-05-01",
+      "status": "pending",
+      "paid_date": null,
+      "transaction_id": null
+    },
+    {
+      "id": "fee_t1_002",
+      "label": "Term 1 Tuition",
+      "amount_paise": 4500000,
+      "due_date": "2026-04-12",
+      "status": "paid",
+      "paid_date": "2026-04-11",
+      "transaction_id": "NEFT-22109"
+    },
+    {
+      "id": "fee_t2_002",
+      "label": "Term 2 Tuition",
+      "amount_paise": 4500000,
+      "due_date": "2026-05-12",
+      "status": "pending",
+      "paid_date": null,
+      "transaction_id": null
+    },
+    {
+      "id": "fee_lab_001",
+      "label": "Lab & Activity",
+      "amount_paise": 850000,
+      "due_date": "2026-05-20",
+      "status": "pending",
+      "paid_date": null,
+      "transaction_id": null
+    },
+    {
+      "id": "fee_t2_003",
+      "label": "Term 2 Tuition",
+      "amount_paise": 4500000,
+      "due_date": "2026-05-05",
+      "status": "overdue",
+      "paid_date": null,
+      "transaction_id": null
+    },
+    {
+      "id": "fee_hostel_001",
+      "label": "Hostel — Q1",
+      "amount_paise": 18000000,
+      "due_date": "2026-05-18",
+      "status": "pending",
+      "paid_date": null,
+      "transaction_id": null
+    }
+  ],
   "notices": [],
   "chat_threads": [],
   "messages": [],
@@ -24,7 +161,41 @@
   "timetable": {},
   "attendance_sessions": [],
   "books": [],
-  "staff": [],
+  "staff": [
+    {
+      "id": "stf_001",
+      "name": "Lakshmi Subramaniam",
+      "role": "Senior Teacher",
+      "department": "Mathematics",
+      "phone": "9876501001",
+      "email": "lakshmi@demo.school",
+      "salary_ctc": 9600000,
+      "employee_code": "NC-T-001",
+      "campus_block": "Main"
+    },
+    {
+      "id": "stf_002",
+      "name": "Vikram Hegde",
+      "role": "Teacher",
+      "department": "Science",
+      "phone": "9876501002",
+      "email": "vikram@demo.school",
+      "salary_ctc": 7800000,
+      "employee_code": "NC-T-014",
+      "campus_block": "Main"
+    },
+    {
+      "id": "stf_003",
+      "name": "Anita Rao",
+      "role": "Office Admin",
+      "department": "Administration",
+      "phone": "9876501003",
+      "email": "anita@demo.school",
+      "salary_ctc": 5400000,
+      "employee_code": "NC-A-003",
+      "campus_block": "Annex"
+    }
+  ],
   "canteen_menu": [],
   "canteen_combos": [],
   "canteen_subscription_plans": [],
@@ -38,15 +209,485 @@
   "kb_articles": [],
   "events": [],
   "staff_attendance": [],
-  "payslips": [],
+  "payslips": [
+    {
+      "id": "pslip_may_001",
+      "month": "2026-05",
+      "employee_id": "stf_001",
+      "basic_paise": 4800000,
+      "hra_paise": 1920000,
+      "da_paise": 960000,
+      "allowances_paise": 720000,
+      "pf_deduction_paise": 576000,
+      "esi_deduction_paise": 86400,
+      "tds_deduction_paise": 120000,
+      "status": "Pending"
+    },
+    {
+      "id": "pslip_may_002",
+      "month": "2026-05",
+      "employee_id": "stf_002",
+      "basic_paise": 3900000,
+      "hra_paise": 1560000,
+      "da_paise": 780000,
+      "allowances_paise": 585000,
+      "pf_deduction_paise": 468000,
+      "esi_deduction_paise": 70200,
+      "tds_deduction_paise": 95000,
+      "status": "Pending"
+    },
+    {
+      "id": "pslip_may_003",
+      "month": "2026-05",
+      "employee_id": "stf_003",
+      "basic_paise": 2700000,
+      "hra_paise": 1080000,
+      "da_paise": 540000,
+      "allowances_paise": 405000,
+      "pf_deduction_paise": 324000,
+      "esi_deduction_paise": 48600,
+      "tds_deduction_paise": 65000,
+      "status": "Generated"
+    }
+  ],
+  "finance_snapshot": {
+    "period": "2026-05",
+    "today_collection_paise": 12500000,
+    "bank_balance_paise": 4850000000,
+    "petty_cash_paise": 2500000,
+    "pf_employer_month_paise": 1840000,
+    "esi_employer_month_paise": 920000,
+    "collection_trend_paise": [
+      8200000,
+      9100000,
+      7800000,
+      10500000,
+      11200000,
+      9800000,
+      12500000
+    ]
+  },
+  "finance_income_lines": [
+    {
+      "id": "fin_inc_1",
+      "label": "Fee collection — Term 2",
+      "amount_paise": 18500000,
+      "booked_at": "2026-05-02",
+      "period": "2026-05",
+      "kind": "fee"
+    },
+    {
+      "id": "fin_inc_2",
+      "label": "Transport fees",
+      "amount_paise": 3200000,
+      "booked_at": "2026-05-04",
+      "period": "2026-05",
+      "kind": "fee"
+    },
+    {
+      "id": "fin_inc_3",
+      "label": "Canteen revenue share",
+      "amount_paise": 890000,
+      "booked_at": "2026-05-06",
+      "period": "2026-05",
+      "kind": "other"
+    },
+    {
+      "id": "fin_inc_4",
+      "label": "Late fee & misc",
+      "amount_paise": 125000,
+      "booked_at": "2026-05-09",
+      "period": "2026-05",
+      "kind": "other"
+    }
+  ],
+  "finance_expense_lines": [
+    {
+      "id": "fin_exp_1",
+      "label": "Staff salaries (provisional)",
+      "amount_paise": 142000000,
+      "booked_at": "2026-05-01",
+      "period": "2026-05",
+      "category": "Payroll"
+    },
+    {
+      "id": "fin_exp_2",
+      "label": "Electricity — BESCOM",
+      "amount_paise": 1850000,
+      "booked_at": "2026-05-03",
+      "period": "2026-05",
+      "category": "Utilities"
+    },
+    {
+      "id": "fin_exp_3",
+      "label": "Lab consumables",
+      "amount_paise": 640000,
+      "booked_at": "2026-05-05",
+      "period": "2026-05",
+      "category": "Academic"
+    },
+    {
+      "id": "fin_exp_4",
+      "label": "IT subscriptions",
+      "amount_paise": 420000,
+      "booked_at": "2026-05-07",
+      "period": "2026-05",
+      "category": "IT"
+    }
+  ],
+  "finance_expense_pipeline": [
+    {
+      "id": "pipe_1",
+      "vendor": "GreenLeaf Supplies",
+      "category": "Stationery",
+      "amount_paise": 2850000,
+      "status": "Pending approval",
+      "due_date": "2026-05-18",
+      "budget_category": "Ops",
+      "budget_cap_paise": 5000000,
+      "spent_paise": 2150000
+    },
+    {
+      "id": "pipe_2",
+      "vendor": "City Water Board",
+      "category": "Utilities",
+      "amount_paise": 4200000,
+      "status": "Scheduled",
+      "due_date": "2026-05-22",
+      "budget_category": "Utilities",
+      "budget_cap_paise": 8000000,
+      "spent_paise": 1850000
+    },
+    {
+      "id": "pipe_3",
+      "vendor": "TechServe AMC",
+      "category": "IT",
+      "amount_paise": 1980000,
+      "status": "Paid",
+      "due_date": "2026-05-10",
+      "budget_category": "IT",
+      "budget_cap_paise": 4000000,
+      "spent_paise": 4200000
+    }
+  ],
+  "finance_exceptions": [
+    {
+      "id": "ex_1",
+      "title": "Bounced UPI settlement",
+      "detail": "₹12,400 from parent wallet — reconcile in HDFC portal.",
+      "severity": "high"
+    },
+    {
+      "id": "ex_2",
+      "title": "Unmatched bank line",
+      "detail": "NEFT ref N3419281 — no student receipt tagged.",
+      "severity": "medium"
+    },
+    {
+      "id": "ex_3",
+      "title": "Salary hold — docs pending",
+      "detail": "1 staff KYC refresh due before May payroll lock.",
+      "severity": "medium"
+    }
+  ],
+  "finance_collection_events": [
+    {
+      "id": "ce_1",
+      "student_name": "Arjun Kumar",
+      "amount_paise": 2500000,
+      "label": "Term 2 partial",
+      "channel": "UPI",
+      "at": "2026-05-14T10:12:00.000"
+    },
+    {
+      "id": "ce_2",
+      "student_name": "Priya Nair",
+      "amount_paise": 1500000,
+      "label": "Transport annual",
+      "channel": "Card",
+      "at": "2026-05-14T09:40:00.000"
+    },
+    {
+      "id": "ce_3",
+      "student_name": "Kiran Patil",
+      "amount_paise": 3500000,
+      "label": "Term 1 + Lab",
+      "channel": "NEFT",
+      "at": "2026-05-14T08:05:00.000"
+    }
+  ],
+  "finance_pending_by_class": [
+    { "class_section": "8-A", "amount_paise": 5350000 },
+    { "class_section": "9-A", "amount_paise": 9000000 },
+    { "class_section": "7-C", "amount_paise": 4500000 },
+    { "class_section": "10-A", "amount_paise": 4500000 },
+    { "class_section": "6-B", "amount_paise": 0 }
+  ],
+  "finance_budget_vs_actual": [
+    {
+      "category": "Payroll",
+      "budget_paise": 155000000,
+      "actual_paise": 142000000
+    },
+    {
+      "category": "Utilities",
+      "budget_paise": 12000000,
+      "actual_paise": 6050000
+    },
+    {
+      "category": "Academic",
+      "budget_paise": 8000000,
+      "actual_paise": 6400000
+    },
+    {
+      "category": "IT",
+      "budget_paise": 6000000,
+      "actual_paise": 4200000
+    }
+  ],
+  "finance_month_close_items": [
+    {
+      "id": "mc_fees",
+      "label": "Fee accrual posted for May",
+      "done": true
+    },
+    {
+      "id": "mc_payroll",
+      "label": "Payroll run locked & bank file exported",
+      "done": false
+    },
+    {
+      "id": "mc_petty",
+      "label": "Petty cash tallied & vouchers scanned",
+      "done": false
+    },
+    {
+      "id": "mc_tally",
+      "label": "Tally / CSV bridge reviewed",
+      "done": false
+    }
+  ],
   "trainings": [],
-  "driver_stop_students": {},
-  "bus_stops": [],
+  "driver_stop_students": {
+    "Jayanagar 4th Block": [
+      "Arjun Kumar",
+      "Priya Nair",
+      "Rahul Desai",
+      "Sneha Rao"
+    ],
+    "Basavanagudi": ["Kiran Patil", "Meera Iyer", "Vikram Singh"],
+    "NR Colony": ["Ananya Reddy", "Suresh Menon", "Divya Kulkarni"]
+  },
+  "driver_absent_students": ["Riya Sharma"],
+  "driver_trip_history": [
+    {
+      "id": "trip-2026-05-12-am",
+      "date": "2026-05-12T08:15:00.000",
+      "shift": "Morning",
+      "route": "Route 3 — Jayanagar",
+      "boarded": 18,
+      "total": 19,
+      "status": "Submitted"
+    }
+  ],
+  "driver_vehicle_checklist": {
+    "tyres": true,
+    "lights": true,
+    "brakes": true,
+    "mirrors": true,
+    "fire_extinguisher": true,
+    "first_aid": true
+  },
+  "bus_stops": [
+    {
+      "id": "stop-1",
+      "name": "School main gate",
+      "eta": "7:05 AM",
+      "student_count": 0,
+      "is_visited": true,
+      "lat": 12.9431,
+      "lng": 77.597
+    },
+    {
+      "id": "stop-2",
+      "name": "Jayanagar 4th Block",
+      "eta": "7:22 AM",
+      "student_count": 8,
+      "is_visited": false,
+      "lat": 12.9257,
+      "lng": 77.5938
+    },
+    {
+      "id": "stop-3",
+      "name": "Basavanagudi",
+      "eta": "7:38 AM",
+      "student_count": 6,
+      "is_visited": false,
+      "lat": 12.9408,
+      "lng": 77.5733
+    },
+    {
+      "id": "stop-4",
+      "name": "NR Colony",
+      "eta": "7:50 AM",
+      "student_count": 5,
+      "is_visited": false,
+      "lat": 12.9324,
+      "lng": 77.5672
+    }
+  ],
   "book_issues": [],
   "reservations": [],
-  "hostel_students": [],
-  "hostel_outpasses": [],
-  "visitors": [],
+  "hostel_desk": {
+    "property_name": "Emerald House — Boys Block",
+    "chef_special": "Tonight: ragi mudde, drumstick sambar, kesari bhath.",
+    "quiet_hours": "10:00 PM – 5:30 AM · corridor lights dimmed",
+    "occupancy_note": "48 / 52 beds filled — 4 on approved leave"
+  },
+  "hostel_students": [
+    {
+      "id": "hs_001",
+      "name": "Arjun Kumar",
+      "room_no": "A-204",
+      "bed_no": "A",
+      "class_section": "10-B",
+      "is_present": true,
+      "absent_reason": null,
+      "parent_name": "Sunita Kumar",
+      "parent_phone": "9876500001",
+      "blood_group": "B+",
+      "medical_notes": null,
+      "emergency_contact": "Uncle Ravi",
+      "emergency_phone": "9845012345",
+      "fee_status": "paid"
+    },
+    {
+      "id": "hs_002",
+      "name": "Rahul Desai",
+      "room_no": "A-204",
+      "bed_no": "B",
+      "class_section": "10-B",
+      "is_present": true,
+      "absent_reason": null,
+      "parent_name": "Meera Desai",
+      "parent_phone": "9876500002",
+      "blood_group": "O+",
+      "medical_notes": "Mild asthma — inhaler in cupboard",
+      "emergency_contact": "Meera Desai",
+      "emergency_phone": "9876500002",
+      "fee_status": "paid"
+    },
+    {
+      "id": "hs_003",
+      "name": "Vikram Singh",
+      "room_no": "B-118",
+      "bed_no": "C",
+      "class_section": "9-A",
+      "is_present": false,
+      "absent_reason": "On approved leave",
+      "parent_name": "Col. Harinder Singh",
+      "parent_phone": "9880011122",
+      "blood_group": "A+",
+      "medical_notes": null,
+      "emergency_contact": "Col. Harinder Singh",
+      "emergency_phone": "9880011122",
+      "fee_status": "paid"
+    }
+  ],
+  "hostel_outpasses": [
+    {
+      "id": "op_001",
+      "student_name": "Priya Nair",
+      "student_id": "STU_2024_0088",
+      "reason": "Family event",
+      "from_date": "2026-05-16T00:00:00.000",
+      "to_date": "2026-05-17T23:59:59.000",
+      "status": "pending",
+      "approved_by": null,
+      "parent_consent_phone": "9845099887",
+      "check_out_time": null,
+      "expected_return_time": "2026-05-17T20:00:00.000"
+    }
+  ],
+  "visitors": [
+    {
+      "id": "vis_demo_1",
+      "visitor_name": "Sunita Kumar",
+      "relationship": "Mother",
+      "phone": "9876500001",
+      "student_name": "Arjun Kumar",
+      "id_type": "Aadhaar",
+      "check_in_time": "2026-05-14T16:30:00.000",
+      "check_out_time": null
+    }
+  ],
+  "warden_dining": [
+    {
+      "id": "meal_brk",
+      "meal": "Breakfast",
+      "window": "7:00 – 8:30 AM",
+      "expected": 48,
+      "served": 46,
+      "status": "In service",
+      "chef_note": "Extra idli batter — seconds allowed."
+    },
+    {
+      "id": "meal_lun",
+      "meal": "Lunch",
+      "window": "12:30 – 2:00 PM",
+      "expected": 48,
+      "served": 0,
+      "status": "Prep",
+      "chef_note": "Vegetarian thali · egg curry side counter."
+    },
+    {
+      "id": "meal_din",
+      "meal": "Dinner",
+      "window": "7:30 – 9:00 PM",
+      "expected": 48,
+      "served": 0,
+      "status": "Scheduled",
+      "chef_note": "Millet night — announce allergens at line."
+    }
+  ],
+  "warden_rooms": [
+    {
+      "room_no": "A-204",
+      "floor": "2",
+      "status": "occupied",
+      "linen_due": "Linen refresh Sat",
+      "note": "Two boarders · AC remote at desk"
+    },
+    {
+      "room_no": "B-118",
+      "floor": "1",
+      "status": "turnover",
+      "linen_due": "Strip beds today",
+      "note": "One away on leave — dust & lock wardrobe"
+    },
+    {
+      "room_no": "C-012",
+      "floor": "G",
+      "status": "ready",
+      "linen_due": "Fresh stack",
+      "note": "Guest parent room (reserved)"
+    }
+  ],
+  "warden_patrol": {
+    "gates_locked": false,
+    "mess_kitchen_closed": false,
+    "fire_panel_ok": true,
+    "common_area_lights": false,
+    "silent_hours_announced": false,
+    "first_aid_unlocked": true
+  },
+  "warden_concierge_log": [
+    {
+      "at": "2026-05-14T08:05:00.000",
+      "title": "Handover",
+      "detail": "Night warden noted all gates secure. Mess keys in safe B."
+    }
+  ],
   "admission_enquiries": [],
   "assets": [],
   "staff_leave_requests": []

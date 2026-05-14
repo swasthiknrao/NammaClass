@@ -194,6 +194,41 @@ class _SidebarInfoRow extends StatelessWidget {
   }
 }
 
+/// Surfaces demo JWT-style permission strings for the signed-in role (QA).
+class _DemoClaimsSection extends ConsumerWidget {
+  const _DemoClaimsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    if (user == null) return const SizedBox.shrink();
+    final claims = ref.watch(demoPermissionsProvider);
+    if (claims.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeader('Demo access claims', Icons.key_outlined),
+        NcCard(
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: claims
+                .map(
+                  (c) => Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text(c, style: AppTypography.labelSmall),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+      ],
+    );
+  }
+}
+
 class _ProfileContent extends ConsumerWidget {
   const _ProfileContent({this.user, required this.auth});
   final dynamic user;
@@ -206,6 +241,7 @@ class _ProfileContent extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const _DemoClaimsSection(),
           _SectionHeader('Appearance', Icons.palette_outlined),
           NcCard(padding: EdgeInsets.zero, child: const _ThemeTile()),
           const SizedBox(height: AppSpacing.lg),

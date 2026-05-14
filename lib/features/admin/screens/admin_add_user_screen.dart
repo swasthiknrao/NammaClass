@@ -18,6 +18,7 @@ import '../../../features/tenant/providers/tenant_provider.dart';
 import '../../../routing/app_routes.dart';
 import '../providers/admin_add_user_roles.dart';
 import '../providers/staff_notifier.dart';
+import '../widgets/admin_user_created_dialog.dart';
 
 /// Admin / principal (etc.) creates a portal user in-app — name, phone, email, role, temp PIN.
 class AdminAddUserScreen extends ConsumerStatefulWidget {
@@ -49,11 +50,6 @@ class _AdminAddUserScreenState extends ConsumerState<AdminAddUserScreen> {
     return 'usr_${DateTime.now().millisecondsSinceEpoch}_$n';
   }
 
-  String _tempPin(String name, String phone) {
-    final h = Object.hash(name, phone);
-    return '${100000 + h.abs() % 900000}';
-  }
-
   Future<void> _submit(UserRole role) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
@@ -66,7 +62,7 @@ class _AdminAddUserScreenState extends ConsumerState<AdminAddUserScreen> {
     final dept = _departmentController.text.trim().isEmpty
         ? 'General'
         : _departmentController.text.trim();
-    final pin = _tempPin(name, phone);
+    final pin = adminGeneratedTempPin(name, phone);
 
     final member = MockStaffMember(
       id: _nextStaffId(),
@@ -83,41 +79,13 @@ class _AdminAddUserScreenState extends ConsumerState<AdminAddUserScreen> {
     setState(() => _saving = false);
     if (!mounted) return;
 
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('User created'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${UserModel.roleDisplayLabel(role)} · $name',
-                style: AppTypography.titleSmall,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Share this temporary PIN once; ask them to change it on first login.',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _CopyRow(label: 'Phone', value: phone),
-              _CopyRow(label: 'Email', value: email),
-              _CopyRow(label: 'Temporary PIN', value: pin, mono: true),
-            ],
-          ),
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
+    await showAdminUserCreatedDialog(
+      context,
+      roleLabel: UserModel.roleDisplayLabel(role),
+      name: name,
+      phone: phone,
+      email: email,
+      pin: pin,
     );
 
     if (!mounted) return;
@@ -316,48 +284,6 @@ class _AddUserFormState extends State<_AddUserForm> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _CopyRow extends StatelessWidget {
-  const _CopyRow({required this.label, required this.value, this.mono = false});
-  final String label;
-  final String value;
-  final bool mono;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(label, style: AppTypography.labelMedium),
-          ),
-          Expanded(
-            child: SelectableText(
-              value,
-              style: AppTypography.bodyMedium.copyWith(
-                fontFamily: mono ? 'JetBrainsMono' : null,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.copy, size: 20),
-            tooltip: 'Copy',
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: value));
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('$label copied')));
-            },
-          ),
-        ],
       ),
     );
   }

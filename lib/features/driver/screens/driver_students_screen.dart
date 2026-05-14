@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/mock/mock_data.dart';
+import '../../../core/providers/data_sync_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/shell_layout_scope.dart';
-import '../providers/driver_provider.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/nc_avatar.dart';
+import '../../../l10n/app_localizations.dart';
+import '../providers/driver_provider.dart';
+import '../widgets/driver_portal_bar_actions.dart';
+import '../widgets/driver_sos_dialog.dart';
 
 class DriverStudentsScreen extends ConsumerStatefulWidget {
   const DriverStudentsScreen({super.key});
@@ -18,16 +23,20 @@ class DriverStudentsScreen extends ConsumerStatefulWidget {
 
 class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
   String _trip = 'Morning';
+
+  /// Pickup: boarded; Drop-off: safely dropped.
+  String _mode = 'pickup';
   final Map<String, bool> _boarded = {};
   bool _showQrOverlay = false;
   String? _scannedStudentName;
 
-  int _boardedCount(Map<String, List<String>> stopGroups) =>
+  int _doneCount(Map<String, List<String>> roster) =>
       _boarded.values.where((v) => v).length;
-  int _totalCount(Map<String, List<String>> stopGroups) =>
-      stopGroups.values.fold(0, (sum, list) => sum + list.length);
 
-  void _toggleBoarded(String name) {
+  int _totalExpected(Map<String, List<String>> roster) =>
+      roster.values.fold(0, (sum, list) => sum + list.length);
+
+  void _toggle(String name) {
     setState(() => _boarded[name] = !(_boarded[name] ?? false));
   }
 
@@ -42,30 +51,75 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
     });
   }
 
-  void _submit(Map<String, List<String>> stopGroups) {
-    final bc = _boardedCount(stopGroups);
-    final tc = _totalCount(stopGroups);
-    showDialog(
+  void _openQrStubNote(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.driverQrCameraStubTitle, style: AppTypography.titleSmall),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              l10n.driverQrCameraStubNote,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _simulateQrScan();
+              },
+              child: Text(l10n.driverQrSimulateScan),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _submit(Map<String, List<String>> roster) {
+    final l10n = AppLocalizations.of(context);
+    final bc = _doneCount(roster);
+    final tc = _totalExpected(roster);
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Submit Boarding Report'),
-        content: Text('$bc of $tc students boarded. Submit?'),
+        title: Text(l10n.driverSubmitBoardingTitle),
+        content: Text(l10n.driverSubmitBoardingBody(bc, tc)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
+              final bus = MockData.busInfo;
+              MockData.appendDriverTripHistory({
+                'id': 'trip-${DateTime.now().millisecondsSinceEpoch}',
+                'date': DateTime.now().toIso8601String(),
+                'shift': '$_trip ($_mode)',
+                'route': '${bus['route'] ?? '—'}',
+                'boarded': bc,
+                'total': tc,
+                'status': l10n.driverTripHistorySubmitted,
+              });
+              ref.read(dataSyncProvider.notifier).bump();
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Boarding report submitted!'),
+                SnackBar(
+                  content: Text(l10n.driverBoardingReportSubmitted),
                   backgroundColor: AppColors.success,
                 ),
               );
             },
-            child: const Text('Submit'),
+            child: Text(l10n.submit),
           ),
         ],
       ),
@@ -74,45 +128,27 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final stopGroups = ref.watch(driverStopStudentsProvider);
+    final l10n = AppLocalizations.of(context);
+    final roster = ref.watch(driverExpectedRosterProvider);
+    final absent = ref.watch(driverAbsentStudentsProvider);
+
     return Scaffold(
       appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
           ? null
           : AppBar(
-              title: const Text('Student Boarding'),
+              title: Text(l10n.driverStudentsBoardingTitle),
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               actions: [
+                const DriverPortalBarActions(),
                 TextButton.icon(
-                  onPressed: () => showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text(
-                        'SOS',
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                      content: const Text('Send emergency alert?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('Cancel'),
-                        ),
-                        FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.error,
-                          ),
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('Send SOS'),
-                        ),
-                      ],
-                    ),
-                  ),
+                  onPressed: () => showDriverSosDialog(context, ref),
                   style: TextButton.styleFrom(
                     backgroundColor: AppColors.error,
                     foregroundColor: Colors.white,
                   ),
                   icon: const Icon(Icons.emergency, size: 18),
-                  label: const Text('SOS'),
+                  label: Text(l10n.driverSosShort),
                 ),
                 const SizedBox(width: AppSpacing.sm),
               ],
@@ -121,24 +157,65 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
         children: [
           Column(
             children: [
-              // Trip selector + QR scan
               Container(
                 color: AppColors.card,
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (absent.isNotEmpty) ...[
+                      Text(
+                        l10n.driverAbsentSection,
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.warning,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: absent
+                            .map(
+                              (n) => Chip(
+                                label: Text(
+                                  n,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
                     SegmentedButton<String>(
                       selected: {_trip},
                       onSelectionChanged: (v) =>
                           setState(() => _trip = v.first),
-                      segments: const [
+                      segments: [
                         ButtonSegment(
                           value: 'Morning',
-                          label: Text('Morning Trip'),
+                          label: Text(l10n.driverMorningTrip),
                         ),
                         ButtonSegment(
                           value: 'Evening',
-                          label: Text('Evening Trip'),
+                          label: Text(l10n.driverEveningTrip),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SegmentedButton<String>(
+                      selected: {_mode},
+                      onSelectionChanged: (v) =>
+                          setState(() => _mode = v.first),
+                      segments: [
+                        ButtonSegment(
+                          value: 'pickup',
+                          label: Text(l10n.driverPickup),
+                        ),
+                        ButtonSegment(
+                          value: 'dropoff',
+                          label: Text(l10n.driverDropoff),
                         ),
                       ],
                     ),
@@ -146,23 +223,21 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: _simulateQrScan,
+                        onPressed: () => _openQrStubNote(context),
                         icon: const Icon(Icons.qr_code_scanner),
-                        label: const Text('Scan Student QR Card'),
+                        label: Text(l10n.driverScanStudentQr),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Student list grouped by stop
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: stopGroups.length,
+                  itemCount: roster.length,
                   itemBuilder: (_, i) {
-                    final stopName = stopGroups.keys.elementAt(i);
-                    final students = stopGroups.values.elementAt(i);
+                    final stopName = roster.keys.elementAt(i);
+                    final students = roster.values.elementAt(i);
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -189,7 +264,7 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
                                 ),
                               ),
                               Text(
-                                '${students.length} students',
+                                l10n.driverStopStudentCount(students.length),
                                 style: AppTypography.bodySmall.copyWith(
                                   color: AppColors.textSecondary,
                                 ),
@@ -201,7 +276,10 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
                           (name) => _StudentBoardingTile(
                             name: name,
                             isBoarded: _boarded[name] ?? false,
-                            onToggle: () => _toggleBoarded(name),
+                            actionLabel: _mode == 'pickup'
+                                ? l10n.driverBoardedLabel
+                                : l10n.driverDroppedLabel,
+                            onToggle: () => _toggle(name),
                           ),
                         ),
                       ],
@@ -211,8 +289,6 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
               ),
             ],
           ),
-
-          // QR scan overlay
           if (_showQrOverlay)
             Positioned.fill(
               child: Container(
@@ -241,9 +317,11 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
                           ),
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        const Text(
-                          'Boarded ✓',
-                          style: TextStyle(
+                        Text(
+                          _mode == 'pickup'
+                              ? l10n.driverBoardedOk
+                              : l10n.driverDroppedOk,
+                          style: const TextStyle(
                             color: AppColors.success,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -255,8 +333,6 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
                 ),
               ),
             ),
-
-          // Summary footer
           Positioned(
             bottom: 0,
             left: 0,
@@ -271,18 +347,21 @@ class _DriverStudentsScreenState extends ConsumerState<DriverStudentsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Boarded: ${_boardedCount(stopGroups)} / ${_totalCount(stopGroups)} students',
+                      l10n.driverBoardingFooter(
+                        _doneCount(roster),
+                        _totalExpected(roster),
+                      ),
                       style: AppTypography.titleSmall.copyWith(
                         color: AppColors.primary,
                       ),
                     ),
                   ),
                   FilledButton(
-                    onPressed: () => _submit(stopGroups),
+                    onPressed: () => _submit(roster),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.accent,
                     ),
-                    child: const Text('Submit'),
+                    child: Text(l10n.submit),
                   ),
                 ],
               ),
@@ -298,10 +377,12 @@ class _StudentBoardingTile extends StatelessWidget {
   const _StudentBoardingTile({
     required this.name,
     required this.isBoarded,
+    required this.actionLabel,
     required this.onToggle,
   });
   final String name;
   final bool isBoarded;
+  final String actionLabel;
   final VoidCallback onToggle;
 
   @override
@@ -313,6 +394,10 @@ class _StudentBoardingTile extends StatelessWidget {
       ),
       leading: NcAvatar(name: name, radius: 22),
       title: Text(name, style: AppTypography.bodyLarge),
+      subtitle: Text(
+        actionLabel,
+        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+      ),
       trailing: GestureDetector(
         onTap: onToggle,
         child: AnimatedContainer(

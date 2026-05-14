@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_data.dart';
+import '../../../core/providers/data_sync_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/launch_utils.dart';
 import '../../../core/widgets/nc_card.dart';
+import '../../../core/widgets/shell_layout_scope.dart';
+import '../../../l10n/app_localizations.dart';
+import '../providers/driver_provider.dart';
+import '../widgets/driver_portal_bar_actions.dart';
+import '../widgets/driver_sos_dialog.dart';
 
 class DriverRouteScreen extends ConsumerStatefulWidget {
   const DriverRouteScreen({super.key});
@@ -15,94 +22,77 @@ class DriverRouteScreen extends ConsumerStatefulWidget {
 }
 
 class _DriverRouteScreenState extends ConsumerState<DriverRouteScreen> {
-  bool _tripStarted = false;
-  final List<MockBusStop> _stops = MockData.busStops;
+  int _visitedCount(List<MockBusStop> stops) =>
+      stops.where((s) => s.isVisited).length;
 
-  int get _visitedCount => _stops.where((s) => s.isVisited).length;
-
-  void _markVisited(MockBusStop stop) {
-    setState(() => stop.isVisited = !stop.isVisited);
+  void _syncNextStop() {
+    final stops = MockData.busStops;
+    String nextLabel;
+    if (stops.every((s) => s.isVisited)) {
+      nextLabel = 'Route complete';
+    } else {
+      final n = stops.firstWhere((s) => !s.isVisited);
+      nextLabel = n.name;
+    }
+    MockData.mergeBusInfo({'nextStop': nextLabel});
+    ref.read(dataSyncProvider.notifier).bump();
   }
 
-  void _triggerSos() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.error,
-        title: const Text(
-          '🚨 Send SOS Alert',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'This will immediately alert the transport manager and principal with your current location.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🚨 SOS alert sent to transport manager!'),
-                  backgroundColor: AppColors.error,
-                  duration: Duration(seconds: 4),
-                ),
-              );
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.error,
-            ),
-            child: const Text('Send SOS'),
-          ),
-        ],
-      ),
-    );
+  void _toggleVisited(MockBusStop stop) {
+    setState(() => stop.isVisited = !stop.isVisited);
+    _syncNextStop();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final stops = ref.watch(driverBusStopsProvider);
+    final bus = ref.watch(driverBusInfoProvider);
+    final routeTitle = bus['route']?.toString() ?? l10n.driverRouteTitle;
+    final tripActive = bus['trip_active'] == true;
+
+    final total = stops.length;
+    final visited = _visitedCount(stops);
+    final progress = total == 0 ? 0.0 : visited / total;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Route 3 — Jayanagar',
-          style: AppTypography.titleMedium.copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          // SOS button — ALWAYS visible, cannot be obscured
-          TextButton.icon(
-            onPressed: _triggerSos,
-            style: TextButton.styleFrom(
-              backgroundColor: AppColors.error,
+      appBar: ShellLayoutScope.maybeOf(context)?.hasPersistentTopBar == true
+          ? null
+          : AppBar(
+              title: Text(
+                routeTitle,
+                style: AppTypography.titleMedium.copyWith(color: Colors.white),
+              ),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              actions: [
+                const DriverPortalBarActions(),
+                TextButton.icon(
+                  onPressed: () => showDriverSosDialog(context, ref),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                  ),
+                  icon: const Icon(Icons.emergency, size: 18),
+                  label: Text(
+                    l10n.driverSosShort,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
             ),
-            icon: const Icon(Icons.emergency, size: 18),
-            label: const Text(
-              'SOS',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-        ],
-      ),
       body: Column(
         children: [
-          // Map placeholder (CustomPaint)
           Container(
             height: MediaQuery.sizeOf(context).height * 0.35,
             color: const Color(0xFFE8EDF0),
             child: CustomPaint(
-              painter: _RoutePainter(_stops),
+              painter: _RoutePainter(stops),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -110,13 +100,13 @@ class _DriverRouteScreenState extends ConsumerState<DriverRouteScreen> {
                     const Icon(Icons.map, size: 48, color: AppColors.primary),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'Live Route Map',
+                      l10n.driverLiveRouteMap,
                       style: AppTypography.labelMedium.copyWith(
                         color: AppColors.primary,
                       ),
                     ),
                     Text(
-                      'GPS tracking active',
+                      l10n.driverGpsTrackingActive,
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -126,8 +116,6 @@ class _DriverRouteScreenState extends ConsumerState<DriverRouteScreen> {
               ),
             ),
           ),
-
-          // Route progress bar
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
@@ -140,13 +128,19 @@ class _DriverRouteScreenState extends ConsumerState<DriverRouteScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Progress: $_visitedCount/${_stops.length} stops',
+                      total == 0
+                          ? l10n.driverNoStopsOnRoute
+                          : l10n.driverProgressStops(visited, total),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
                     Text(
-                      '${(_visitedCount / _stops.length * 100).round()}% complete',
+                      total == 0
+                          ? '—'
+                          : l10n.driverProgressPercent(
+                              (progress * 100).round(),
+                            ),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.teal,
                       ),
@@ -155,15 +149,13 @@ class _DriverRouteScreenState extends ConsumerState<DriverRouteScreen> {
                 ),
                 const SizedBox(height: 4),
                 LinearProgressIndicator(
-                  value: _visitedCount / _stops.length,
+                  value: total == 0 ? 0.0 : progress,
                   backgroundColor: AppColors.divider,
                   color: AppColors.teal,
                 ),
               ],
             ),
           ),
-
-          // Start/End trip
           Container(
             color: AppColors.card,
             padding: const EdgeInsets.symmetric(
@@ -175,52 +167,95 @@ class _DriverRouteScreenState extends ConsumerState<DriverRouteScreen> {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: () {
-                      setState(() => _tripStarted = !_tripStarted);
+                      final next = !tripActive;
+                      MockData.mergeBusInfo({'trip_active': next});
+                      ref.read(dataSyncProvider.notifier).bump();
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            _tripStarted
-                                ? 'Trip started — GPS broadcasting'
-                                : 'Trip ended. Report submitted.',
+                            next
+                                ? l10n.driverTripStartedSnack
+                                : l10n.driverTripEndedSnack,
                           ),
-                          backgroundColor: _tripStarted
+                          backgroundColor: next
                               ? AppColors.success
                               : AppColors.error,
                         ),
                       );
                     },
                     style: FilledButton.styleFrom(
-                      backgroundColor: _tripStarted
+                      backgroundColor: tripActive
                           ? AppColors.error
                           : AppColors.success,
                     ),
-                    icon: Icon(_tripStarted ? Icons.stop : Icons.play_arrow),
-                    label: Text(_tripStarted ? 'End Trip' : 'Start Trip'),
+                    icon: Icon(tripActive ? Icons.stop : Icons.play_arrow),
+                    label: Text(
+                      tripActive ? l10n.driverEndTrip : l10n.driverStartTrip,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Stop list
           Expanded(
-            child: DraggableScrollableSheet(
-              initialChildSize: 1.0,
-              minChildSize: 0.5,
-              maxChildSize: 1.0,
-              builder: (ctx, scrollCtrl) => ListView.separated(
-                controller: scrollCtrl,
-                padding: const EdgeInsets.all(AppSpacing.md),
-                itemCount: _stops.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: AppSpacing.xs),
-                itemBuilder: (_, i) => _StopTile(
-                  stop: _stops[i],
-                  index: i + 1,
-                  onMark: () => _markVisited(_stops[i]),
-                ),
-              ),
-            ),
+            child: stops.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.alt_route_rounded,
+                            size: 56,
+                            color: AppColors.textSecondary.withValues(
+                              alpha: 0.45,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            l10n.driverNoRouteStopsYet,
+                            style: AppTypography.titleSmall,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            l10n.driverNoRouteStopsBody,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : DraggableScrollableSheet(
+                    initialChildSize: 1.0,
+                    minChildSize: 0.5,
+                    maxChildSize: 1.0,
+                    builder: (ctx, scrollCtrl) => ListView.separated(
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      itemCount: stops.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AppSpacing.xs),
+                      itemBuilder: (_, i) => _StopTile(
+                        stop: stops[i],
+                        index: i + 1,
+                        l10n: l10n,
+                        onToggleVisited: () => _toggleVisited(stops[i]),
+                        onOpenMaps: stops[i].lat != null && stops[i].lng != null
+                            ? () => launchMapsGeo(
+                                context,
+                                latitude: stops[i].lat!,
+                                longitude: stops[i].lng!,
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -232,11 +267,15 @@ class _StopTile extends StatelessWidget {
   const _StopTile({
     required this.stop,
     required this.index,
-    required this.onMark,
+    required this.l10n,
+    required this.onToggleVisited,
+    this.onOpenMaps,
   });
   final MockBusStop stop;
   final int index;
-  final VoidCallback onMark;
+  final AppLocalizations l10n;
+  final VoidCallback onToggleVisited;
+  final VoidCallback? onOpenMaps;
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +283,6 @@ class _StopTile extends StatelessWidget {
       color: stop.isVisited ? AppColors.success.withValues(alpha: 0.05) : null,
       child: Row(
         children: [
-          // Stop number badge
           Container(
             width: 32,
             height: 32,
@@ -270,7 +308,7 @@ class _StopTile extends StatelessWidget {
               children: [
                 Text(stop.name, style: AppTypography.labelMedium),
                 Text(
-                  'ETA: ${stop.eta}  ·  ${stop.studentCount} students',
+                  l10n.driverStopEtaStudents(stop.eta, stop.studentCount),
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -278,23 +316,18 @@ class _StopTile extends StatelessWidget {
               ],
             ),
           ),
-          if (!stop.isVisited && stop.studentCount > 0)
-            ElevatedButton.icon(
-              onPressed: onMark,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.teal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          if (!stop.isVisited) ...[
+            if (onOpenMaps != null)
+              IconButton(
+                tooltip: l10n.driverOpenInMaps,
+                onPressed: onOpenMaps,
+                icon: const Icon(Icons.map_outlined, color: AppColors.teal),
               ),
-              icon: const Icon(Icons.navigation, size: 14),
-              label: const Text('Navigate', style: TextStyle(fontSize: 12)),
-            )
-          else if (stop.isVisited)
+            TextButton(
+              onPressed: onToggleVisited,
+              child: Text(l10n.driverMarkArrived),
+            ),
+          ] else
             const Icon(Icons.check_circle, color: AppColors.success),
         ],
       ),
